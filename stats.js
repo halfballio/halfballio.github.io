@@ -389,7 +389,7 @@ function tabSessions(d, w){
     return `<li class="svsess"><div class="when"><b>${fmtDay(s.start)}</b><small>${s.legacy ? 'finished session' : `${fmtTime(s.start)} · ${fmtDur(s.end - s.start)}`}</small></div>`
       + `<div class="what"><span class="svbt" aria-hidden="true"><i style="width:${p}%"></i></span><small>${plural(s.n, 'shot')}${s.best ? ` · best streak ${s.best}` : ''}${g ? ` · ${g}` : ''}</small></div><b class="pct">${p}%</b></li>`;
   }).join('');
-  grid.push(card('All sessions', `Newest first${list.length > 60 ? ' (the last 60)' : ''}`, `<ul class="svsessl" role="list">${rows}</ul>` + (S.untimed ? `<p class="svnote">${plural(S.untimed, 'earlier shot')} from before times were kept ${S.untimed === 1 ? 'is' : 'are'} in the other tabs, not here.</p>` : ''), 'wide'));
+  grid.push(card('All sessions', `Newest first${list.length > 60 ? ' (the last 60)' : ''}`, `<ul class="svsessl" role="list">${rows}</ul>`, 'wide'));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 
