@@ -140,11 +140,11 @@ function streakChart(list, o){
   s += `<line class="g base" x1="${l}" x2="${W - r}" y1="${Y(0)}" y2="${Y(0)}"/><text class="yl" x="${l - 6}" y="${Y(0) + 4}">0</text>`;
   s += `<line class="hotl" x1="${l}" x2="${W - r}" y1="${Y(o.hot)}" y2="${Y(o.hot)}"/><text class="yl" x="${l - 6}" y="${Y(o.hot) + 4}">${o.hot}</text>`;
   s += `<text class="yl" x="${l - 6}" y="${Y(max) + 4}">${max}</text>`;
-  let rec = 0;
+  const top = Math.max(...list.map(s=>s.len)); let topDone = false;
   list.forEach((k, i)=>{
-    const x = l + i*cw + (cw - bw)/2, isRec = k.len > rec; if(isRec) rec = k.len;
+    const x = l + i*cw + (cw - bw)/2, isRec = cw >= 18 || (k.len === top && !topDone); if(k.len === top) topDone = true;
     s += `<rect class="${k.len >= o.hot ? 'hotb' : 'cold'}${k.open ? ' open' : ''}" x="${x.toFixed(1)}" y="${Y(k.len).toFixed(1)}" width="${bw.toFixed(1)}" height="${(Y(0) - Y(k.len)).toFixed(1)}" rx="2"/>`;
-    if(isRec && (cw >= 14 || k.len === o.best)) s += `<text class="vl" x="${(x + bw/2).toFixed(1)}" y="${(Y(k.len) - 4).toFixed(1)}">${k.len}</text>`;
+    if(isRec) s += `<text class="vl" x="${(x + bw/2).toFixed(1)}" y="${(Y(k.len) - 4).toFixed(1)}">${k.len}</text>`;
   });
   s += `<text class="xl" x="${l}" y="${H - 6}">${esc(o.from)}</text><text class="xl" x="${W - r}" y="${H - 6}" text-anchor="end">${esc(o.to)}</text>`;
   return s + `</svg>`;
@@ -364,12 +364,12 @@ function tabHistory(d, w){
   // streaks
   const hots = d.streaks.filter(s=>s.len >= hot).length, last100 = (()=>{ let b = 0, c = 0; for(let i = Math.max(0, d.n - 100); i < d.n; i++){ c = d.okA[i] ? c + 1 : 0; b = Math.max(b, c); } return b; })();
   let sb = `<div class="svkpis mini">${kpi(num(d.best), 'Best streak', '')}${kpi(num(d.curStreak), 'Current', '')}${kpi(num(last100), 'Best, last 100', '')}${kpi(num(hots), `Streaks of ${hot}+`, '')}`
-    + `${d.bestWin >= 0 ? kpi(`${pct(d.bestWin, 25)}%`, 'Best 25 shots', `shots ${num(d.bestWinAt + 1)}–${num(d.bestWinAt + 25)}`) : ''}</div>`;
+    + `${d.bestWin >= 0 ? kpi(`${pct(d.bestWin, 25)}%`, 'Best 25 shots', `from shot ${num(d.bestWinAt + 1)}`) : ''}</div>`;
   const S3 = d.streaks.filter(s=>s.len >= 3), list = S3.slice(-60);
-  sb += list.length ? streakChart(list, {w: w.half, hot, best: d.best, aria: `${S3.length} streaks of 3 or more; best ${d.best}`, from: `shot ${num(list[0].at + 1)}`, to: list[list.length - 1].open ? 'now' : `shot ${num(list[list.length - 1].at + 1)}`})
+  sb += list.length ? streakChart(list, {w: w.full, hot, best: d.best, aria: `${S3.length} streaks of 3 or more; best ${d.best}`, from: `shot ${num(list[0].at + 1)}`, to: list[list.length - 1].open ? 'now' : `shot ${num(list[list.length - 1].at + 1)}`})
     + `<div class="svlegend" aria-hidden="true"><span><i class="sw hotb"></i>${hot} or more</span><span><i class="sw cold"></i>3 to ${hot - 1}</span><span><i class="sw hotl"></i>Hot line</span></div>`
     : empty('No streaks of 3 or more yet', '');
-  grid.push(card('Streaks', `Each streak of 3 or more, oldest left${S3.length > 60 ? ' (the last 60)' : ''}; numbers mark each new record`, sb));
+  grid.push(card('Streaks', `Each streak of 3 or more, oldest left${S3.length > 60 ? ' (the last 60)' : ''}; the longest shown is labelled`, sb, 'wide'));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 

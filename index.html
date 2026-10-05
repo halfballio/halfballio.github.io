@@ -783,7 +783,7 @@ html.svopen,html.svopen body{overflow:hidden}
 .svcard .svkpi{background:var(--surface-2);box-shadow:none}
 .svkpi b{font:700 30px/1 var(--display);letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .svkpi span{font:600 11px/1.3 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.svkpi small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svkpi small{font-size:12px;line-height:1.3;color:var(--muted);font-variant-numeric:tabular-nums}
 .svkpi.grade{background:var(--navy);border-color:var(--navy);color:var(--gold)}.svkpi.grade span,.svkpi.grade small{color:var(--cream-2)}
 .svempty{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:22px 16px;border:1px dashed var(--line-strong);border-radius:var(--r);color:var(--muted)}
 .svempty b{font:600 15px var(--body);color:var(--ink)}
@@ -1312,7 +1312,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 494;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 495;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
