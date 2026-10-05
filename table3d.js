@@ -178,6 +178,18 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     const t = new T3.CanvasTexture(cv); t.anisotropy = 4;
     return texCache[key] = t;
   }
+  // the numbers are drawn in the page's condensed font: on a first visit (or a slow phone) it can still be on its way when the
+  // balls are first drawn, and they'd keep the fallback's numbers. When it arrives, the numbered balls are drawn again.
+  try{
+    const NUMF = '700 20px "Barlow Condensed"', fonts = root.document && root.document.fonts;
+    if(fonts && fonts.check && !fonts.check(NUMF)) fonts.load(NUMF).then(()=>{
+      const old = [];
+      for(const k in texCache) if(!k.startsWith('cb')){ old.push(texCache[k]); delete texCache[k]; }
+      if(!old.length) return;
+      if(opts.redraw) opts.redraw();   // setBalls picks up the new textures
+      setTimeout(()=>old.forEach(t=>t.dispose()), 1000);
+    }, ()=>{});
+  }catch(e){}
   const sphere = opts.lite ? new T3.SphereGeometry(1, 32, 24) : new T3.SphereGeometry(1, 48, 32);   // 32 round: under half a pixel off round even down on the shot
   function ball(id, R){
     if(balls[id]) return balls[id];

@@ -990,7 +990,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 469;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 470;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -3466,7 +3466,7 @@ function ringArc3(P){
 }
 // the table in 3D (table3d.js); without WebGL everything is drawn in the SVG as before
 let G3 = null, G3BALLS = [], boxPx = [600, 400];
-try{ G3 = window.Table3D ? Table3D.make(document.getElementById('table3d'), {lite: IS_PHONE}) : null; }catch(e){ G3 = null; }
+try{ G3 = window.Table3D ? Table3D.make(document.getElementById('table3d'), {lite: IS_PHONE, redraw: ()=>{ if(shot && !anim) draw(answered); }}) : null; }catch(e){ G3 = null; }
 if(!G3) document.getElementById('table3d').style.display = 'none';
 // the ball's own frame for its texture: the number spot is painted at local +x, so turn +x onto where the spot starts
 function spotBase(sp){
