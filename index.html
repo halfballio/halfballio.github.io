@@ -1240,7 +1240,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 495;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 496;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1321,7 +1321,7 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // The routine: each time a player-facing change ships, add an entry at the TOP for that build (the BUILD it ships in: the
 // pre-commit hook adds one, so that's the current BUILD + 1), or extend the top entry if it's still that build or the same
 // day's run of builds (raise `build`, keep `from`). One plain line per change, in the player's words: what they'll notice,
-// not how it works. Keep it to 2–4 lines; leave out fixes nobody would see. Shown as "1.<build> · Oct 5" (a range: from–build).
+// not how it works. Keep it to 2–4 lines; leave out fixes nobody would see. Shown as "1.<build>" (a range: from–build); the date is kept in the list but not shown.
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
@@ -6300,7 +6300,7 @@ const wnVer = e => '1.' + (e.from && e.from < e.build ? e.from + '–' + e.build
 const wnUnseen = () => WHATS_NEW.filter(e=>e.build > settings.notesSeen);
 let wnFrom = null, wnPoll = 0, wnInput = performance.now();
 function wnEntry(e, isNew){
-  return `<section class="wnentry"><div class="wnmeta"><span>${wnVer(e)} · <time datetime="${e.date}">${wnDate(e.date)}</time></span>${isNew ? '<span class="wnpill">New</span>' : ''}</div>`
+  return `<section class="wnentry"><div class="wnmeta"><span>${wnVer(e)}</span>${isNew ? '<span class="wnpill">New</span>' : ''}</div>`
     + `<h3>${e.title}</h3><ul>${e.items.map(t=>`<li>${t}</li>`).join('')}</ul></section>`;
 }
 function wnSync(){   // the dot on ? and the menu item follow what's unseen
@@ -6309,7 +6309,7 @@ function wnSync(){   // the dot on ? and the menu item follow what's unseen
   h.setAttribute('aria-label', n ? 'Tutorials and what’s new: new updates' : 'Tutorial');
   let b = $('wnopen');
   if(!b){ $('tourreplay').insertAdjacentHTML('beforebegin', '<button id="wnopen"></button>');   // first in the list b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
-  b.innerHTML = 'What’s new' + (n ? '<span class="wnpill">New</span>' : WHATS_NEW[0] ? `<small>${wnVer(WHATS_NEW[0])} · ${wnDate(WHATS_NEW[0].date)}</small>` : '');
+  b.innerHTML = 'What’s new' + (n ? '<span class="wnpill">New</span>' : WHATS_NEW[0] ? `<small>${wnVer(WHATS_NEW[0])}</small>` : '');
 }
 // sinceSeen: the one-time card, only the builds since you last looked (the three newest, the rest a tap away); otherwise all of it
 function openWhatsNew(sinceSeen){
