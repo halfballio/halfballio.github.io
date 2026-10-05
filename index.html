@@ -365,11 +365,43 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .tabpanel .options{gap:12px 18px}
 .quick .ql{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
 .quick .ql.tap{font-size:13px}
-.quick .vgrid{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;align-items:baseline;width:100%;margin-top:4px;font-size:13px}
-.quick .vgrid>span{color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-size:11px;font-weight:600}
-.quick .vgrid i{font-style:normal;font-weight:600;color:var(--ink)} .quick .vgrid i.ok{color:var(--good)} .quick .vgrid i.no{color:var(--bad)} .quick .vgrid i.also{color:var(--accent)}
-.quick .vgrid em{font-style:normal;display:flex;align-items:baseline;gap:12px}
-.quick .vgrid em>span{color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-size:11px;font-weight:600}
+/* the result card: drawn before the call with the rows this shot will report (pending ones as a dash), filled in place on the call */
+.quick:has(.rcard){display:block;min-height:0}.quick:empty{display:none}   /* a lesson: no card, the coach says it */
+.rcard{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px 14px;box-shadow:var(--shadow-1);color:var(--ink);font-variant-numeric:tabular-nums}
+.rhead{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:28px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.rcard .rverd{font:700 26px/28px var(--display);letter-spacing:.02em;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:var(--ink)}
+.rcard .rverd.ok{color:var(--good)} .rcard .rverd.no{color:var(--bad)} .rcard .rverd.also{color:var(--accent)}
+.rverd .ricon{width:18px;height:18px}
+.rcard.pend .rverd{color:var(--muted);font-weight:600;font-size:15px;font-family:var(--body);letter-spacing:.08em;text-transform:uppercase}
+.raside{font-size:12px;line-height:1.3;color:var(--muted);text-align:right;min-width:0}
+.rrows{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:center;font-size:14px;line-height:20px}
+.rrow{display:contents}
+.rk{font:600 11px/20px var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rval{min-width:0;min-height:20px;display:flex;flex-wrap:wrap;align-items:center;gap:0 10px}
+.rv{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.rv.ok{color:var(--good)} .rv.no{color:var(--bad)} .rv.also{color:var(--accent)}
+.rcard.pend .rv{font-weight:500}
+.ricon{width:12px;height:12px;flex:none;align-self:center}
+.rr{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:500;white-space:nowrap}
+.rr small{font:600 11px/1 var(--body);letter-spacing:.07em;text-transform:uppercase}
+.rr .rrv{color:var(--good);font-weight:600}
+.rdash{display:inline-block;width:28px;height:6px;border-radius:3px;background:var(--chip);vertical-align:middle}
+.rcard:not(.pend) .rverd,.rcard:not(.pend) .rval{animation:rin var(--t) var(--ease) both}
+@keyframes rin{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.rcard .rverd,.rcard .rval{animation:none!important}}
+.shootctl:not(:has(> :not([hidden]))){display:none}   /* nothing in it (no free-play buttons): no empty gap above the result */
+@media (max-width:760px){   /* phones: no box, the rows in two columns (long ones across both), so table, fractions and Next still fit */
+  .rcard{background:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;padding:6px 0 0}
+  .rhead{min-height:22px;padding:0;margin-bottom:3px;border:0}
+  .rcard .rverd{font-size:21px;line-height:22px}.rverd .ricon{width:15px;height:15px}
+  .rcard.pend .rverd{font-size:12px}
+  .rrows{grid-template-columns:1fr 1fr;gap:2px 14px;font-size:13px;line-height:19px}
+  .rrow{display:flex;align-items:center;gap:8px;min-width:0}
+  .rrow.wide{grid-column:1/-1}
+  .rk{flex:none;width:4.6em;font-size:10.5px;line-height:19px}
+  .rval{gap:0 8px;min-height:19px}
+  .rr small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* the arrow and the green say it; "right" stays for screen readers */
+}
 .nudge{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .nudge button{font:600 15px var(--body);min-height:44px;padding:12px 0;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1);cursor:pointer}
 .nudge button:disabled{opacity:.4;cursor:default}
@@ -1162,7 +1194,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 483;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 484;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -2477,6 +2509,7 @@ function shotInFrame(cam, s, m = 24){
 // ---------- controls: speed bar and tip pad ----------
 function renderShootControls(){
   const box = $('shootctl'); if(!box) return;
+  if(shot && !answered && $('quick').querySelector('.rcard.pend')) pendCard();   // stroke or spin changed: the card shows it
   const tl = tut.on && isShooting() ? (tstep().ui || []) : null;   // in a lesson: just the controls the step is about, lit up
   const on = isShooting() && (!tut.on || tl.length > 0), c0 = tl ? ctrlAt(LESSONS[tut.lesson].at) : null, c = tl ? {speed: tl.includes('speed'), up: tl.includes('tip'), down: tl.includes('tip') && c0.down, side: tl.includes('tip') && c0.side} : ctrl();   // a lesson's tip pad offers what its grade does
   box.hidden = !on; $('lookwrap').hidden = !(isShooting() && settings.view !== 'top');   // the eye stays in lessons, so a shot that runs off the view can still be followed
@@ -2627,23 +2660,23 @@ function takeShot(id){
     if(full && st >= STREAK_HOT) playSound('streak', st); else if(!full && prevStreak >= STREAK_HOT) playSound('streakEnd');
     showStreak(st, !full && prevStreak >= STREAK_HOT ? prevStreak : 0);
   }
-  const lab = r => r.id === 'full' ? 'Full' : r.label;
   // the verdict as a small table: your call and the right one, your stroke and the one it wanted, and what the balls did
-  const spd = n => coarseSpeed() ? COARSE_LBL[nearestCoarse(n)] : String(n), want = s.zone && s.zone.lvl ? s.zone.lvl : pocketLvl, mine = speedLevel();
-  const rows = [['Call', lab(picked), ok ? true : zoneWin ? 'also' : false, ok ? '' : lab(right)]];
+  const spd = strokeName, want = s.zone && s.zone.lvl ? s.zone.lvl : pocketLvl, mine = speedLevel();
   const strokeOk = s.zone && s.zone.lvls ? s.zone.lvls.some(l=>spd(l) === spd(mine)) : s.zone ? spd(mine) === spd(want) : nearestCoarse(mine) >= want;   // no zone: pocket speed or harder
-  if(ctrl().speed) rows.push(['Stroke', spd(mine), strokeOk || zoneWin, strokeOk || zoneWin ? '' : spd(want)]);
-  // the spin: your tip against the one that makes the zone (in half-tip steps: "½ top", "1 draw", "½ left"...)
-  if(s.zone && (ctrl().up || ctrl().side)){
-    const mineTip = snapTip(stroke.tip || [0, 0]), zoneTip = s.zone.tip || [0, 0], same = tipName(mineTip) === tipName(zoneTip);
-    rows.push(['Spin', tipName(mineTip), same || zoneWin, same || zoneWin ? '' : tipName(zoneTip)]);
-  }
   const ball = run.scratch ? 'Scratch: the cue ball went in' : !run.hit ? 'Missed the object ball' : !run.made ? (run.obIn ? 'Wrong pocket' : 'Missed the pocket')
     : s.zone ? (run.inZone ? 'Pocketed, in the zone' : `Pocketed, missed the zone by ${run.zoneMiss.toFixed(1)}″`) : 'Pocketed';
-  rows.push(['Ball', ball, run.made && !run.scratch && (!s.zone || run.inZone), '']);
-  const bits = [], grid = `<div class="vgrid">${rows.map(([k, v, good, right])=>`<span>${k}</span><em><i class="${good === 'also' ? 'also' : good ? 'ok' : 'no'}">${v}</i>${right ? `<span>Right</span><i class="ok">${right}</i>` : ''}</em>`).join('')}</div>`;   // a miss shows the right answer beside it
+  // the same rows the card showed before the call (shootRows), filled in: a miss shows the right answer beside yours
+  const rows = shootRows(s).map(r=>{
+    if(r.k === 'Call') return {...r, v: fracName(picked), good: ok ? true : zoneWin ? 'also' : false, right: ok ? '' : fracName(right)};
+    if(r.k === 'Stroke') return {...r, v: spd(mine), good: strokeOk || zoneWin, right: strokeOk || zoneWin ? '' : spd(want)};
+    if(r.k === 'Spin'){   // your tip against the one that makes the zone (in half-tip steps: "½ tip of top", "1 tip of draw", "½ tip left"...)
+      const mineTip = snapTip(stroke.tip || [0, 0]), zoneTip = s.zone.tip || [0, 0], same = tipName(mineTip) === tipName(zoneTip);
+      return {...r, v: tipName(mineTip), good: same || zoneWin, right: same || zoneWin ? '' : tipName(zoneTip)};
+    }
+    return {...r, v: ball, good: run.made && !run.scratch && (!s.zone || run.inZone)};
+  });
   const head = full ? 'Good shot' : partial ? 'Pocketed' : ok ? 'Missed' : run.made ? 'Wrong call, but it drops' : 'Missed';
-  $('quick').innerHTML = `<div class="ql"><b class="${full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no'}">${head}</b>${bits.map(b=>`<span>${b}</span>`).join('')}</div>${grid}`;
+  $('quick').innerHTML = rcardHTML(head, full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no', rows);
   $('showright').hidden = full;   // under Next shot: play it the right way
   $('result').innerHTML = `<div class="resultpair">${overlapSVG(s)}${tipSVG(s)}</div>`;
   const hitT = (obHit(run.sim.events) || {}).t ?? 0;
@@ -3749,7 +3782,38 @@ function startFlash(){
 function endFlash(){ clearTimeout(flashTimer); $('cover').hidden = true; $('flashbar').hidden = true; }
 
 // ---------- round ----------
-const PLACEHOLDER = `How full do you hit the object ball?`;
+// The result card. Before the call it shows the rows this shot will report: what you've already set (stroke, spin) and a
+// dash for the rest, so on the call the values land where the dashes were and nothing below moves.
+// rows: {k: label, v: value (null: pending), good: true | false | 'also' | undefined (not judged), right: the right value when yours differs, wide: across both columns on a phone}
+const RICON = {
+  ok: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="right"><path d="M2 6.4 4.8 9.2 10 3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  no: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="wrong"><path d="M3 3l6 6M9 3 3 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  also: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="drops, not the ideal call"><circle cx="6" cy="6" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'};
+const rcls = g => g === 'also' ? 'also' : g === true ? 'ok' : g === false ? 'no' : '';
+function rcardHTML(head, cls, rows, aside){
+  const pend = head == null;
+  const val = r => r.v == null ? '<span class="rdash" aria-label="pending"></span>'
+    : `<span class="rv ${pend ? '' : rcls(r.good)}">${pend ? '' : RICON[rcls(r.good)] || ''}${r.v}</span>${!pend && r.right ? `<span class="rr"><span aria-hidden="true">→</span><small>right</small><span class="rrv">${r.right}</span></span>` : ''}`;
+  return `<div class="rcard${pend ? ' pend' : ''}"><div class="rhead"><b class="rverd ${pend ? '' : cls}">${pend ? 'Call the hit' : (RICON[cls] || '') + head}</b><span class="raside">${aside || ''}</span></div>`
+    + `<div class="rrows">${rows.map(r=>`<div class="rrow${r.wide ? ' wide' : ''}"><span class="rk">${r.k}</span><span class="rval">${val(r)}</span></div>`).join('')}</div></div>`;
+}
+const fracName = r => r.id === 'full' ? 'Full' : r.label;
+const strokeName = n => coarseSpeed() ? COARSE_LBL[nearestCoarse(n)] : String(n);
+// a called shot's rows: the call, your stroke once speed is yours, your spin once there's a zone and spin is yours, and the ball
+function shootRows(s){
+  const c = ctrl(), rows = [{k: 'Call', v: null}];
+  if(c.speed) rows.push({k: 'Stroke', v: strokeName(speedLevel())});
+  if(s.zone && (c.up || c.side)) rows.push({k: 'Spin', v: tipName(snapTip(shotStroke(s).tip || [0, 0])), wide: true});
+  rows.push({k: 'Ball', v: null, wide: true});
+  return rows;
+}
+// a read shot's rows (the Ladder's reading shots and Flash): the call, the cut, and what the ball did
+const readRows = () => [{k: 'Call', v: null}, {k: 'Cut', v: null}, {k: 'Ball', v: null, wide: true}];
+const aidAside = () => practiceAid() ? 'Aid on · not scored' : '';
+function pendCard(){   // the card before the call
+  if(!shot || answered || tut.on || isPlace()) return;
+  $('quick').innerHTML = isShooting() ? rcardHTML(null, '', shootRows(shot)) : rcardHTML(null, '', readRows(), aidAside());
+}
 const PLACE_HINT = `Tap or drag around the object ball to set the ghost ball. Fine-tune with the arrows, then Shoot.${kt(' Keys <kbd>←</kbd> <kbd>→</kbd> nudge, <kbd>Enter</kbd> shoots.', '')}`;
 const QUESTION = {sess:'How full do you hit the object ball?', call:'How full do you hit the object ball?', flash:'How full do you hit the object ball?', place:'Where does the ghost ball go?', shoot:'How full do you hit the object ball?', free:'How full do you hit the object ball?'};
 const tableBox = document.querySelector('.table-box');
@@ -3810,7 +3874,8 @@ function dealInner(){
   $('mods').hidden = !shot.phys;
   const sc = $('speedchip'); sc.hidden = true;   // no speed shown for now: every shot is pocket speed if(shot.speed){ sc.textContent = SPEED_LABEL[shot.speed]; sc.className = 'speedchip ' + shot.speed; }
   $('result').innerHTML = '';
-  $('quick').innerHTML = `<div class="ql hint">${isPlace() ? PLACE_HINT : PLACEHOLDER}</div>`; $('showright').hidden = true;
+  if(isPlace()) $('quick').innerHTML = `<div class="ql hint">${PLACE_HINT}</div>`; else if(tut.on) $('quick').innerHTML = ''; else pendCard();
+  $('showright').hidden = true;
   tableBox.classList.remove('tappable');
   tableBox.classList.toggle('placing', isPlace());
   updateControls();
@@ -4365,7 +4430,7 @@ function answer(id, mod){
     if(stats.active && stats.active.task===settings.task) stats.active.pause = (stats.active.pause||0) + (animMs||0);
     if(jumpingAhead){ sessionTick(ok, counted); return; }   // going straight to the next shot: just count it, draw nothing
     draw(true);
-    $('quick').innerHTML = quickHTML + `<div class="ql tap">${aided ? 'Aid on: practice shot, not scored. ' : ''}<span class="touch-only">Tap the table for the next shot</span></div>`;
+    $('quick').innerHTML = cardHTML(aided ? 'Aid on · not scored' : '<span class="touch-only">Tap the table for the next shot</span>');
     finishRound();
     sessionTick(ok, counted);
   };
@@ -4382,12 +4447,13 @@ function answer(id, mod){
   const adjust = over ? 'fuller' : 'thinner';
   const tipText = tip ? `Tip: a pure ${lbl(picked)} misses by ${Math.abs(oc.lat).toFixed(1)}″. Hit it a touch ${adjust}.` : '';
   showResult(msg, cls, counted, oc.lat, over, exactLine, tipText);
-  const quickHTML = `<div class="ql"><b class="${counted?'ok':'no'}">${counted ? 'Pocketed' : 'Missed'}</b>`
-    + (!ok ? `<span class="out">${counted ? `Also drops, a bit ${over?'thin':'full'}` : oc.short ? `Right line, but it dies short` : `${over?'Too thin':'Too full'}, by ${Math.abs(oc.lat).toFixed(1)}″`}</span>` : '')
-    + (phys ? `<span>${lbl(shot.answer)} ${shot.mod}${alt ? ` / ${lbl(ALL.find(r=>r.id===alt.id))} ${alt.mod}` : ''} · ${shot.theta.toFixed(1)}°${shot.throwDeg > 0.05 ? ` · throw ${shot.throwDeg.toFixed(1)}°` : ''}</span></div>` : `<span>${shot.theta.toFixed(1)}° · ${f.toFixed(2)} ball</span></div>`)
-    ;
-  // the verdict lands on the call, not after the animation: sound, result, button colours, streak
-  $('quick').innerHTML = quickHTML;
+  const rightCall = phys ? `${fracName(shot.answer)} ${shot.mod}${alt ? ` / ${fracName(ALL.find(r=>r.id===alt.id))} ${alt.mod}` : ''}` : fracName(shot.answer);
+  const rows = readRows().map(r=>
+      r.k === 'Call' ? {...r, v: fracName(picked) + (phys ? ' ' + mod : ''), good: ok ? true : oc.made ? 'also' : false, right: ok ? '' : rightCall}
+    : r.k === 'Cut' ? {...r, v: `${shot.theta.toFixed(1)}° · ${f.toFixed(2)} ball${phys && shot.throwDeg > 0.05 ? ` · throw ${shot.throwDeg.toFixed(1)}°` : ''}`}
+    : {...r, v: ok ? 'Pocketed' : counted ? `Also drops, a bit ${over?'thin':'full'}` : oc.short ? `Right line, but it dies short` : `${over?'Too thin':'Too full'}, by ${Math.abs(oc.lat).toFixed(1)}″`, good: ok ? true : counted ? 'also' : false});
+  const cardHTML = aside => rcardHTML(counted ? 'Pocketed' : 'Missed', counted ? 'ok' : 'no', rows, aside);   // the same rows the card showed before the call
+  $('quick').innerHTML = cardHTML(aided ? 'Aid on · not scored' : '');
   document.querySelectorAll('#answers button').forEach(b=>{
     if(b.dataset.id===showF) b.className='right';
     else if(b.dataset.id===id) b.className = oc.made ? 'also' : 'wrong';   // blue: it still drops, just not the ideal call
