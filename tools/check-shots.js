@@ -26,17 +26,17 @@ let bad = 0;
 for(const k of L.LIB_STEPS){
   L.setTable(L.tableFor(k));
   let ok = 0, zones = 0, n = 40;
-  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s){ ok++; if(s.zone) zones++; } }
+  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9){ ok++; if(s.zone) zones++; } }
   const wantZone = L.isZoneStep(k);
   if(ok < n*.8 || (wantZone && zones !== ok) || (!wantZone && zones)) bad++;
   console.log(`grade ${k} (${L.tableFor(k)} ft): ${S.steps[k] ? S.steps[k].cnt : 0} stored · dealt ${ok}/${n}${wantZone ? ` · with zones ${zones}` : ''}`);
 }
-// on the other table sizes the stored shots are scaled and checked again as they're dealt: each must still pot (and land in its zone)
+// on the other table sizes the stored shots are scaled and checked again as they're dealt: each must still pot (and land in its zone) (and every dealt cue ball within reach of the rail behind it)
 for(const k of L.LIB_STEPS) for(const t of ['7', '8', '9']){
   if(t === L.tableFor(k)) continue;
   L.setTable(t);
   let ok = 0, n = 20;
-  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.isZoneStep(k) === !!s.zone && L.dealtOk(s, k)) ok++; }
+  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9 && L.isZoneStep(k) === !!s.zone && L.dealtOk(s, k)) ok++; }
   if(ok < n*.9) bad++;
   console.log(`grade ${k} scaled to ${t} ft: dealt and re-checked ${ok}/${n}`);
 }
