@@ -1163,7 +1163,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 484;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 485;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -5019,7 +5019,7 @@ function walkRedraw(){ if(walkRaf || anim) return; walkRaf = requestAnimationFra
 svgEl.addEventListener('pointerdown', ev=>{
   if(dragging) return;   // aiming or moving a ball, not looking around
   if(!walkOn() || !shot || !$('sesscover').hidden || !$('startcover').hidden || !$('sessidlecover').hidden) return;
-  // a drag across the full width of the table swings you half way round the object ball
+  // a drag across the full width of the table swings you half way round the cue ball
   document.body.classList.add('dragging'); try{ getSelection().removeAllRanges(); }catch(e){}
   walkDrag = {x: ev.clientX, y: ev.clientY, moved:false, id: ev.pointerId, k: Math.PI / Math.max(300, svgEl.clientWidth), kv: (12*RAD) / Math.max(150, svgEl.clientHeight*0.45)};
 });
@@ -5135,7 +5135,7 @@ const TSTEPS_THROW = [
 ];
 // ---------- Shoot lessons ----------
 const SL_SHOOT = [
-  {rail:true, noPocket:true, aids:{}, labels:['cb','ob'], next:true,
+  {rail:true, noPocket:true, aids:{}, labels:['cb','ob','drag'], next:true,
    text:'The <b>cue ball</b> is the one you strike; it hits the <b>object ball</b>. The question is always the same: <b>how full</b> do you hit it?'},
   {noPocket:true, aids:{ghost:1, line:1}, labels:['ghost','line'], next:true,
    text:'The <b>ghost ball</b> shows where the cue ball must be when it hits the object ball. The dotted <b>guide line</b> is the cue ball’s path.'},
@@ -5564,7 +5564,7 @@ function tutLayer(cam, s, reveal){
     o += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="#fff" stroke-width="1.5"/><circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="2.5" fill="#fff"/>
       <text x="${best.cx.toFixed(1)}" y="${(best.cy + FS*0.36).toFixed(1)}" text-anchor="middle" font-size="${FS}" font-weight="700" font-family="IBM Plex Sans, sans-serif" fill="#fff" ${halo}>${t.t}</text>`;
   }
-  if((st.labels || []).includes('drag')) o += `<text x="${VW/2}" y="${VH-28}" text-anchor="middle" font-size="15" font-weight="700" font-family="IBM Plex Sans, sans-serif" fill="#fff" ${halo}>⟵ drag to walk around ⟶</text>`;
+  if((st.labels || []).includes('drag')) o += `<text x="${VW/2}" y="${VH-28}" text-anchor="middle" font-size="15" font-weight="700" font-family="IBM Plex Sans, sans-serif" fill="#fff" ${halo}>⟵ drag to look around ⟶</text>`;
   if(st.overlap && tut.zb > 0.99){
     const g = scr([(s.gbLook || s.gb)[0], (s.gbLook || s.gb)[1], R]), b = scr([s.ob[0], s.ob[1], R]);
     if(g && b) o += `<clipPath id="tovl"><circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="${b[2].toFixed(1)}"/></clipPath>
@@ -5746,7 +5746,7 @@ $('stancedone').addEventListener('click', e=>{ e.stopPropagation(); closeStance(
 // ---------- the app tour: how to use Halfball (not how to play pool), once for a new player after the stance card ----------
 const TOUR = [
   {el: 'answers', t: 'Welcome to Halfball', p: 'Each shot, call how full you’ll hit the object ball with one of these fractions, then shoot. That’s the game.'},
-  {el: '.table-box', t: 'The table', p: 'Drag on the table to walk around it. Hold ' + kt('<b>Space</b> or the eye button', 'the eye button') + ' to step back and see the whole table.'},
+  {el: '.table-box', t: 'The table', p: 'Drag on the table to look around the cue ball. Hold ' + kt('<b>Space</b> or the eye button', 'the eye button') + ' to step back and see the whole table.'},
   {el: 'badge', t: 'Your grade', p: 'Call shots right to move up. Each grade adds something new: tap your grade to see the ladder.'},
   {el: 'badge', t: 'It starts simple', p: 'You start by just calling the fraction. As you climb you’ll unlock:'
     + '<ul class="tourlist"><li>Getting down on the shot</li><li>Any angle, on a bigger table</li><li>Speed and spin</li><li>English, then everything at once</li></ul>'},
