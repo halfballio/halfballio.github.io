@@ -1070,7 +1070,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 471;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 472;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -2250,8 +2250,8 @@ function shootCam(s, view){
   const base = c.phase === 'step' ? mix(stand, standAim, c.k) : c.phase === 'shift' ? mix(c.fromCam || camAlong(s, c.fromAim || d, VIEWS.stand), standAim, c.k) : c.phase === 'down' ? bendCam(standAim, down, c.k, aim) : view === 'down' && !c.T ? camAlong(s, d, VIEWS.down) : stand;
   return look.k > 0 ? mix(base, overviewCam(s), ease(look.k)) : base;
 }
-// Step back (hold Space, or the eye button): up high behind the shot, the whole table in view. Free while standing;
-// down on the shot it stands you up first, and you get down again (Enter, a call or the chip) when you're ready.
+// Step back (hold Space, or the eye button): up high behind the shot, the whole table in view. Down on the shot you stay
+// in your stance: let go and you're back on it as you were. Only Esc (or the stand-up button) takes you off the shot.
 const look = {k: 0, target: 0, raf: 0};
 function overviewCam(s){
   const d = norm(sub(s.ob, s.cb)), pts = [[0,0,0],[W,0,0],[W,H,0],[0,H,0], [s.cb[0],s.cb[1],R], [s.ob[0],s.ob[1],R]];
@@ -2267,9 +2267,7 @@ function overviewCam(s){
 }
 function setLook(on){
   if(!shot || !isShooting() || settings.view === 'top' || (tut.on && tut.zb > 0)) return;
-  look.target = on ? 1 : 0;
-  const c = shot.cam;
-  if(on && !answered && c && c.T && c.phase === 'down' && c.k > 0 && !c.moving){ c.up = true; featherOff(shot); riseCam(shot, 0); }
+  look.target = on ? 1 : 0;   // the camera blends over the stance (shootCam), so the stance, cue and strokes are left as they are
   cancelAnimationFrame(look.raf);
   let last = performance.now();
   const tick = now => {
