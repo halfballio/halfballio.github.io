@@ -758,6 +758,179 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .stancecard{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:60;
     max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
 }
+/* ---------- Stats: the header button, the compact summary under the controls, and the full view ---------- */
+.statsbtn{height:40px;display:inline-flex;align-items:center;gap:7px;padding:0 13px 0 11px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:600 14px var(--body);cursor:pointer;box-shadow:var(--shadow-1);transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
+.statsbtn:hover{border-color:var(--muted)}
+.statsbtn svg{color:var(--accent);flex:none}
+.statsbtn[aria-expanded="true"]{background:var(--navy);border-color:var(--navy);color:var(--cream)}.statsbtn[aria-expanded="true"] svg{color:var(--gold)}
+@media (max-width:439px){.statsbtn{width:40px;padding:0;justify-content:center}.statsbtn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
+.tab.on{color:var(--ink);border-bottom-color:var(--gold)}
+.tab svg{margin-left:6px;vertical-align:-2px;color:var(--muted)}
+.foot .statsopen{min-height:44px;padding:0 16px;font-size:14px;display:inline-flex;align-items:center;gap:8px;margin-left:auto}
+.foot .statsopen svg{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.statsview{position:fixed;inset:0;z-index:58;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);animation:svin .18s var(--ease) both}
+@keyframes svin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html.svopen,html.svopen body{overflow:hidden}
+@media (min-width:900px) and (min-height:501px){   /* a desktop: over the table and the panel, under the header */
+  .main{position:relative}
+  .statsview{position:absolute;inset:0;z-index:30;padding:0;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-2);overflow:hidden}
+  html.svopen,html.svopen body{overflow:visible}
+}
+.svtop{flex:none;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.svback{width:auto;display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 14px 0 8px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:600 15px var(--body);cursor:pointer;flex:none;transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
+.svback:hover{background:var(--surface-2);border-color:var(--muted)}
+.svtitle{margin:0;font:700 26px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--ink);display:flex;align-items:baseline;gap:10px;min-width:0}
+.svtitle small{font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svmode{margin-left:auto;flex:none}
+.svmode .ico{width:11px;height:11px;margin-left:4px}
+.svtabs{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-bottom:1px solid var(--line);padding:0 8px}
+.svtabs button{min-height:46px;padding:0 4px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;color:var(--muted);font:600 14px var(--body);cursor:pointer;white-space:nowrap;transition:color var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
+.svtabs button:hover{color:var(--ink)}
+.svtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold-text)}
+.svtabs button:focus-visible{outline-offset:-3px}
+@media (min-width:760px){.svtabs{display:flex;gap:6px;padding:0 16px}.svtabs button{padding:0 14px;font-size:15px}}
+@media (max-width:379px){.svtabs{padding:0 2px}.svtabs button{font-size:13px;padding:0 2px}.svtop{gap:8px;padding:8px 10px}.svback span{display:none}.svback{padding:0 10px}}
+.svbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:16px 16px calc(28px + env(safe-area-inset-bottom))}
+.svbody:focus{outline:none}
+@media (min-width:760px){.svbody{padding:20px 24px 32px}}
+.svin{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.svgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;align-items:start}
+.svgrid > .svkpis,.svcard.wide{grid-column:1/-1}
+.svcard{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow-1)}
+.svch h3{margin:0;font:700 20px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase}
+.svch p{margin:3px 0 14px;font-size:13px;line-height:1.4;color:var(--muted)}
+.svcard h4{margin:16px 0 8px;font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.svcard h4:first-of-type{margin-top:4px}
+.svnote{margin:10px 0 0;font-size:12.5px;line-height:1.4;color:var(--muted)}
+/* key numbers */
+.svkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.svkpis.mini{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));margin-bottom:14px}
+.svkpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;box-shadow:var(--shadow-1);display:flex;flex-direction:column;gap:2px;min-width:0}
+.svcard .svkpi{background:var(--surface-2);box-shadow:none}
+.svkpi b{font:700 30px/1 var(--display);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.svkpi span{font:600 11px/1.3 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.svkpi small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svkpi.grade{background:var(--navy);border-color:var(--navy);color:var(--gold)}.svkpi.grade span,.svkpi.grade small{color:var(--cream-2)}
+.svempty{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:22px 16px;border:1px dashed var(--line-strong);border-radius:var(--r);color:var(--muted)}
+.svempty b{font:600 15px var(--body);color:var(--ink)}
+.svempty span{font-size:13px;max-width:44ch}
+/* bars: label, bar, value */
+.svbars{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.svbar{display:grid;grid-template-columns:minmax(64px,32%) minmax(0,1fr) auto;gap:10px;align-items:center;min-height:30px}
+.svbl{font-size:14px;font-weight:500;min-width:0;overflow-wrap:anywhere;line-height:1.25}
+.svbl.big{font:700 20px/1 var(--display)}
+.svbt{display:block;height:10px;background:var(--chip);border-radius:5px;overflow:hidden}
+.svbt i{display:block;height:100%;background:var(--accent);border-radius:5px}
+.svbar.few .svbt i{background:repeating-linear-gradient(135deg,var(--accent) 0 3px,color-mix(in srgb,var(--accent) 35%,transparent) 3px 6px)}
+.svbars.bad .svbt i{background:var(--bad)}
+.svbar.none .svbl{color:var(--muted)}
+.svbv{display:flex;align-items:baseline;justify-content:flex-end;gap:6px;min-width:96px;font-variant-numeric:tabular-nums}
+.svbv b{font-weight:600;font-size:14px}
+.svbv small{font:500 11px var(--mono);color:var(--muted);white-space:nowrap}
+/* tables */
+.svtw{overflow-x:auto;margin-top:12px}
+.svt{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.svt th,.svt td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.svt thead th{font:600 11px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.svt .l{text-align:left;font-weight:500}
+.svt tbody th{font-weight:500}
+.svt td small{color:var(--muted);font-size:11px;margin-left:4px}
+@media (max-width:599px){.svkpis.mini.wide{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* the confusion heatmap */
+.svheat{border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums;margin:0 auto}
+.svheat th{font:700 18px var(--display);text-align:center;padding:0 4px;color:var(--ink)}
+.svheat tbody th{text-align:right;padding-right:8px}
+.svheat th.corner{font:600 10px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;vertical-align:bottom}
+.svheat th.corner span{display:block}.svheat th.corner span + span{text-align:right}
+.svheat td{min-width:46px;height:46px;text-align:center;border-radius:6px;background:var(--chip);color:var(--muted);line-height:1.05}
+.svheat td b{display:block;font:600 14px var(--mono)}
+.svheat td small{display:block;font-size:10px;opacity:.85}
+.svheat td.diag{box-shadow:inset 0 0 0 2px var(--good)}
+.statsview{--heat-span:52%}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .statsview{--heat-span:36%}}
+:root[data-theme="dark"] .statsview{--heat-span:36%}
+.svheat td.c{background:color-mix(in srgb,var(--accent) calc(8% + var(--s)*var(--heat-span)),var(--surface));color:var(--ink)}
+.svheat td.tot,.svheat th.tot{background:none;font:500 12px var(--mono);color:var(--muted);min-width:36px;padding-left:6px}
+/* legends */
+.svlegend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12px;color:var(--muted)}
+.svlegend span{display:inline-flex;align-items:center}
+.sw{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:6px;flex:none}
+.sw.r{background:var(--good)}.sw.h{border:2px solid var(--good);background:linear-gradient(to top,var(--good) 50%,transparent 50%)}.sw.m{border:2px solid var(--bad)}
+.sw.ramp{width:40px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 8%,var(--surface)),color-mix(in srgb,var(--accent) calc(8% + var(--heat-span)),var(--surface)))}
+.sw.diag{background:var(--chip);box-shadow:inset 0 0 0 2px var(--good)}
+.sw.hotb{background:var(--accent)}.sw.cold{border:1.5px solid var(--accent)}
+.sw.hotl{height:0;border-top:2px dashed var(--gold-text);border-radius:0}
+.sw.ln{height:0;border-top:2.5px solid var(--accent);border-radius:0}.sw.mean{height:0;border-top:1.5px dashed var(--muted);border-radius:0}
+@media (max-width:599px){.svkpis:not(.mini){grid-template-columns:repeat(3,minmax(0,1fr))}.svkpi.lead{grid-column:span 2}}
+/* recent form: filled right, half-filled partial, hollow miss */
+.svform{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:3px}
+.svform i{aspect-ratio:1;border-radius:2px}
+.svform i.r{background:var(--good)}
+.svform i.h{border:2px solid var(--good);background:linear-gradient(to top,var(--good) 50%,transparent 50%)}
+.svform i.m{border:2px solid var(--bad)}
+/* lean: misses split too full (left) and too thin (right) */
+.svlean{display:flex;flex-direction:column;gap:8px}
+.svleanh,.svleanr{display:grid;grid-template-columns:minmax(84px,32%) minmax(0,1fr) 92px;gap:10px;align-items:center}
+.svleanh{font-size:11px;color:var(--muted)}.svleanh .mid{display:flex;justify-content:space-between}
+.svleanr .lab{font-size:14px;font-weight:500;line-height:1.25}
+.svleanr .trk{position:relative;height:12px;background:var(--chip);border-radius:6px}
+.svleanr .trk::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1.5px;background:var(--muted)}
+.svleanr .trk i{position:absolute;top:0;bottom:0}
+.svleanr .trk i.full{right:50%;background:var(--full);border-radius:6px 0 0 6px}
+.svleanr .trk i.thin{left:50%;background:var(--thin);border-radius:0 6px 6px 0}
+.svleanr .val{text-align:right;font-variant-numeric:tabular-nums;line-height:1.2}
+.svleanr .val b{font-weight:600;font-size:13px}.svleanr .val small{display:block;font-size:11px;color:var(--muted)}
+/* patterns */
+.svins{margin:0;border-top:1px solid var(--line)}
+.svins div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.svins dt,.svins dd{margin:0}
+.svins dt{font:600 11px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);align-self:center}
+.svins dd{text-align:right;font:600 15px var(--body);font-variant-numeric:tabular-nums}
+.svins dd small{font-weight:400;font-size:12.5px;color:var(--muted);margin-left:6px}
+.svins dd.up{color:var(--good)}.svins dd.down{color:var(--bad)}.svins dd.none{color:var(--muted);font-weight:400}
+/* charts */
+.svchart{min-width:0}
+.svchart svg,.svgrade,.svstreak{display:block;max-width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.svread{margin:0 0 6px;min-height:21px;font:600 14px var(--body);font-variant-numeric:tabular-nums}
+.svline:focus{outline:none}.svline:focus-visible{outline:2px solid var(--ring);outline-offset:4px;border-radius:4px}
+.svline .g,.svgrade .g,.svstreak .g{stroke:var(--line);stroke-width:1}
+.svline .g.base,.svgrade .g.base,.svstreak .g.base{stroke:var(--line-strong)}
+.svline text,.svgrade text,.svstreak text{font:500 11px var(--mono);fill:var(--muted)}
+.svline .yl,.svgrade .yl,.svstreak .yl{text-anchor:end}
+.svline .mean{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+.svline .ml{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.svline .area{fill:var(--accent);fill-opacity:.10}
+.svline .ln{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.svline .pt{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.svline .hair{stroke:var(--muted);stroke-dasharray:3 3}
+.svline .hot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.svgrade .step{fill:none;stroke:var(--gold-text);stroke-width:2.5;stroke-linejoin:round}
+.svgrade .gl{font:700 14px var(--display);fill:var(--ink);text-anchor:middle}
+.svstreak .hotb{fill:var(--accent)}
+.svstreak .cold{fill:color-mix(in srgb,var(--accent) 12%,transparent);stroke:var(--accent);stroke-width:1.5}
+.svstreak .open{stroke-dasharray:3 2;stroke:var(--ink);stroke-width:1.5}
+.svstreak .hotl{stroke:var(--gold-text);stroke-width:1.5;stroke-dasharray:5 4}
+.svstreak .vl{font-weight:600;fill:var(--ink);text-anchor:middle}
+.svtipw{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.svtipw .svnote{flex:1;min-width:160px;margin:0}
+.svtip .face{fill:#f4efe0;stroke:#cfc6ae;stroke-width:.03}
+.svtip .cross{stroke:rgba(18,32,48,.18);stroke-width:.015}
+.svtip .lim{fill:none;stroke:rgba(18,32,48,.35);stroke-width:.015;stroke-dasharray:.05 .04}
+.svtip .tipd{fill:#25598a;stroke:#25598a;stroke-width:.02}
+.svdet{margin-top:12px}
+.svdet summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:600 14px var(--body);color:var(--accent)}
+/* sessions */
+.svsessl{list-style:none;margin:0;padding:0}
+.svsess{display:grid;grid-template-columns:minmax(112px,auto) minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.svsess .when b{display:block;font-size:14px;font-weight:600}
+.svsess small{display:block;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.svsess .what{display:flex;flex-direction:column;gap:5px;min-width:0}
+.svsess .pct{font:700 22px/1 var(--display);font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+@media (max-width:480px){.svsess{grid-template-columns:minmax(0,1fr) auto}.svsess .what{grid-column:1/-1;grid-row:2}}
+@media (hover:none) and (pointer:coarse){.statsbtn{height:44px}.statsbtn{min-width:44px}}
+@media (prefers-reduced-motion:reduce){.statsview{animation:none}}
 </style>
 </head>
 <body>
@@ -803,6 +976,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="plwrap" id="plwrap" hidden><button class="plchip" id="plchip" aria-haspopup="menu" aria-expanded="false" title="Switch player"><span id="plchipname"></span> ▾</button>
         <div class="plmenu" id="plmenu" role="menu" hidden></div></div>
       <div class="badgewrap"><div class="gradebadge" id="badge" hidden role="button" tabindex="0" aria-label="Your grade: open progress"><small id="badgetrack">Read</small><b id="badgeg"></b><span class="bbar"><i id="badgefill"></i></span></div></div>
+      <button class="statsbtn" id="statsbtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="statsview" title="Stats"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Stats</span></button>
       <button class="cog helpbtn" id="help" aria-label="Tutorial" title="Tutorial">?</button>
       <button class="cog" id="cog" aria-label="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M10.3 2.8h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9-2.6-.5v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
     </div>
@@ -1046,77 +1220,30 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="quick" id="quick" aria-live="polite"></div>
       <button class="next" id="next" disabled>Next shot <kbd class="key" aria-hidden="true">Enter</kbd></button>
       <button class="sumdone showright" id="showright" hidden><svg class="replayicon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3.5 13.5a8.5 8.5 0 1 0 2.4-7.4L3 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 9.2v6.6l5.4-3.3z" fill="currentColor"/></svg>Replay the right shot <kbd class="key" aria-hidden="true">Shift</kbd></button>
-      <div class="tabs" role="tablist" aria-label="Details">
-        <button class="tab" role="tab" data-tab="stats" id="tabbtn-stats">Stats</button>
+      <div class="tabs">
+        <button class="tab" data-tab="stats" id="tabbtn-stats" aria-haspopup="dialog" aria-controls="statsview" title="Open all stats">Stats<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
       <div class="tabpanel" role="tabpanel" id="tab-shot"><div class="result" id="result"></div></div>
-      <div class="tabpanel" role="tabpanel" id="tab-stats" hidden>
-      <div class="stathead">
-        <div class="seg statmode" role="group" aria-label="Which mode's stats" hidden>
-          <button data-stat="sess">Ladder</button>
-          <button data-stat="flash">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg></button>
-        </div>
-        <div class="seg subtabs" role="tablist" aria-label="Stats sections">
-          <button data-sub="overview" role="tab">Overview</button>
-          <button data-sub="fractions" role="tab">Fractions</button>
-          <button data-sub="details" role="tab">Details</button>
-        </div>
-      </div>
-      <div class="subpanel" data-sub="overview">
+      <div class="tabpanel" role="tabpanel" id="tab-stats" aria-labelledby="tabbtn-stats" hidden>
         <div class="stats">
           <div class="stat"><b id="s-acc">–</b><span id="s-l1">Called right</span></div>
           <div class="stat" title="Called right over your last 20 shots in this mode"><b id="s-made">–</b><span>Last 20</span></div>
           <div class="stat"><b id="s-streak">0</b><span>Streak</span></div>
           <div class="stat"><b id="s-n">0</b><span>Shots</span></div>
         </div>
-        <div class="mblock" id="sesshist" hidden>
-          <h2>Accuracy over time</h2>
-          <div class="trend" id="trend"></div>
-        </div>
-        <div class="mblock">
-          <h2>Patterns</h2>
-          <dl class="insights" id="insight"></dl>
-        </div>
-      </div>
-      <div class="subpanel" data-sub="fractions">
-        <div class="mblock">
-          <h2 id="byfrac-h">Called right, by real fraction</h2>
-          <div class="byfrac" id="byfrac"></div>
-        </div>
-        <div class="pgrid">
-          <div id="confbox">
-            <h2>Real fraction vs. your call</h2>
-            <div class="grid-wrap"><table class="conf" id="conf"></table></div>
-          </div>
-          <div>
-            <h2>Where you lean</h2>
-            <div class="legend"><span></span><div><span>← too full</span><span>too thin →</span></div><span></span></div>
-            <div class="leans" id="leans"></div>
-          </div>
-        </div>
-      </div>
-      <div class="subpanel" data-sub="details">
-        <div class="mblock">
-          <h2>By distance, cue ball to object ball</h2>
-          <div class="byfrac" id="bin-dc"></div>
-        </div>
-        <div class="mblock">
-          <h2>By pocket</h2>
-          <div class="byfrac" id="bin-pt"></div>
-        </div>
-        <div class="mblock">
-          <h2>Walk-around</h2>
-          <div class="byfrac" id="bin-wk"></div>
-        </div>
-        <div class="mblock" hidden>
-          <h2>Recent sessions</h2>
-          <div class="sesslist" id="sesslist"></div>
-        </div>
-      </div>
-      <div class="foot"><span>Best streak: <b id="s-best">0</b></span></div>
+        <div class="foot"><span>Best streak: <b id="s-best">0</b></span><button class="sumdone statsopen" id="statsopen" aria-haspopup="dialog" aria-controls="statsview"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>All stats and charts</button></div>
       </div>
 
     </div>
+    <section class="statsview" id="statsview" role="dialog" aria-modal="true" aria-labelledby="sv-title" hidden>
+      <div class="svtop">
+        <button class="svback" id="svclose" aria-label="Close stats, back to the table" title="Back (Esc)"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Back</span></button>
+        <h2 class="svtitle" id="sv-title">Stats<small id="sv-who"></small></h2>
+        <div class="seg svmode" id="svmode" role="group" aria-label="Which mode's stats" hidden><button data-svt="shoot" aria-pressed="true">Ladder</button><button data-svt="flash" aria-pressed="false">Flash</button></div>
+      </div>
+      <div class="svtabs" id="svtabs" role="tablist" aria-label="Stats sections"></div>
+      <div class="svbody" id="svbody" role="tabpanel" tabindex="-1"></div>
+    </section>
   </div>
 
 
@@ -1126,6 +1253,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 <script src="vendor/three.min.js"></script>
 <script src="table3d.js"></script>
 <script src="music.js"></script>
+<script src="stats.js"></script>
 <script>
 (async function(){   // async: the game waits for a player to be picked
 const R = 1.125;               // ball radius, inches (2.25" ball)
@@ -1211,7 +1339,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 492;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 493;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -2682,7 +2810,8 @@ function takeShot(id){
     logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, gh: 1, pr: g});
   } else if(isShoot()){
     const prevStreak = curStreak();
-    logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, z: s.zone ? (run.inZone ? 1 : 0) : undefined, sc: run.scratch ? 1 : undefined, sv: +ratio.toFixed(2), sg: g});
+    logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, z: s.zone ? (run.inZone ? 1 : 0) : undefined, sc: run.scratch ? 1 : undefined, sv: +ratio.toFixed(2), sg: g,
+      zk: s.zone ? s.zone.step : undefined, wl: s.zone ? s.zone.lvl : undefined, sl: ctrl().speed ? nearestCoarse(speedLevel()) : undefined, tp: ctrl().up || ctrl().side ? stroke.tip.map(v=>+(+v).toFixed(2)) : undefined});   // for the Stats view: the zone's shot type, the stroke it wanted and yours, the tip
     if(!partial){
       const from = shootLevel(); stats.shoot.bestBefore = Math.max(stats.shoot.best ?? 0, stats.shoot.g);
       const d = levelPoint(full);
@@ -3971,11 +4100,11 @@ function updateControls(){
 
 let laterT = 0;
 function laterSave(){ clearTimeout(laterT); laterT = setTimeout(()=>{ save(); renderStats(); }, 30); }   // after the answer has painted
-function logEntry(extra){
+function logEntry(extra){   // ts: the minute it was played (minutes since 1970), so the Stats view can group sittings
   const act = stats.active && stats.active.task===settings.task ? stats.active.id : undefined;
   stats.log.push({sid:act, t:settings.task, a:shot.answer.id, s:shot.side, v:settings.view,
     c: settings.view==='top' ? '-' : (isPlace() ? 'line' : stanceAim() ? 'aim' : 'line'),
-    md:shot.any ? 'any' : 'ref', ...(shot.phys ? {am: shot.mod, sp: shot.speed, tw: +shot.throwDeg.toFixed(1), ...(shot.alt ? {aa: shot.alt.id, aam: shot.alt.mod} : {})} : {}), th:settings.throw, ln:shot.len, rp:shot.replays||0, wk: shot.walked ? 1 : 0, dc:Math.round(len(sub(shot.ob,shot.cb))), dp:Math.round(shot.L), ag:+shot.theta.toFixed(1), pt:shot.P.side?'s':'c', gh: practiceAid() ? 1 : 0, fa: ['ghost','line','stance'].filter(k=>['on','fade'].includes(aidMode(k))).join('') || undefined, tb:settings.table, pk:settings.pockets, ...extra});
+    md:shot.any ? 'any' : 'ref', ...(shot.phys ? {am: shot.mod, sp: shot.speed, tw: +shot.throwDeg.toFixed(1), ...(shot.alt ? {aa: shot.alt.id, aam: shot.alt.mod} : {})} : {}), th:settings.throw, ln:shot.len, ts: Math.round(Date.now()/60000), rp:shot.replays||0, wk: shot.walked ? 1 : 0, dc:Math.round(len(sub(shot.ob,shot.cb))), dp:Math.round(shot.L), ag:+shot.theta.toFixed(1), pt:shot.P.side?'s':'c', gh: practiceAid() ? 1 : 0, fa: ['ghost','line','stance'].filter(k=>['on','fade'].includes(aidMode(k))).join('') || undefined, tb:settings.table, pk:settings.pockets, ...extra});
   if(stats.log.length > 3000) stats.log = stats.log.slice(-3000);
   laterSave();
 }
@@ -4485,39 +4614,6 @@ function showSummary(rec){
   $('sessagain').dataset.size = rec.size;
   $('sesscover').hidden = false;
 }
-function renderSessionHistory(){
-  const S = (stats.sessions || []).filter(x=>x.task===statTask() && !x.dev);
-  const el = $('trend');
-  const fmt = x => new Date(x.end).toLocaleDateString(undefined,{month:'short',day:'numeric'});
-  let h = [0,50,100].map(v=>`<div class="grid${v===0?' base':''}" style="top:${100-v}%"></div><span class="ylab" style="top:${100-v}%">${v}%</span>`).join('');
-  if(S.length < 2){
-    el.innerHTML = h + `<div class="empty">${S.length ? 'One session so far' : 'No sessions yet'}</div>`;
-  } else {
-    const pts = S.map((x,i)=>({x: S.length===1 ? 50 : i/(S.length-1)*100, y: pct(x.right,x.n), s:x}));
-    h += `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.map(p=>`${p.x.toFixed(2)},${(100-p.y).toFixed(2)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
-    h += pts.map((p,i)=>`<span class="dot${p.s.base?' base':''}" data-i="${i}" style="left:${p.x}%;top:${100-p.y}%"></span>`).join('');
-    h += `<span class="xlab" style="left:0">${fmt(S[0])}</span><span class="xlab" style="right:0">${fmt(S[S.length-1])}</span>`;
-    el.innerHTML = h;
-    el._pts = pts;
-  }
-  $('sesslist').innerHTML = S.slice(-8).reverse().map(x=>`<div class="srow"><span>${new Date(x.end).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})} · ${x.base ? 'Baseline' : x.size+' shots'}</span><b>${pct(x.right,x.n)}%</b></div>`).join('') || `<span class="cap" style="margin:0">No finished sessions yet.</span>`;
-}
-// hover / touch: crosshair on the nearest session, with its date, length and score
-(function(){
-  const el = document.getElementById('trend');
-  const clear = ()=>{ el.querySelectorAll('.xhair,.tip').forEach(n=>n.remove()); el.querySelectorAll('.dot.on').forEach(d=>d.classList.remove('on')); };
-  el.addEventListener('pointermove', ev=>{
-    const pts = el._pts; if(!pts || !pts.length) return;
-    const r = el.getBoundingClientRect(), fx = (ev.clientX - r.left)/r.width*100;
-    let best = 0; pts.forEach((p,i)=>{ if(Math.abs(p.x-fx) < Math.abs(pts[best].x-fx)) best = i; });
-    const p = pts[best]; clear();
-    el.querySelector(`.dot[data-i="${best}"]`)?.classList.add('on');
-    const x = p.s, d = new Date(x.end).toLocaleDateString(undefined,{month:'short',day:'numeric'});
-    el.insertAdjacentHTML('beforeend', `<div class="xhair" style="left:${p.x}%"></div><div class="tip" style="left:${Math.min(85,Math.max(15,p.x))}%;top:${100-p.y}%"><b>${p.y}%</b> · ${d} · ${x.base ? 'baseline' : x.size+' shots'}</div>`);
-  });
-  el.addEventListener('pointerleave', clear);
-})();
-
 // With speed & throw a call has two parts, fraction and thick / center / thin, picked in either order.
 let pend = {f:null, m:null};
 let callLock = false;   // a brand-new player: no shot and no calls until the first lesson (or skipping the tour) deals one
@@ -4955,132 +5051,90 @@ function renderStats(){
   $('s-streak').textContent = r.cur;
   $('s-best').textContent = r.best;
   $('s-n').textContent = n;
-  document.querySelectorAll('.statmode button').forEach(b=>b.setAttribute('aria-pressed', (b.dataset.stat==='flash') === (statTask()==='flash')));
-  $('byfrac-h').textContent = place ? 'Pocketed, by real fraction' : 'Called right, by real fraction';
-  const SR = statRefs(L);
-  $('byfrac').innerHTML = SR.map(ref=>{
-    const rec = L.filter(e=>e.a===ref.id), c = rec.filter(place ? e=>e.m : success).length, p = pct(c, rec.length);
-    return `<div class="row"><span class="lab">${ref.label}</span><div class="bar"><i style="width:${p}%"></i></div><span class="n">${rec.length? p+'% · '+rec.length : '—'}</span></div>`;
-  }).join('');
-  renderPatterns();
-  renderSessionHistory();
   renderSession();
+  if(SV.open) svRender();
 }
 
-
-function groupStats(rec){
-  const n = rec.length, right = rec.filter(success).length;
-  const thin = rec.filter(e=>lean(e)>0).length, full = rec.filter(e=>lean(e)<0).length;
-  return {n, right, thin, full, acc: pct(right,n)};
+// ---------- the Stats view: over the table and panel on a desktop, the whole screen on a phone ----------
+const SV = {open: false, tab: 'overview', task: null, opener: null, pushed: false};
+const svTabs = () => window.HBStats ? HBStats.TABS : [];
+function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, hot: STREAK_HOT, shoot: stats.shoot}; }
+function svRender(){
+  if(!window.HBStats) return;
+  const hasFlash = SV.task === 'flash' || flashUnlocked() || stats.log.some(e=>e.t === 'flash');
+  $('svmode').hidden = !hasFlash;
+  document.querySelectorAll('#svmode button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.svt === SV.task));
+  document.querySelectorAll('#svtabs [role="tab"]').forEach(b=>{ const on = b.dataset.svtab === SV.tab; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
+  const body = $('svbody'); body.setAttribute('aria-labelledby', 'svtab-' + SV.tab);
+  HBStats.render(body, svCtx(), SV.tab);
 }
-
-function renderPatterns(){
-  const log = statLog(), place = isPlace();
-  $('confbox').hidden = place;
-  const SR = statRefs(log), si = id => SR.findIndex(r=>r.id===id);
-  const M = SR.map(()=>SR.map(()=>0));
-  if(!place){
-    log.forEach(e=>{ const i=si(e.a), j=si(viaAlt(e) ? e.a : e.p); if(i>=0&&j>=0) M[i][j]++; });
-    let t = `<tr><th></th><th class="axis" colspan="${SR.length}">You called</th></tr><tr><th class="axis rowh">Real</th>${SR.map(r=>`<th>${r.label}</th>`).join('')}</tr>`;
-    SR.forEach((r,i)=>{
-      const tot = M[i].reduce((a,b)=>a+b,0);
-      t += `<tr><th class="rowh">${r.label}</th>` + M[i].map((c,j)=>{
-        const share = tot ? c/tot : 0;
-        const bg = c===0 ? 'var(--chip)' : `color-mix(in srgb, ${i===j?'var(--good)':'var(--bad)'} ${Math.round(18+share*62)}%, var(--chip))`;
-        return `<td style="background:${bg}">${c||'·'}</td>`;
-      }).join('') + `</tr>`;
-    });
-    $('conf').innerHTML = t;
-  }
-
-  const groups = [
-    ['All shots', ()=>true],
-    ['Left cuts', e=>e.s==='L'], ['Right cuts', e=>e.s==='R'],
-    ['Standing', e=>e.v==='stand'], ['Down on the ball', e=>e.v==='down'],
-    ['Ball line', e=>e.v!=='top' && e.c==='line'], ['Aim line', e=>e.v!=='top' && e.c==='aim'],
-    ['Short shots', e=>e.ln==='short'], ['Long shots', e=>e.ln==='long'],
-  ];
-  $('leans').innerHTML = groups.map(([name,fn],gi)=>{
-    const g = groupStats(log.filter(fn));
-    if(!g.n && gi>0) return '';
-    if(!g.n) return `<div class="lean"><span>${name}</span><div class="dbar"></div><span class="n">—</span></div>`;
-    const val = (g.thin - g.full)/g.n, w = Math.min(Math.abs(val),.5)/.5*50;
-    const bar = val===0 ? '' : `<i class="${val>0?'thin':'full'}" style="width:${w.toFixed(1)}%"></i>`;
-    return `<div class="lean"><span>${name}</span><div class="dbar" title="${g.thin} too thin, ${g.full} too full">${bar}</div><span class="n">${g.acc}% · ${g.n}</span></div>`;
-  }).join('');
-
-  const found = renderBreakdowns(log);
-  const all = groupStats(log), rows = [];   // [label, value, tone]
-  const dash = ['—','none'];
-  const wrong = all.thin + all.full;
-  if(statTask()==='sess' && baselines().length){   // only players placed by the old baseline have one
-    const b = baselines()[0];
-    rows.push(['Baseline', ...(b && b.dev ? ['Skipped <small>testing</small>',''] : b ? [`${GRADES[b.grade ?? gradeFor(pct(b.right,b.n))]} <small>${pct(b.right,b.n)}% · standing ${b.stand}% · down ${b.down}%</small>`,''] : dash)]);
-  }
-  rows.push(['Misses lean', ...(wrong < 4 ? (all.n && !wrong ? ['No misses','up'] : dash)
-    : all.thin/wrong >= .65 ? [`Too thin <small>${all.thin} of ${wrong}</small>`,'']
-    : all.full/wrong >= .65 ? [`Too full <small>${all.full} of ${wrong}</small>`,'']
-    : [`Even <small>${all.thin} thin · ${all.full} full</small>`,''])]);
-  let top = null;
-  if(!place) M.forEach((row,i)=>row.forEach((c,j)=>{ if(i!==j && c>=3 && (!top || c>top.c)) top={i,j,c}; }));
-  rows.push(['Common mix-up', ...(top ? [`${SR[top.j].label} when it’s ${SR[top.i].label} <small>${top.c}×</small>`,''] : dash)]);
-  rows.push(['Weakest cut', ...(found.worst ? [`${found.worst.label} <small>${pct(found.worst.ok,found.worst.n)}%</small>`,'down'] : dash)]);
-  rows.push(['Strongest cut', ...(found.best ? [`${found.best.label} <small>${pct(found.best.ok,found.best.n)}%</small>`,'up'] : dash)]);
-  const L = groupStats(log.filter(e=>e.s==='L')), Rr = groupStats(log.filter(e=>e.s==='R'));
-  rows.push(['Left vs. right cuts', ...(L.n>=6 && Rr.n>=6
-    ? (Math.abs(L.acc-Rr.acc) >= 12 ? [`Weaker on ${L.acc<Rr.acc?'left':'right'} <small>${Math.min(L.acc,Rr.acc)}% vs ${Math.max(L.acc,Rr.acc)}%</small>`,'down'] : [`Even <small>${L.acc}% · ${Rr.acc}%</small>`,''])
-    : dash)]);
-  rows.push(['Distance', ...(found.dist || dash)]);
-  rows.push(['Trend', ...(found.trend || dash)]);
-  $('insight').innerHTML = rows.map(([k,v,t])=>`<div class="irow"><dt>${k}</dt><dd class="${t}">${v}</dd></div>`).join('');
+function svTab(t, focus){
+  if(!svTabs().some(([k])=>k === t)) t = 'overview';
+  SV.tab = t; settings.svTab = t; saveSettings();
+  svRender(); $('svbody').scrollTop = 0;
+  if(focus) $('svtab-' + t).focus({preventScroll: true});
 }
-
-// ---------- breakdowns: distance, angle, pocket, recent form ----------
-const BINS = {
-  dc: [[0,24,'Short','under 2 ft'],[24,42,'Medium','2 to 3½ ft'],[42,1e9,'Long','3½ ft or more']],
-};
-function binRows(id, rows){
-  const el = $(id); el.classList.add('bins');
-  el.innerHTML = rows.map(r=>{
-    const p = pct(r.ok, r.n), few = r.n > 0 && r.n < 5;
-    const name = r.range ? `${r.label} (${r.range})` : r.label;
-    const tip = r.n ? `${name}: ${r.ok} of ${r.n} right (${p}%)` : `${name}: no shots yet`;
-    return `<div class="row${few?' thin':''}" title="${tip}"><span class="lab wide">${r.label}</span><div class="bar"><i style="width:${r.n?p:0}%"></i></div><span class="n">${r.n ? p+'% · '+r.n : '—'}</span></div>`;
-  }).join('');
+function openStats(v, opts = {}){
+  const view = $('statsview');
+  if(v === SV.open){ if(v && opts.tab) svTab(opts.tab); return; }
+  SV.open = v;
+  const fixed = () => getComputedStyle(view).position === 'fixed';   // a phone: it covers the header too
+  if(v){
+    SV.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : $('statsbtn');
+    SV.task = statTask();
+    if(opts.tab) SV.tab = opts.tab;
+    view.hidden = false;
+    document.documentElement.classList.add('svopen');
+    ['.tablecol', '.panel'].forEach(s=>{ const el = document.querySelector(s); if(el) el.inert = true; });
+    if(fixed()) document.querySelector('header').inert = true;
+    $('statsbtn').setAttribute('aria-expanded', 'true');
+    $('sv-who').textContent = ME && ME.name && PL.list.length > 1 ? ME.name : '';
+    svRender();
+    $('svbody').scrollTop = 0;
+    $('svtab-' + SV.tab).focus({preventScroll: true});
+    try{ history.pushState({hbStats: 1}, ''); SV.pushed = true; }catch(e){ SV.pushed = false; }   // the phone's back gesture closes it
+  } else {
+    view.hidden = true;
+    document.documentElement.classList.remove('svopen');
+    ['.tablecol', '.panel', 'header'].forEach(s=>{ const el = document.querySelector(s); if(el) el.inert = false; });
+    $('statsbtn').setAttribute('aria-expanded', 'false');
+    $('svbody').innerHTML = '';
+    if(SV.pushed && !opts.fromPop){ SV.pushed = false; try{ history.back(); }catch(e){} }
+    SV.pushed = false;
+    const o = SV.opener; SV.opener = null;
+    if(o && o.isConnected && !o.closest('[inert]')) o.focus({preventScroll: true});
+  }
 }
-function renderBreakdowns(log){
-  const place = isPlace(), notes = {};
-  const withDist = log.filter(e=>typeof e.dc === 'number');
-  const stat = rec => ({n: rec.length, ok: rec.filter(place ? e=>e.m : success).length});
-  const binned = key => BINS[key].map(([lo,hi,label,range])=>({label, range, ...stat(withDist.filter(e=>e[key]>=lo && e[key]<hi))}));
-  const dc = binned('dc');
-  binRows('bin-dc', dc);
-  binRows('bin-wk', [{label:'Walked', ...stat(log.filter(e=>e.wk===1))}, {label:'Didn’t', ...stat(log.filter(e=>e.wk===0))}]);
-  binRows('bin-pt', [{label:'Corner', ...stat(withDist.filter(e=>e.pt==='c'))}, {label:'Side', ...stat(withDist.filter(e=>e.pt==='s'))}]);
-  // blocks of 10 shots (last 120), used for the Trend line in Patterns
-  const blocks = [];
-  for(let i = Math.max(0, log.length - 120); i < log.length; i += 10){ const b = log.slice(i, i+10); blocks.push({from:i+1, to:i+b.length, ...stat(b)}); }
-  // findings for the Patterns list
-  const acc = rows => { const n = rows.reduce((a,r)=>a+r.n,0), ok = rows.reduce((a,r)=>a+r.ok,0); return {n, p: pct(ok,n)}; };
-  const nearD = acc(dc.slice(0,1)), farD = acc(dc.slice(2));
-  if(nearD.n>=6 && farD.n>=6){
-    const d = nearD.p - farD.p;
-    notes.dist = d >= 12 ? [`Drops when long <small>${nearD.p}% → ${farD.p}%</small>`,'down']
-      : d <= -12 ? [`Better when long <small>${nearD.p}% → ${farD.p}%</small>`,'up']
-      : [`Steady <small>${nearD.p}% short · ${farD.p}% long</small>`,''];
-  }
-  const fr = ALL.map(r=>({label: r.label, ...stat(log.filter(e=>e.a===r.id))})).filter(r=>r.n>=5);   // by fraction
-  if(fr.length>=2){
-    const worst = fr.reduce((a,b)=>pct(b.ok,b.n)<pct(a.ok,a.n)?b:a), best = fr.reduce((a,b)=>pct(b.ok,b.n)>pct(a.ok,a.n)?b:a);
-    if(pct(best.ok,best.n) > pct(worst.ok,worst.n)){ notes.worst = worst; notes.best = best; }
-  }
-  const full = blocks.filter(b=>b.n===10);
-  if(full.length>=4){
-    const a = acc(full.slice(0,2)), z = acc(full.slice(-2)), d = z.p - a.p;
-    notes.trend = d >= 15 ? [`Improving <small>${a.p}% → ${z.p}%</small>`,'up'] : d <= -15 ? [`Slipping <small>${a.p}% → ${z.p}%</small>`,'down'] : [`Steady <small>${a.p}% → ${z.p}%</small>`,''];
-  }
-  return notes;
-}
+(function(){
+  $('svtabs').innerHTML = svTabs().map(([k, label])=>`<button role="tab" id="svtab-${k}" data-svtab="${k}" aria-controls="svbody" aria-selected="false" tabindex="-1">${label}</button>`).join('');
+  SV.tab = svTabs().some(([k])=>k === settings.svTab) ? settings.svTab : 'overview';
+  $('svtabs').addEventListener('click', e=>{ const b = e.target.closest('[data-svtab]'); if(b) svTab(b.dataset.svtab); });
+  $('svtabs').addEventListener('keydown', e=>{   // arrow keys move along the tabs, as tabs do
+    const ks = svTabs().map(([k])=>k), i = ks.indexOf(SV.tab);
+    const j = {ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ks.length - 1}[e.key];
+    if(j == null) return; e.preventDefault(); svTab(ks[(j + ks.length) % ks.length], true);
+  });
+  $('svmode').addEventListener('click', e=>{ const b = e.target.closest('[data-svt]'); if(!b || b.dataset.svt === SV.task) return; SV.task = b.dataset.svt; svRender(); });
+  $('svclose').addEventListener('click', ()=>openStats(false));
+  ['statsbtn', 'statsopen', 'tabbtn-stats'].forEach(id=>$(id).addEventListener('click', ()=>openStats(!SV.open)));
+  window.addEventListener('popstate', ()=>{ if(SV.open) openStats(false, {fromPop: true}); });
+  // while it's open the game behind takes no keys; Esc closes it, and Tab stays inside it
+  window.addEventListener('keydown', e=>{
+    if(!SV.open) return;
+    e.stopPropagation();
+    if(e.key === 'Escape'){ e.preventDefault(); if(menuOpen()) openMenu(false); else if(!$('prog').hidden) openProg(false); else if(!$('tutmenu').hidden) openTutMenu(false); else openStats(false); return; }
+    if(e.key === 'Tab'){
+      const view = $('statsview'), f = [...view.querySelectorAll('button:not([disabled]),[tabindex="0"],summary')].filter(x=>x.getClientRects().length && !x.closest('[hidden]'));
+      if(!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if(!view.contains(document.activeElement)){ e.preventDefault(); first.focus(); }
+      else if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  }, true);
+  window.addEventListener('keyup', e=>{ if(SV.open) e.stopPropagation(); }, true);
+  let rt = 0; window.addEventListener('resize', ()=>{ if(!SV.open) return; clearTimeout(rt); rt = setTimeout(svRender, 150); });
+})();
 
 // ---------- controls ----------
 const HINTS = {
@@ -5274,18 +5328,10 @@ window.addEventListener('resize', ()=>requestAnimationFrame(alignLogo));
 window.addEventListener('resize', ()=>{ clearTimeout(rsz); rsz = setTimeout(sizeTable, 60); });
 if(mqDesk.addEventListener) mqDesk.addEventListener('change', sizeTable);
 function showTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===t));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
   document.querySelectorAll('.tabpanel').forEach(p=>p.hidden = p.id!=='tab-'+t);
   settings.tab = t; saveSettings();
 }
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click', ()=>showTab(b.dataset.tab)));
-function showSub(t){
-  document.querySelectorAll('.subtabs button').forEach(b=>{ b.setAttribute('aria-pressed', b.dataset.sub===t); b.setAttribute('aria-selected', b.dataset.sub===t); });
-  document.querySelectorAll('.subpanel').forEach(p=>p.hidden = p.dataset.sub!==t);
-  settings.sub = t; saveSettings();
-}
-document.querySelectorAll('.subtabs button').forEach(b=>b.addEventListener('click', ()=>showSub(b.dataset.sub)));
-showSub(['overview','fractions','details'].includes(settings.sub) ? settings.sub : 'overview');
 showTab('stats');   // the Shot tab is gone: its result line sits under the table
 $('reset').addEventListener('click', ()=>{   // all or nothing: your whole progression, Ladder and Flash together
   const warn = `Reset your progress?\n\nYou'll start again at ${SHOOT_GRADES[0]} with no record: every shot and session, Ladder and Flash, is cleared. Flash and the bigger tables lock until you earn them back, and the lessons play again as you reach them. This can't be undone.`;
@@ -5295,7 +5341,6 @@ $('reset').addEventListener('click', ()=>{   // all or nothing: your whole progr
   saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderPracticeChip();
   if(!flashUnlocked() && settings.task==='flash' || !freeUnlocked() && settings.task==='free') applySetting('task','shoot');
   showSessIdle(); syncPressed(); save(); renderStats(); syncStreakPill(); if(!answered && !anim) deal(); });
-document.querySelectorAll('.statmode button').forEach(b=>b.addEventListener('click', ()=>{ settings.statTask = b.dataset.stat; saveSettings(); renderStats(); }));
 document.querySelectorAll('.sesschip').forEach(b=>b.addEventListener('click', ()=>startSession(+b.dataset.sess)));
 $('sessend').addEventListener('click', endSession);
 const menuOpen = () => !$('menu').hidden;
