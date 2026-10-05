@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d151b">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1520" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0f2233">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
 <meta name="description" content="Billiards cut-shot aim trainer: read the shot, call the fraction.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
@@ -555,6 +561,61 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .practicechip{bottom:56px;left:8px;font-size:11px;padding:5px 10px;min-height:28px}
   .routinechip{font-size:12px;padding:4px 10px}
 }
+
+/* ---------- the app shell on phones: notch and home-indicator insets, toolbars, pull-to-refresh ---------- */
+/* the page keeps clear of the notch and the home indicator (all zero on a desktop) */
+html{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overscroll-behavior-y:none}   /* no pull-to-refresh mid-session */
+html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#playercover{padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.sumcover{overscroll-behavior:contain}
+@media (max-width:760px){#sesscover{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}}
+@media (min-width:900px){
+  .wrap{height:calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+}
+/* a phone on its side: the table fits between the toolbars rather than running off the bottom */
+@media (orientation:landscape) and (max-height:540px) and (pointer:coarse){
+  body{padding-block:10px 16px}
+  .table-box{width:min(100%, calc((100vh - 84px)*.8));width:min(100%, calc((100dvh - 84px - env(safe-area-inset-top) - env(safe-area-inset-bottom))*.8))}
+  .table-box.persp{width:100%}
+}
+@media (orientation:landscape) and (max-height:540px) and (pointer:coarse) and (min-width:900px){
+  .wrap{min-height:0;height:calc(100dvh - 26px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+}
+
+/* ---------- touch on the table: finger-sized targets, no zoom or scroll while dragging, pressed states ---------- */
+.table-box{touch-action:manipulation}   /* a quick second tap on the table is a tap, not a zoom */
+.ctlrow,.ctlrow *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.tippad,.speedbar{position:relative}
+.speedbar .ckeys kbd{touch-action:manipulation}
+/* while a finger is on the tip pad, a bigger copy of it floats above, where the finger can't hide the dot */
+.tiploupe{position:absolute;left:50%;bottom:calc(100% + 10px);width:116px;height:116px;margin-left:-58px;border-radius:50%;background:rgba(15,34,51,.92);border:1px solid var(--gold);box-shadow:var(--shadow-3);padding:6px;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity var(--t-fast) var(--ease),transform var(--t-fast) var(--ease);z-index:2}
+.tippad .tiploupe svg{display:block;width:100%;height:100%;filter:none;box-shadow:none;cursor:inherit}
+.tippad.held .tiploupe{opacity:1;transform:none}
+/* and on the speed bar, the level shows above the finger */
+.ctlbubble{position:absolute;left:50%;bottom:calc(100% + 8px);min-width:48px;transform:translate(-50%,6px);padding:6px 10px;border-radius:999px;background:rgba(15,34,51,.94);border:1px solid var(--gold);color:var(--cream);font:700 20px/1 var(--display);letter-spacing:.04em;text-align:center;box-shadow:var(--shadow-2);pointer-events:none;opacity:0;transition:opacity var(--t-fast) var(--ease),transform var(--t-fast) var(--ease);z-index:2}
+.speedbar.held .ctlbubble{opacity:1;transform:translate(-50%,0)}
+.tippad.held > svg,.speedbar.held .speedtrack{box-shadow:0 0 0 2px var(--gold),0 2px 6px rgba(0,0,0,.35)}
+@media (prefers-reduced-motion:reduce){.tiploupe,.ctlbubble{transform:none!important}}
+@media (hover:none) and (pointer:coarse){
+  /* 44px for every control, drawn the same size where the art is smaller: the hit area reaches past it */
+  .lookbtn{width:44px;height:44px}.lookbtn svg{width:20px;height:20px}
+  .lookbtn:active{background:rgba(30,58,84,.96);border-color:var(--gold)}
+  .tippad svg{width:66px;height:66px}
+  .tippad::before{content:'';position:absolute;inset:-8px 2px -6px -10px}   /* not to the right: that's the speed bar */
+  .speedbar{min-width:48px}
+  .speedbar::before{content:'';position:absolute;inset:-8px -6px 0}
+  .speedtrack{width:14px}
+  .ctlrow .speedbar .ckeys{gap:8px}
+  .ctlrow .speedbar .ckeys kbd{position:relative;height:32px;min-width:36px;font-size:16px}
+  .ctlrow .speedbar .ckeys kbd::after{content:'';position:absolute;inset:-6px -4px}
+  .ctlrow .speedbar .ckeys kbd:active{background:var(--gold);color:var(--gold-ink)}
+  .radio{left:4px;top:2px;min-width:48px;min-height:48px;justify-content:center}
+  .radio:active svg{transform:scale(.92)}
+  .practicechip{bottom:68px;min-height:36px}
+  .practicechip::after,.routinechip::after{content:'';position:absolute;inset:-5px -2px}
+  .routinechip{min-height:36px}
+  .practicechip:active,.routinechip:active{background:rgba(30,58,84,.98)}
+}
 </style>
 </head>
 <body>
@@ -990,7 +1051,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 466;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 468;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -2301,13 +2362,19 @@ function wireShootControls(){
     const r = $('speedtrack').getBoundingClientRect(), f = Math.max(0, Math.min(1, (r.bottom - ev.clientY)/r.height));
     setSpeedLevel(Math.max(1, Math.ceil(f*10)));
   };
+  // a finger covers what it drags: on a touch screen the bar shows its level above the finger, and the pad a bigger copy of itself
+  const fingerish = ev => ev.pointerType === 'touch' || ev.pointerType === 'pen';
+  const bubble = document.createElement('span'); bubble.className = 'ctlbubble'; bubble.setAttribute('aria-hidden', 'true'); bar.appendChild(bubble);
+  const loupe = document.createElement('div'); loupe.className = 'tiploupe'; loupe.setAttribute('aria-hidden', 'true'); pad.appendChild(loupe);
+  const showBubble = () => { if(bar.classList.contains('held')) bubble.textContent = $('speedval').textContent; };
+  const showLoupe = () => { if(pad.classList.contains('held')) loupe.innerHTML = $('tipsvg').outerHTML.replace(/\s(id|aria-label)="[^"]*"/g, ''); };
   let sDrag = false;
   bar.addEventListener('pointerdown', ev=>{ if(answered || (tut.on && tut.ctl)) return;
     const stepBtn = ev.target.closest('[data-step]');
     if(stepBtn){ ev.preventDefault(); ev.stopPropagation(); setSpeedLevel(speedLevel() + +stepBtn.dataset.step); return; }   // the ↑ ↓ under the bar work as buttons too
-    sDrag = true; try{ bar.setPointerCapture(ev.pointerId); }catch(e){} setSpeedFrom(ev); ev.preventDefault(); ev.stopPropagation(); });
-  bar.addEventListener('pointermove', ev=>{ if(sDrag) setSpeedFrom(ev); });
-  ['pointerup','pointercancel'].forEach(t=>bar.addEventListener(t, ()=>{ sDrag = false; }));
+    sDrag = true; try{ bar.setPointerCapture(ev.pointerId); }catch(e){} bar.classList.toggle('held', fingerish(ev)); setSpeedFrom(ev); showBubble(); ev.preventDefault(); ev.stopPropagation(); });
+  bar.addEventListener('pointermove', ev=>{ if(sDrag){ setSpeedFrom(ev); showBubble(); } });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bar.addEventListener(t, ()=>{ sDrag = false; bar.classList.remove('held'); }));
   const setTipFrom = ev => {
     const svg = $('tipsvg'), pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
     const q = pt.matrixTransform(svg.getScreenCTM().inverse()), c = ctrl();
@@ -2316,9 +2383,9 @@ function wireShootControls(){
     if(String(tip) !== was) uiSound('tick', (tip[1] + 1)/2);   // a tick each time the tip moves to a new point
   };
   let tDrag = false;
-  pad.addEventListener('pointerdown', ev=>{ if(answered || (tut.on && tut.ctl)) return; tDrag = true; try{ pad.setPointerCapture(ev.pointerId); }catch(e){} setTipFrom(ev); ev.preventDefault(); ev.stopPropagation(); });
-  pad.addEventListener('pointermove', ev=>{ if(tDrag) setTipFrom(ev); });
-  ['pointerup','pointercancel'].forEach(t=>pad.addEventListener(t, ()=>{ tDrag = false; }));
+  pad.addEventListener('pointerdown', ev=>{ if(answered || (tut.on && tut.ctl)) return; tDrag = true; try{ pad.setPointerCapture(ev.pointerId); }catch(e){} pad.classList.toggle('held', fingerish(ev)); setTipFrom(ev); showLoupe(); ev.preventDefault(); ev.stopPropagation(); });
+  pad.addEventListener('pointermove', ev=>{ if(tDrag){ setTipFrom(ev); showLoupe(); } });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t, ()=>{ tDrag = false; pad.classList.remove('held'); }));
   $('freereset').addEventListener('click', ()=>{ if(anim) finishAnim(); freeReset(); $('quick').innerHTML = ''; $('result').innerHTML = ''; $('showright').hidden = true; tableBox.classList.remove('tappable'); });
   $('freenew').addEventListener('click', ()=>{ if(anim) finishAnim(); deal(); });
 }
@@ -5290,6 +5357,12 @@ $('progclose').addEventListener('click', ()=>openProg(false));
 document.addEventListener('keyup', e=>{ if(e.key===' ' && look.target){ e.preventDefault(); setLook(false); } });
 $('upbtn').addEventListener('click', e=>{ e.stopPropagation(); standUpOff(); });
 ['pointerdown'].forEach(ev=>$('upbtn').addEventListener(ev, e=>e.stopPropagation()));
+// touch on the table: a long press is never a page menu or a text selection (a held eye is looking, not asking for a menu);
+// and a no-op touch listener lets iOS show the controls' pressed (:active) states
+{ let touched = 0;
+  tableBox.addEventListener('pointerdown', e=>{ touched = e.pointerType === 'touch' || e.pointerType === 'pen' ? performance.now() : 0; }, {capture: true, passive: true});
+  tableBox.addEventListener('contextmenu', e=>{ if(touched && performance.now() - touched < 3000) e.preventDefault(); });
+  document.addEventListener('touchstart', ()=>{}, {passive: true}); }
 { const b = $('lookbtn'); b.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); uiSound('tap'); setLook(true); });
   ['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t, e=>{ e.stopPropagation(); if(look.target) setLook(false); })); b.addEventListener('click', e=>e.stopPropagation()); }
 document.querySelectorAll('[data-stab]').forEach(b=>b.addEventListener('click', ()=>{
