@@ -1344,7 +1344,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 500;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 501;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1429,7 +1429,7 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
-  {build: 500, date: '2026-10-05', title: 'The focus button, redrawn', items: [
+  {build: 501, date: '2026-10-05', title: 'The focus button, redrawn', items: [
     'The focus button is simpler: a ring with a red dot while the view turns round the cue ball, no dot for the object ball.',
   ]},
   {build: 499, date: '2026-10-05', title: 'Stats, properly', items: [
