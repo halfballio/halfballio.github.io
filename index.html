@@ -1347,7 +1347,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 503;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 504;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1433,9 +1433,10 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
-  {build: 503, date: '2026-10-05', title: 'A shorter ladder', items: [
+  {build: 504, date: '2026-10-05', title: 'A shorter ladder', items: [
     'The ladder ends at S. One grade that repeated another is gone, and every grade after it moved down one.',
     'You keep your progress: your grade shows the same skill under its new letter.',
+    'Streaks: the confetti, glow and logo pulse stay; the sparks from the pocket are gone.',
   ]},
   {build: 501, date: '2026-10-05', title: 'The focus button, redrawn', items: [
     'The focus button is simpler: a ring with a red dot while the view turns round the cue ball, no dot for the object ball.',
@@ -4433,77 +4434,14 @@ function confetti(el, n, first){
 }
 function cheerKick(el, cls, ms){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls), ms); }
 function cheerStop(){ if(cheerFx){ cancelAnimationFrame(cheerFx.raf); cheerFx.cv.remove(); cheerFx = null; } }
-function cheerGo(){
+function cheerGo(){   // at the call: the table's edge glows, the logo pulses and confetti bursts out of the count
   const q = cheerQ; cheerQ = null; if(!q) return;
   clearTimeout(q.at); cheerStop();
   if(tut.on || settings.streaks === '0') return;
   const logo = $('hlogo'), box = document.querySelector('.table-box');
   const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  cheerKick(box, 'cheer', 950);
-  if(calm || q.s !== shot || !box){ cheerKick(logo, 'cheer', 950); if(!calm) confetti(logo, q.n, q.first); return; }   // no sparks: a soft glow on the table and the logo
-  // where it starts: the target pocket on screen (kept inside the table's box)
-  const br = box.getBoundingClientRect(), svg = $('table');
-  if(!br.width){ cheerKick(logo, 'cheer', 650); confetti(logo, q.n, q.first); return; }
-  let from = null;
-  try{
-    let x, y;
-    if(settings.view === 'top'){ x = q.s.P.c[0]; y = q.s.P.c[1]; }
-    else { const c = lastCam && lastCam.toCam([q.s.P.c[0], q.s.P.c[1], 0]); if(c && c[2] > NEAR) [x, y] = lastCam.proj(c); }
-    if(x != null){ const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; const m = svg.getScreenCTM(); if(m){ const r = pt.matrixTransform(m); from = [r.x, r.y]; } }
-  }catch(e){}
-  if(!from || !isFinite(from[0]) || !isFinite(from[1])) from = [br.left + br.width/2, br.top + br.height*.4];
-  const pad = 14; from = [Math.max(br.left + pad, Math.min(br.right - pad, from[0])), Math.max(br.top + pad, Math.min(br.bottom - pad, from[1]))];
-  const lr = logo ? logo.getBoundingClientRect() : null, to = lr && lr.width ? [lr.left + lr.width/2, lr.top + lr.height/2] : null;
-  // a little more for a longer streak: more at 10, 15 and 20, then no more; the first one (at 6) a little bigger
-  const tier = (q.n >= 10) + (q.n >= 15) + (q.n >= 20), k = Math.max(.7, Math.min(1.2, br.width/700));
-  const nBurst = Math.round(Math.min(18, q.first ? 16 : 9 + 2*tier)*(IS_PHONE ? .75 : 1)), nFly = to ? Math.min(5, q.first ? 4 : 2 + tier) : 0;
-  const dpr = Math.min(2, window.devicePixelRatio || 1), W0 = innerWidth, H0 = innerHeight;
-  const cv = document.createElement('canvas'); cv.className = 'cheerfx'; cv.setAttribute('aria-hidden', 'true');
-  cv.width = Math.round(W0*dpr); cv.height = Math.round(H0*dpr);
-  const g = cv.getContext && cv.getContext('2d');
-  if(!g){ cheerKick(logo, 'cheer', 650); confetti(logo, q.n, q.first); return; }
-  document.body.appendChild(cv); g.scale(dpr, dpr);
-  const sparks = [];
-  for(let i = 0; i < nBurst; i++){
-    const a = -Math.PI/2 + (Math.random() - .5)*Math.PI*1.7, v = (130 + Math.random()*150)*k*(q.first ? 1.15 : 1);
-    sparks.push({x: from[0], y: from[1], vx: Math.cos(a)*v, vy: Math.sin(a)*v, life: .5 + Math.random()*.35, w: (1.4 + Math.random())*k});
-  }
-  const fly = [];
-  for(let i = 0; i < nFly; i++){   // each on its own curve up to the logo, alternating sides
-    const dx = to[0] - from[0], dy = to[1] - from[1], L = Math.hypot(dx, dy) || 1, side = (i % 2 ? 1 : -1)*(.18 + .14*Math.random())*L;
-    fly.push({t0: .05 + i*.07, dur: .62 + Math.random()*.12, c: [from[0] + dx*.45 - dy/L*side, Math.max(to[1] + 6, from[1] + dy*.45 + dx/L*side - .12*L)], tr: []});
-  }
-  const END = nFly ? .05 + (nFly - 1)*.07 + .9 : .95;
-  let landed = !nFly, last = performance.now();
-  confetti(logo, q.n, q.first);   // the confetti goes with the sparks, at the call
-  const t0 = last, fx = cheerFx = {cv, raf: 0};
-  const frame = now => {
-    if(cheerFx !== fx) return;
-    const t = (now - t0)/1000, dt = Math.max(0, Math.min(.05, (now - last)/1000)); last = now;
-    g.clearRect(0, 0, W0, H0); g.lineCap = 'round';
-    if(t < .5){ const u = t/.5; g.strokeStyle = `rgba(255,211,77,${(1 - u)*.8})`; g.lineWidth = 2*k*(1 - u) + .5; g.beginPath(); g.arc(from[0], from[1], (6 + 30*u*(2 - u))*k, 0, 2*Math.PI); g.stroke(); }   // a ring opens at the pocket
-    for(const p of sparks){
-      if(t > p.life) continue;
-      const f = Math.exp(-2.6*dt); p.vx *= f; p.vy = p.vy*f + 300*k*dt; p.x += p.vx*dt; p.y += p.vy*dt;
-      const al = 1 - (t/p.life)**2;
-      g.strokeStyle = `rgba(255,214,90,${al})`; g.lineWidth = p.w;
-      g.beginPath(); g.moveTo(p.x - p.vx*.035, p.y - p.vy*.035); g.lineTo(p.x, p.y); g.stroke();
-      g.fillStyle = `rgba(255,248,220,${al})`; g.beginPath(); g.arc(p.x, p.y, p.w*.6, 0, 2*Math.PI); g.fill();
-    }
-    for(const p of fly){
-      const u = (t - p.t0)/p.dur; if(u <= 0) continue;
-      if(u < 1){
-        const e = u < .5 ? 2*u*u : 1 - 2*(1 - u)*(1 - u), a = 1 - e;
-        p.tr.push([a*a*from[0] + 2*a*e*p.c[0] + e*e*to[0], a*a*from[1] + 2*a*e*p.c[1] + e*e*to[1]]); if(p.tr.length > 7) p.tr.shift();
-      } else { if(!landed){ landed = true; cheerKick(logo, 'cheer', 650); } p.tr.shift(); }   // the first to land rings the logo
-      if(!p.tr.length) continue;
-      g.lineWidth = 2.2*k; g.strokeStyle = 'rgba(240,191,52,.75)'; g.beginPath(); p.tr.forEach(([x, y], i)=>i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
-      const [hx, hy] = p.tr[p.tr.length - 1]; g.fillStyle = '#fff3c4'; g.strokeStyle = '#c9971c'; g.lineWidth = 1;
-      g.beginPath(); g.arc(hx, hy, 2.6*k, 0, 2*Math.PI); g.fill(); g.stroke();
-    }
-    if(t < END) fx.raf = requestAnimationFrame(frame); else cheerStop();
-  };
-  fx.raf = requestAnimationFrame(frame);
+  cheerKick(box, 'cheer', 950); cheerKick(logo, 'cheer', 950);
+  if(!calm) confetti(logo, q.n, q.first);
 }
 // calling the shot: soft mallet tones in a hall
 function mallet(o, t, f, g, dur, damp){   // partials near 1:4:10, each fading at its own rate, a slow tremolo
