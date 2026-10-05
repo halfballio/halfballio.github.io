@@ -1009,7 +1009,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 467;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 468;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -3531,7 +3531,7 @@ function endFlash(){ clearTimeout(flashTimer); $('cover').hidden = true; $('flas
 
 // ---------- round ----------
 const PLACEHOLDER = `How full do you hit the object ball?`;
-const PLACE_HINT = `Tap or drag around the object ball to set the ghost ball. Fine-tune with the arrows, then Shoot. Keys <kbd>←</kbd> <kbd>→</kbd> nudge, <kbd>Enter</kbd> shoots.`;
+const PLACE_HINT = `Tap or drag around the object ball to set the ghost ball. Fine-tune with the arrows, then Shoot.${kt(' Keys <kbd>←</kbd> <kbd>→</kbd> nudge, <kbd>Enter</kbd> shoots.', '')}`;
 const QUESTION = {sess:'How full do you hit the object ball?', call:'How full do you hit the object ball?', flash:'How full do you hit the object ball?', place:'Where does the ghost ball go?', shoot:'How full do you hit the object ball?', free:'How full do you hit the object ball?'};
 const tableBox = document.querySelector('.table-box');
 
@@ -4871,7 +4871,7 @@ const SL_SHOOT = [
   {noPocket:true, ghostAt:'18', aids:{ghost:1}, zoom:true, overlap:true, next:true,
    text:'Just an eighth, barely touching: a <b>⅛-ball</b> hit, the thinnest you’ll call.'},
   {shot:'34', aids:{ghost:1, line:1, path:1}, labels:['pocket'], ask:'34',
-   text:'Now with a <b>pocket</b>, marked in gold; the yellow line is the object ball’s path into it. <b>Your call takes the shot</b>: the cue ball is sent to that fraction’s contact, so the right call drops. Call this one with the buttons, or keys <b>1</b>–<b>5</b>.'},
+   text:'Now with a <b>pocket</b>, marked in gold; the yellow line is the object ball’s path into it. <b>Your call takes the shot</b>: the cue ball is sent to that fraction’s contact, so the right call drops. ' + kt('Call this one with the buttons, or keys <b>1</b>–<b>5</b>.', 'Tap a fraction to call this one.')},
   {shot:'12', aids:{ghost:1, line:1, path:1}, ask:'12',
    text:'One more. Call this one.'},
   {finish:true, aids:{},
@@ -4893,7 +4893,7 @@ const SL_OWNLINE = [
 ];
 const SL_SPEED = [
   {deg:30, aids:{}, ui:['speed'], next:true,
-   text:'<b>Speed</b> is yours now: four strokes, <b>¼</b>, <b>½</b>, <b>¾</b> and <b>full</b>. <b>↑ ↓</b>, or the bar on the right of the table. Set it before you call.'},
+   text:'<b>Speed</b> is yours now: four strokes, <b>¼</b>, <b>½</b>, <b>¾</b> and <b>full</b>. ' + kt('<b>↑ ↓</b>, or the bar on the right of the table.', 'Drag the <b>Speed</b> bar on the table, or tap its arrows.') + ' Set it before you call.'},
   {aids:{}, ui:['speed'], next:true,
    text:'Rolling, a <b>¼</b> stroke (a touch shot) goes under a table length, <b>½</b> (a lag) about two, <b>¾</b> about three, and the <b>full</b> stroke (a power shot) about four, rails included.'},
   {aids:{}, ui:['speed'], next:true,
@@ -4917,7 +4917,7 @@ const SL_ANY = [
 ];
 const SL_STUN = [
   {deg:30, aids:{}, check:{k:2.6, tip:[0,0], stun:true}, ui:['tip','speed'], next:true,
-   text:'<b>Stun</b>: hit dead centre (<b>X</b>), firmly enough that the cue ball is still sliding when it arrives. With no spin it leaves along the <b>tangent line</b>, at right angles to the object ball.'},
+   text:'<b>Stun</b>: hit dead centre (' + kt('<b>X</b>', 'the middle of the <b>tip pad</b>') + '), firmly enough that the cue ball is still sliding when it arrives. With no spin it leaves along the <b>tangent line</b>, at right angles to the object ball.'},
   {aids:{}, play:{k:2.6, tip:[0,0], stun:true}, ui:['tip','speed'], next:true, text:'Watch it leave along the tangent line.'},
   {deg:0, aids:{}, play:{k:2.6, tip:[0,0], stun:true}, shows:'stop', ui:['tip','speed'], next:true, text:'Straight in, the same stroke is a <b>stop shot</b>: the cue ball stays where it hit.'},
   {deg:30, aids:{}, try:{k:2.6, tip:[0, 0]}, ui:['tip'], ask:'try',
@@ -4931,7 +4931,7 @@ const SL_FOLLOW = [
    text:'Now the cue ball has somewhere to be: land it in the <b>green zone</b>.'},
   {aids:{}, play:{k:1.2, tip:[0,0]}, ui:['tip'], next:true, text:'Watch: a centre-ball hit goes about here.'},
   {aids:{}, play:{k:1.6, tip:[0,.5]}, ui:['tip'], next:true,
-   text:'<b>Follow</b>: strike above centre with the <b>tip pad</b> (or <b>W</b>). The topspin bends the cue ball forward off the tangent line after contact.'},
+   text:'<b>Follow</b>: strike above centre with the <b>tip pad</b>' + kt(' (or <b>W</b>)', '') + '. The topspin bends the cue ball forward off the tangent line after contact.'},
   {deg:0, aids:{}, play:{k:1.6, tip:[0,.5]}, shows:'through', ui:['tip'], next:true, text:'Straight in, it rolls on through after the object ball.'},
   {deg:30, aids:{}, try:{k:1.6, tip:[0, TIP_STEP]}, ui:['tip'], ask:'try',
    text:'Your turn, with <b>half a tip</b> of follow set on the tip pad. Call the fraction to get down on its line, then call it again to shoot. Land it in the zone.'},
@@ -4941,7 +4941,7 @@ const SL_FOLLOW = [
 ];
 const SL_DRAW = [
   {deg:30, aids:{}, check:{k:2.8, tip:[0,-.55]}, ui:['tip','speed'], next:true,
-   text:'<b>Draw</b>: strike below centre (<b>S</b>). The backspin pulls the cue ball back off the tangent line after contact.'},
+   text:'<b>Draw</b>: strike below centre' + kt(' (<b>S</b>)', ' on the <b>tip pad</b>') + '. The backspin pulls the cue ball back off the tangent line after contact.'},
   {aids:{}, play:{k:2.8, tip:[0,-.55]}, ui:['tip','speed'], next:true, text:'Watch it pull back off the tangent line.'},
   {deg:0, aids:{}, play:{k:2.8, tip:[0,-.55]}, shows:'back', ui:['tip','speed'], next:true, text:'Straight in, it comes back toward you.'},
   {deg:30, aids:{}, try:{k:2.8, tip:[0, -TIP_STEP]}, ui:['tip'], ask:'try',
@@ -4958,7 +4958,7 @@ const SL_CUSHION = [
 ];
 const SL_ENGLISH = [
   {deg:35, aids:{}, check:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true,
-   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: <b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right. 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle.'},
+   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: ' + kt('<b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right.', 'tap or drag to the one you want.') + ' 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle.'},
   {aids:{}, play:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true, text:'Watch how it comes off the cushion with right english.'},
   {aids:{}, play:{k:2.6, tip:[-.45,0]}, shows:'rail', ui:['tip'], next:true, text:'The other side, the other way.'},
   {finish:true, aids:{}, text:'Side also pushes the cue ball slightly off line (<b>deflection</b>) and throws the object ball a little, so on some shots it changes which fraction to call.'},
@@ -5460,11 +5460,11 @@ $('stancedone').addEventListener('click', e=>{ e.stopPropagation(); closeStance(
 // ---------- the app tour: how to use Halfball (not how to play pool), once for a new player after the stance card ----------
 const TOUR = [
   {el: 'answers', t: 'Welcome to Halfball', p: 'Each shot, call how full you’ll hit the object ball with one of these fractions, then shoot. That’s the game.'},
-  {el: '.table-box', t: 'The table', p: 'Drag on the table to walk around it. Hold <b>Space</b> or the 👁 button to step back and see the whole table.'},
+  {el: '.table-box', t: 'The table', p: 'Drag on the table to walk around it. Hold ' + kt('<b>Space</b> or the eye button', 'the eye button') + ' to step back and see the whole table.'},
   {el: 'badge', t: 'Your grade', p: 'Call shots right to move up. Each grade adds something new: tap your grade to see the ladder.'},
   {el: 'badge', t: 'It starts simple', p: 'You start by just calling the fraction. As you climb you’ll unlock:'
     + '<ul class="tourlist"><li>Getting down on the shot</li><li>Any angle, on a bigger table</li><li>Speed and spin</li><li>English, then everything at once</li></ul>'},
-  {el: 'task-flash', t: 'Opens as you climb', p: 'A 🔒 opens as you climb: Flash mode, bigger tables, table styles and ball sets. Hover or tap a lock to see when.'},
+  {el: 'task-flash', t: 'Opens as you climb', p: 'A 🔒 opens as you climb: Flash mode, bigger tables, table styles and ball sets. ' + kt('Hover over or click a lock', 'Tap a lock') + ' to see when.'},
   {el: 'cog', t: 'Settings', p: 'Your height and stance, shooting hand, colours, table size and look, and sound.'},
   {el: 'radio', t: 'Music', p: 'Tap the radio to change the station or turn it off. Volume is in Settings › Sound.'},
   {el: 'help', t: 'Lessons', p: 'The <b>?</b> replays any lesson you’ve reached, and this tour.'},
