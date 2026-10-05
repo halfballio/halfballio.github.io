@@ -1162,7 +1162,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 483;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 484;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1334,6 +1334,19 @@ function rotAxis(v, k, a){   // rotate v about unit axis k by angle a (Rodrigues
   return [0,1,2].map(i=>v[i]*c + kx[i]*sn + k[i]*kd*(1-c));
 }
 function cueScratches(c){ return outcome(c, c.theta).scratch; }   // the right call sends the cue ball into a pocket
+// How far the object ball runs to the pocket, by the cut: thin cuts come up near the pocket, as they do in a game. How far off
+// the object ball goes for a given miss of the contact point grows as 1/cos of the cut, and players leave themselves fuller
+// angles for long shots, so a thin cut across the table into a far pocket hardly ever happens. The run is capped at
+// OB_RUN·cos²θ: straight in 72", ¾ 68", ½ 54", ¼ 32", ⅛ 17". A ball on the rail cut down it into the corner (centre within
+// RAIL_BALL of a cushion that ends at that pocket) is the common exception: it may run OB_RUN·cosθ (¼ 48", ⅛ 35").
+// Checked as shots are dealt, live and from the library (the shipped shots were made before it).
+const OB_RUN = 72, RAIL_BALL = 6;
+function obRunMax(theta, ob, P){
+  const c = Math.cos(Math.min(89, Math.max(0, theta))*RAD);
+  const rail = ob && P && !P.side && (Math.abs(ob[0] - P.c[0]) <= RAIL_BALL || Math.abs(ob[1] - P.c[1]) <= RAIL_BALL);
+  return OB_RUN*(rail ? c : c*c);
+}
+const obRunOk = s => s.L <= obRunMax(s.theta, s.ob, s.P) + 1e-6;
 function generate(bucket){   // bucket: which fraction to deal (picked once per deal, so fractions that are harder to place aren't dealt less)
   const w = bucketWeights();
   const throwOn = throwNow(), phys = physOn(), speed = SHOT_SPEED, wantFlip = throwOn && !tut.on && Math.random() < 1/3;
@@ -1349,7 +1362,8 @@ function generate(bucket){   // bucket: which fraction to deal (picked once per 
     const uC = norm(sub(P.t, ob)), tolC = pocketTol(P, uC), cheat = anyOn() && Math.random() < CHEAT_SHARE ? rnd(-1, 1)*0.7*tolC : 0;
     const T = add(P.t, mul([-uC[1], uC[0]], cheat));
     const toP = sub(T, ob), dist = len(toP);
-    if(dist < RANGE.p[0] || dist > RANGE.p[1]) continue;
+    if(dist < Math.min(RANGE.p[0], obRunMax(phi)/2) || dist > RANGE.p[1]) continue;   // a long thin cut is long from the cue ball: its object ball stays near the pocket
+    if(dist > obRunMax(phi, ob, P)) continue;
     const u = norm(toP);
     if(P.side){ if(dot(u, mul(P.n,-1)) < Math.cos(38*RAD)) continue; }
     else { const bis = norm([Math.sign(P.c[0]-W/2), Math.sign(P.c[1]-H/2)]); if(dot(u,bis) < Math.cos(44*RAD)) continue; }
@@ -1990,7 +2004,7 @@ function fromLibrary(step, bucket){
   const scaled = mine.length + (sh ? sh.cnt : 0) < 200;   // too few made on this table: use the others, scaled
   if(scaled){ sh = S; mine = mineAll; }
   if(mine.length + (sh ? sh.cnt : 0) < 200) return null;   // too few yet to avoid repeats: deal live
-  const near = reachable(step, sh, mine, mineAt);   // only cue balls you can reach from the rail behind them
+  const near = reachable(step, sh, mine, mineAt);   // only cue balls you can reach from the rail behind them, and object balls no further from the pocket than the cut allows (obRunOk)
   if(near.size < REACH_LIB_MIN) return null;   // too few of those to avoid repeats: deal live
   const ofFrac = (sh && sh.byFrac[want] || []).map(j=>'s' + j).concat(mine.map((r, j)=>r.frac === want ? 'm' + j : null).filter(Boolean)).filter(id=>near.has(id));
   const all = () => [...near];
@@ -2009,19 +2023,19 @@ function fromLibrary(step, bucket){
     for(let t = 0; t < 40 && (recent.includes(id) || tooLong(id)); t++) id = pick(list);
     const rec = recOfId(id);
     const s = !rec ? null : scaled ? scaledShot(rec, id[0] === 's' ? sh.table : mineAt, step, Math.random() < .5) : shotOf(rec, step, Math.random() < .5);   // mirrored left-right half the time
-    if(s && inReach(s)){ recent.push(id); if(recent.length > 60) recent.shift(); return s; }
+    if(s && inReach(s) && obRunOk(s)){ recent.push(id); if(recent.length > 60) recent.shift(); return s; }
     if(performance.now() - t0 > 160) break;   // none fits yet: deal live
   }
   return null;
 }
-// The stored shots of a grade whose cue ball is within your reach on this table (scaled, if they were made on another size),
+// The stored shots of a grade whose cue ball is within your reach on this table, with the object ball as near the pocket as its cut asks (scaled, if they were made on another size),
 // worked out once per grade, table, height and library size. Mirroring doesn't change it. A grade with fewer than
 // REACH_LIB_MIN of them deals live (which keeps to the same rule) rather than repeat the same few shots.
 const REACH_LIB_MIN = 100, REACH_IDS = {};
 function reachable(step, sh, mine, mineAt){
   const key = [curTable, stanceIn(), sh ? sh.table + sh.cnt : '', mineAt, mine.length].join('|');
   if(REACH_IDS[step] && REACH_IDS[step].key === key) return REACH_IDS[step].ok;
-  const ok = new Set(), test = (r, from, id) => { if(inReach(shotOf(from === curTable ? r : scaleRec(r, from), step, false))) ok.add(id); };
+  const ok = new Set(), test = (r, from, id) => { const s = shotOf(from === curTable ? r : scaleRec(r, from), step, false); if(inReach(s) && obRunOk(s)) ok.add(id); };
   for(let j = 0; j < (sh ? sh.cnt : 0); j++) test(decodeRec(sh.data, j*REC), sh.table, 's' + j);
   mine.forEach((r, j)=>test(r, mineAt, 'm' + j));
   REACH_IDS[step] = {key, ok};
@@ -2085,6 +2099,7 @@ function makeRec(step, bucket){
   if(!s || (isZoneStep(step) ? !s.zone || s.zone.step !== +step : !!s.zone)) return null;
   if(+step >= SH.down && !handRoom(s)) return null;   // only shots with room for the bridge hand get stored
   if(reachOf(s) > REACH_PER_HEIGHT*REACH_LIB_CM/2.54) return null;   // and only shots in reach from the rail at the default height
+  if(!obRunOk(s)) return null;   // (generate keeps to it already; a record is rounded, so it's checked again as dealt)
   const r = recOf(s);
   return recOk(r, step) ? r : null;
 }
@@ -5876,7 +5891,7 @@ saveSettings();
 syncPressed();
 renderStats();
 sizeTable();
-if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_STEPS, tableFor, libVer, parseShipped, fromLibrary, shippedOk, dealtOk: (s, k)=>{ if(!s.zone){ const q = strikeOf(s), st = +k === SH.throw ? throwStroke(s) : {V: q.V, tip: [0, q.b]}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch; } const st = {V: STROKE_MPH[s.zone.lvl]*MPH, tip: s.zone.tip}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch && r.inZone; }, setShipped: x=>{ SHIPPED = x; }, isZoneStep, shotOf, zoneSpotOk, handRoomMax: s=>{ const g0 = GEN.g; GEN.g = 0; try{ return handRoom(s); } finally { GEN.g = g0; } }, makeRec, encodeRec, decodeRec, recOk, REC, setTable: (t)=>{ setTable(t, settings.pockets); }, curTable: ()=>curTable, reachOf, reachMax, scaleRec, setHeight: cm=>{ settings.heightCm = cm; },
+if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_STEPS, tableFor, libVer, parseShipped, fromLibrary, shippedOk, dealtOk: (s, k)=>{ if(!s.zone){ const q = strikeOf(s), st = +k === SH.throw ? throwStroke(s) : {V: q.V, tip: [0, q.b]}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch; } const st = {V: STROKE_MPH[s.zone.lvl]*MPH, tip: s.zone.tip}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch && r.inZone; }, setShipped: x=>{ SHIPPED = x; }, isZoneStep, shotOf, zoneSpotOk, handRoomMax: s=>{ const g0 = GEN.g; GEN.g = 0; try{ return handRoom(s); } finally { GEN.g = g0; } }, makeRec, encodeRec, decodeRec, recOk, REC, setTable: (t)=>{ setTable(t, settings.pockets); }, curTable: ()=>curTable, reachOf, reachMax, obRunOk, obRunMax, scaleRec, setHeight: cm=>{ settings.heightCm = cm; },
   // deal as the game would at a grade and table (task 'shoot' or 'flash'), with the reach it gives
   testDeal: (task, g, t)=>{ const sh = ensureShootLevel(), g0 = sh.g, t0 = settings.task; sh.g = g; settings.task = task; try{ setTable(t, settings.pockets); const s = task === 'flash' ? dealShot() : addExtras(shootDeal()); return {s, reach: reachOf(s), max: reachMax(), tb: curTable}; } finally { sh.g = g0; settings.task = t0; } },
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view

@@ -26,19 +26,30 @@ let bad = 0;
 for(const k of L.LIB_STEPS){
   L.setTable(L.tableFor(k));
   let ok = 0, zones = 0, n = 40;
-  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9){ ok++; if(s.zone) zones++; } }
+  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9 && L.obRunOk(s)){ ok++; if(s.zone) zones++; } }
   const wantZone = L.isZoneStep(k);
   if(ok < n*.8 || (wantZone && zones !== ok) || (!wantZone && zones)) bad++;
   console.log(`grade ${k} (${L.tableFor(k)} ft): ${S.steps[k] ? S.steps[k].cnt : 0} stored · dealt ${ok}/${n}${wantZone ? ` · with zones ${zones}` : ''}`);
 }
-// on the other table sizes the stored shots are scaled and checked again as they're dealt: each must still pot (and land in its zone) (and every dealt cue ball within reach of the rail behind it)
+// on the other table sizes the stored shots are scaled and checked again as they're dealt: each must still pot (and land in its zone) (and every dealt cue ball within reach of the rail behind it, every object ball as near the pocket as its cut asks)
 for(const k of L.LIB_STEPS) for(const t of ['7', '8', '9']){
   if(t === L.tableFor(k)) continue;
   L.setTable(t);
   let ok = 0, n = 20;
-  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9 && L.isZoneStep(k) === !!s.zone && L.dealtOk(s, k)) ok++; }
+  for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9 && L.obRunOk(s) && L.isZoneStep(k) === !!s.zone && L.dealtOk(s, k)) ok++; }
   if(ok < n*.9) bad++;
   console.log(`grade ${k} scaled to ${t} ft: dealt and re-checked ${ok}/${n}`);
+}
+// thin cuts come up near the pocket (obRunOk): every fraction a grade stores must keep enough shots that pass it, on its own table
+const FRAC_MIN = 40;
+for(const k of L.LIB_STEPS){
+  const st = S.steps[k]; if(!st) continue;
+  L.setTable(st.table);
+  const n = {};
+  for(let j = 0; j < st.cnt; j++){ const r = L.decodeRec(st.data, j*L.REC), s = L.shotOf(r, +k, false); if(L.obRunOk(s) && L.reachOf(s) <= L.reachMax() + 1e-9) n[r.frac] = (n[r.frac] || 0) + 1; }
+  const thin = Object.keys(st.byFrac).filter(f=>(n[f] || 0) < FRAC_MIN);
+  if(thin.length) bad++;
+  console.log(`grade ${k}: dealable by fraction ${Object.keys(st.byFrac).map(f=>f + ' ' + (n[f] || 0)).join(', ')}${thin.length ? ' · TOO FEW: ' + thin.join(', ') : ''}`);
 }
 console.log(bad ? `${bad} grade(s) look wrong` : 'all grades deal from the library, on every table size');
 process.exit(bad ? 1 : 0);
