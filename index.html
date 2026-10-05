@@ -990,7 +990,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 466;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 467;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -1310,10 +1310,12 @@ document.querySelector('.table-box').insertAdjacentHTML('afterend', `<div class=
 // #dev: frames per second, the slowest frame, and what the drawing costs, every half second
 // FPS and timings under the table: on in #dev, or with Settings > Graphics > Show FPS
 const fpsOn = () => DEV || (typeof settings !== 'undefined' && settings.fps === '1');
+// it only runs while it's shown: an empty loop every frame keeps a phone from ever resting
+let fpsStart = () => {};
 {
-  let frames = 0, worst = 0, last = performance.now(), mark = last;
+  let frames = 0, worst = 0, last = performance.now(), mark = last, running = false;
   const tick = now => {
-    if(!fpsOn()){ const el = document.getElementById('fpsmeter'); if(el && el.textContent) el.textContent = ''; last = mark = now; frames = 0; worst = 0; requestAnimationFrame(tick); return; }
+    if(!fpsOn()){ const el = document.getElementById('fpsmeter'); if(el && el.textContent) el.textContent = ''; running = false; return; }
     const dt = now - last; last = now; frames++; worst = Math.max(worst, dt);
     if(now - mark >= 500){
       const sec = (now - mark)/1000, el = document.getElementById('fpsmeter');
@@ -1322,7 +1324,8 @@ const fpsOn = () => DEV || (typeof settings !== 'undefined' && settings.fps === 
     }
     requestAnimationFrame(tick);
   };
-  requestAnimationFrame(tick);
+  fpsStart = () => { if(running || !fpsOn()) return; running = true; frames = 0; worst = 0; last = mark = performance.now(); requestAnimationFrame(tick); };
+  setTimeout(fpsStart, 0);   // once the settings are read
 }
 // adding or removing #dev on an open page doesn't reload it by itself: reload so the switch takes effect
 window.addEventListener('hashchange', e=>{ if(/#dev\b/.test(e.newURL) !== /#dev\b/.test(e.oldURL)) location.reload(); });
@@ -3352,7 +3355,7 @@ function drawInner(reveal){
     const fx = $('tablefx');
     if(fx.getAttribute('viewBox') !== vb) fx.setAttribute('viewBox', vb);
     if(layerHTML.fx !== L.fx){ fx.innerHTML = L.fx; layerHTML.fx = L.fx; }
-    if(G3){ arrowLast = performance.now(); $('table3d').style.display = ''; G3.build(engineTable()); G3.setBalls(G3BALLS, R); { const ma = obMarkA(); G3.setMarker(ma > 0 ? {p: shot.ob, R, a: ma} : null); } G3.setZone(shot && shot.zone && settings.view !== 'top' ? shot.zone : null); setArrows(); glRender(); arrowLoop(); }
+    if(G3){ arrowLast = arrowWake = performance.now(); $('table3d').style.display = ''; G3.build(engineTable()); G3.setBalls(G3BALLS, R); { const ma = obMarkA(); G3.setMarker(ma > 0 ? {p: shot.ob, R, a: ma} : null); } G3.setZone(shot && shot.zone && settings.view !== 'top' ? shot.zone : null); setArrows(); glRender(); arrowLoop(); }
   }
 }
 // The arrow over the target pocket: it floats gently up and down (only the 3D canvas redraws for that, about 30 times a second).
@@ -3412,12 +3415,14 @@ function placeArrow(which, F, T){
   const Q = [0, 1, 2].map(i=>E.p[i] + E.dir[i]*bob);
   return {p: [P[0] + (Q[0]-P[0])*k, P[1] + (Q[1]-P[1])*k], z: P[2] + (Q[2]-P[2])*k, dir: norm3([0, 1, 2].map(i=>(i === 2 ? -1 : 0)*(1 - k) + E.dir[i]*k)), spin: F.spin};
 }
-function setArrows(){
+function setArrows(){   // true while the arrows are moving (bobbing, or gliding to or from the edge of the view)
   const A = arrowAt(), Z = zoneArrowAt();
   G3.setArrow(A);   // the pocket's arrow just floats over the pocket
-  G3.setArrow(placeArrow('zone', Z, Z && [Z.p[0], Z.p[1], .03]), 'zone');
+  const zp = placeArrow('zone', Z, Z && [Z.p[0], Z.p[1], .03]), k = arrowPose.zone.k;
+  G3.setArrow(zp, 'zone');
+  return !!((A || zp) && settings.gfxBob !== '0') || (k > 0 && k < 1);
 }
-let arrowRaf = 0, arrowLast = 0;
+let arrowRaf = 0, arrowLast = 0, arrowWake = 0;
 // graphics settings (#dev): resolution, shadows, antialiasing, and how often the arrows' bob redraws
 const GFX = {ratio: ['1','1.5','2'], shadows: ['soft','hard','off'], aa: ['1','0'], bob: ['30','60','0']};
 function applyGfx(){
@@ -3426,21 +3431,31 @@ function applyGfx(){
   if(!GFX.shadows.includes(settings.gfxShadows)) settings.gfxShadows = IS_PHONE ? 'hard' : 'soft';
   if(!GFX.aa.includes(settings.gfxAA)) settings.gfxAA = '1';
   if(!GFX.bob.includes(settings.gfxBob)) settings.gfxBob = '30';
-  if(G3 && G3.setQuality) G3.setQuality({ratio: +settings.gfxRatio, shadows: settings.gfxShadows});
+  if(!settings.gfxBobV){ try{ if(matchMedia('(prefers-reduced-motion: reduce)').matches) settings.gfxBob = '0'; }catch(e){} settings.gfxBobV = 1; }   // once: reduced motion starts with the arrows Still (Settings can still set them moving)
+  if(G3 && G3.setQuality) G3.setQuality({ratio: +settings.gfxRatio, shadows: settings.gfxShadows, shadowSize: IS_PHONE ? 1024 : 2048});   // a phone's small screen doesn't need the 2048 map: a quarter of the work when balls move
 }
 const bobGap = () => settings.gfxBob === '60' ? 0 : settings.gfxBob === '0' ? Infinity : 33;
 function glRender(){ const t0 = performance.now(); G3.render(lastCam, VW, VH, boxPx[0], boxPx[1]); PERF.glMs += performance.now() - t0; PERF.gls++; }
+// The loop only runs while an arrow moves: with no arrow showing, or the arrows set to Still, the table isn't redrawn at all.
+// And after ARROW_IDLE ms with no touch, key or redraw they come to rest (at the bottom of a bob, so they don't stop mid-air)
+// until the next touch: a phone left on the table can rest its GPU.
+const ARROW_IDLE = 30000;
 function arrowLoop(){
   if(arrowRaf || !G3) return;
   const tick = now => {
     arrowRaf = 0;
     if(!G3 || !lastCam || settings.view === 'top' || document.hidden) return;
-    if(now - arrowLast >= bobGap()){ arrowLast = now; setArrows(); glRender(); }
+    if(now - arrowLast >= bobGap() || settings.gfxBob === '0'){   // Still: only the glide to or from the edge needs frames
+      arrowLast = now; const moving = setArrows(); glRender();
+      if(!moving) return;
+      if(now - arrowWake > ARROW_IDLE && Math.abs(Math.sin(now/1000*2*Math.PI/1.6)) < .12) return;
+    }
     arrowRaf = requestAnimationFrame(tick);
   };
   arrowRaf = requestAnimationFrame(tick);
 }
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && shot) arrowLoop(); });
+['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ arrowWake = performance.now(); if(shot && settings.view !== 'top') arrowLoop(); }, {capture: true, passive: true}));
 // the gold ring round the target pocket: round the engine's hole, the part that's outside the playing surface
 function ringArc3(P){
   const E = engineTable().pockets[POCKETS.indexOf(P)], r = E.holeR + 0.6, out = [];
@@ -3451,7 +3466,7 @@ function ringArc3(P){
 }
 // the table in 3D (table3d.js); without WebGL everything is drawn in the SVG as before
 let G3 = null, G3BALLS = [], boxPx = [600, 400];
-try{ G3 = window.Table3D ? Table3D.make(document.getElementById('table3d')) : null; }catch(e){ G3 = null; }
+try{ G3 = window.Table3D ? Table3D.make(document.getElementById('table3d'), {lite: IS_PHONE}) : null; }catch(e){ G3 = null; }
 if(!G3) document.getElementById('table3d').style.display = 'none';
 // the ball's own frame for its texture: the number spot is painted at local +x, so turn +x onto where the spot starts
 function spotBase(sp){
@@ -4664,6 +4679,7 @@ function applySetting(key, val){
   if(key==='ghost' || key==='line'){ if(shot) draw(answered); }
   else if(key==='streaks') syncStreakPill();
   else if(key==='gfxAA') location.reload();
+  else if(key==='fps') fpsStart();
   else if(key.startsWith('gfx')){ applyGfx(); if(shot) draw(answered); }
   else if(key==='music'){ if(window.Music) val === 'off' ? Music.stop() : Music.play(val); renderRadio(); }
   else if(key==='tstyle' || key==='ballSet'){ applyStyle(); if(shot) draw(answered); }
@@ -5530,7 +5546,7 @@ if(!['0','1'].includes(settings.haptic)) settings.haptic='1';
 $('hapticopt').hidden = !navigator.vibrate;   // only where the device can vibrate (not iOS Safari)
 if(!['0','1'].includes(settings.animate)) settings.animate='1';
 if(!['0','1'].includes(settings.streaks)) settings.streaks='1';
-if(!['0','1'].includes(settings.fps)) settings.fps='0';
+if(!['0','1'].includes(settings.fps)) settings.fps='0'; fpsStart();
 ['refPath','refTrail','refGhost','refMiss','refStart'].forEach(k=>{ if(!settings.sv6 || !['0','1'].includes(settings[k])) settings[k] = '1'; });   // on by default (once, for everyone: they'd been off for some)
 settings.sv6 = 1;
 if(!['R','L'].includes(settings.hand)) settings.hand='R';
