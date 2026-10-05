@@ -10,7 +10,7 @@ const w = new JSDOM(html, {url: 'https://halfball.local/#test', runScripts: 'dan
   w.matchMedia = () => ({matches: false, addEventListener(){}, removeEventListener(){}}); w.fetch = () => Promise.reject(new Error('offline'));
   w.HTMLCanvasElement.prototype.getContext = () => null; w.scrollTo = () => {};
   w.localStorage.setItem('halfball-settings', JSON.stringify({sv: 2, sv3: 1, sv4: 1, sv5: 1, tut: 1, stanceSet: 1, tutSeen: {}, sound: '0', task: 'shoot'}));
-  w.localStorage.setItem('halfball-stats', JSON.stringify({log: [], shoot: {g: 15, best: 15, pts: 0, v: 1}, sessions: []}));
+  w.localStorage.setItem('halfball-stats', JSON.stringify({log: [], shoot: {g: 13, best: 13, pts: 0, v: 2}, sessions: []}));
 }}).window, L = w.__lib;
 const file = path.join(ROOT, 'shots.bin');
 let buf = fs.readFileSync(file);
@@ -29,7 +29,7 @@ for(const k of L.LIB_STEPS){
   for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9 && L.obRunOk(s)){ ok++; if(s.zone) zones++; } }
   const wantZone = L.isZoneStep(k);
   if(ok < n*.8 || (wantZone && zones !== ok) || (!wantZone && zones)) bad++;
-  console.log(`grade ${k} (${L.tableFor(k)} ft): ${S.steps[k] ? S.steps[k].cnt : 0} stored · dealt ${ok}/${n}${wantZone ? ` · with zones ${zones}` : ''}`);
+  console.log(`step ${k} (${L.tableFor(k)} ft): ${S.steps[k] ? S.steps[k].cnt : 0} stored · dealt ${ok}/${n}${wantZone ? ` · with zones ${zones}` : ''}`);
 }
 // on the other table sizes the stored shots are scaled and checked again as they're dealt: each must still pot (and land in its zone) (and every dealt cue ball within reach of the rail behind it, every object ball as near the pocket as its cut asks)
 for(const k of L.LIB_STEPS) for(const t of ['7', '8', '9']){
@@ -38,7 +38,7 @@ for(const k of L.LIB_STEPS) for(const t of ['7', '8', '9']){
   let ok = 0, n = 20;
   for(let i = 0; i < n; i++){ const s = L.fromLibrary(k, Math.floor(Math.random()*5)); if(s && L.reachOf(s) <= L.reachMax() + 1e-9 && L.obRunOk(s) && L.isZoneStep(k) === !!s.zone && L.dealtOk(s, k)) ok++; }
   if(ok < n*.9) bad++;
-  console.log(`grade ${k} scaled to ${t} ft: dealt and re-checked ${ok}/${n}`);
+  console.log(`step ${k} scaled to ${t} ft: dealt and re-checked ${ok}/${n}`);
 }
 // thin cuts come up near the pocket (obRunOk): every fraction a grade stores must keep enough shots that pass it, on its own table
 const FRAC_MIN = 40;
@@ -49,7 +49,7 @@ for(const k of L.LIB_STEPS){
   for(let j = 0; j < st.cnt; j++){ const r = L.decodeRec(st.data, j*L.REC), s = L.shotOf(r, +k, false); if(L.obRunOk(s) && L.reachOf(s) <= L.reachMax() + 1e-9) n[r.frac] = (n[r.frac] || 0) + 1; }
   const thin = Object.keys(st.byFrac).filter(f=>(n[f] || 0) < FRAC_MIN);
   if(thin.length) bad++;
-  console.log(`grade ${k}: dealable by fraction ${Object.keys(st.byFrac).map(f=>f + ' ' + (n[f] || 0)).join(', ')}${thin.length ? ' · TOO FEW: ' + thin.join(', ') : ''}`);
+  console.log(`step ${k}: dealable by fraction ${Object.keys(st.byFrac).map(f=>f + ' ' + (n[f] || 0)).join(', ')}${thin.length ? ' · TOO FEW: ' + thin.join(', ') : ''}`);
 }
-console.log(bad ? `${bad} grade(s) look wrong` : 'all grades deal from the library, on every table size');
+console.log(bad ? `${bad} step(s) look wrong` : 'all steps deal from the library, on every table size');
 process.exit(bad ? 1 : 0);

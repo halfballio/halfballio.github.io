@@ -4,7 +4,7 @@
 // the game runs, then spreads the work over every CPU core.
 //
 //   node tools/gen-shots.js [--per 20000] [--per-basic 5000] [--workers N] [--out shots.bin]
-//   --per: shots for each zone grade (B+ to S+), --per-basic: for each grade without zones (F to B)
+//   --per: shots for each zone step (grades B to A+), --per-basic: for each step without zones (grades F to B-)
 //   --only 8,9: just those grades, spliced into the existing file (the others are kept, the file restamped)
 //
 // Re-run it whenever the physics, the strokes or the zone rules change: the game only uses a library whose version
@@ -33,7 +33,7 @@ function loadGame(seed){
       w.scrollTo = () => {};
       let x = seed >>> 0 || 1; w.Math.random = () => ((x = (x*1664525 + 1013904223) >>> 0) / 4294967296);   // each worker its own stream
       w.localStorage.setItem('halfball-settings', JSON.stringify({sv: 2, sv3: 1, sv4: 1, sv5: 1, tut: 1, stanceSet: 1, tutSeen: {}, sound: '0', task: 'shoot', table: '9'}));
-      w.localStorage.setItem('halfball-stats', JSON.stringify({n: 0, c: 0, made: 0, streak: 0, best: 0, log: [], shoot: {g: 15, best: 15, pts: 0, v: 1}, sessions: []}));
+      w.localStorage.setItem('halfball-stats', JSON.stringify({n: 0, c: 0, made: 0, streak: 0, best: 0, log: [], shoot: {g: 13, best: 13, pts: 0, v: 2}, sessions: []}));
     }});
   const w = dom.window;
   if(!w.__lib) throw new Error('the game did not expose its library hooks (window.__lib)');

@@ -297,7 +297,8 @@ function wheres(d){
 function tabShots(d){
   const G = d.ctx.grades;
   if(!d.shoot) return empty('Zone, speed and spin results come from the Ladder', 'Switch to Ladder at the top to see them.');
-  const zk = e => e.zk || (e.sg >= 9 && e.sg <= 13 ? e.sg : e.z != null ? 0 : null);
+  const GS = d.ctx.gradeStep || [], st = e => GS[e.sg];   // a grade's step (zone steps are 9 to 13)
+  const zk = e => e.zk || (st(e) >= 9 && st(e) <= 13 ? st(e) : e.z != null ? 0 : null);
   const Z = d.L.filter(e=>e.z != null), grid = [];
   // zones by shot type
   if(Z.length){
@@ -333,7 +334,7 @@ function tabShots(d){
     const where = e => { const [x, y] = e.tp; return Math.abs(x) > .05 ? (x < 0 ? 'Left english' : 'Right english') : y > .05 ? 'Top (follow)' : y < -.05 ? 'Bottom (draw)' : 'Centre'; };
     const R = ['Top (follow)', 'Centre', 'Bottom (draw)', 'Left english', 'Right english'].map(label=>{ const x = TP.filter(e=>where(e) === label), zz = x.filter(e=>e.z != null); return {label, n: x.length, made: x.filter(e=>e.m).length, zn: zz.length, zok: zz.filter(e=>e.z === 1).length}; }).filter(r=>r.n);
     grid.push(card('Spin', 'Where you struck the cue ball, and what happened', tipMap(TP) + table(['Tip', 'Shots', 'Pocketed', 'In zone'], R.map(r=>[r.label, num(r.n), pc(r.made, r.n), r.zn ? pc(r.zok, r.zn) : '–']), 'Tip position against outcome')));
-  } else grid.push(card('Spin', 'Where you struck the cue ball', empty('No spin results yet', `You set the spin from grade ${G[9]} on.`)));
+  } else grid.push(card('Spin', 'Where you struck the cue ball', empty('No spin results yet', `You set the spin from grade ${G[d.ctx.spinAt ?? 8]} on.`)));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 // the cue ball face with a dot per tip position used: size by how often, fill by the zone rate there

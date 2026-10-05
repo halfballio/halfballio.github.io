@@ -1179,7 +1179,7 @@ html.svopen,html.svopen body{overflow:hidden}
     </div>
 
     <div class="panel">
-      <div class="seg modes" role="group" aria-label="Mode">   <!-- the Ladder, and Flash from C+ (Free play is off for now) -->
+      <div class="seg modes" role="group" aria-label="Mode">   <!-- the Ladder, and Flash from C (Free play is off for now) -->
         <button id="task-sess">Ladder</button>
         <button id="task-flash" data-set="task" data-val="flash">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg><span class="lock" id="flashlock" aria-label="unlocks at C+" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-free" hidden>Free play<span class="lock" id="freelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
@@ -1341,8 +1341,11 @@ function f2(n){return n.toFixed(2);}
 // ---------- players: up to 4, each with their own settings and stats ----------
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
-const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 500;   // one per commit to main (shown on the title screen and under the table)
+const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S'];   // one grade per skill step (GRADE_STEP, below); S is the top
+// Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
+// grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
+const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
+const BUILD = 501;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1357,7 +1360,8 @@ const plEsc = t => String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':
 function plGrade(id){   // their Shoot grade, for the picker
   let s = null; try{ s = JSON.parse(lsGet(plKey('halfball-stats', id))); }catch(e){}
   if(!s || (!s.shoot && !(s.log || []).length)) return 'New';
-  return SHOOT_GRADES[Math.min(Math.max(0, s.shoot ? s.shoot.g | 0 : 0), SHOOT_GRADES.length - 1)];
+  const g = s.shoot ? ((s.shoot.v | 0) < SHOOT_V ? oldShootG(s.shoot.g | 0) : s.shoot.g | 0) : 0;   // not moved over yet: they haven't played since
+  return SHOOT_GRADES[Math.min(Math.max(0, g), SHOOT_GRADES.length - 1)];
 }
 // the game starts at the top: no reload after a pick, so the title screen's scroll (and the phone keyboard the name field
 // brought up) would carry over and open the game scrolled far down. Again once the keyboard has gone and the page has settled.
@@ -1427,6 +1431,10 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 501, date: '2026-10-05', title: 'A shorter ladder', items: [
+    'The ladder ends at S. One grade that repeated another is gone, and every grade after it moved down one.',
+    'You keep your progress: your grade shows the same skill under its new letter.',
+  ]},
   {build: 499, date: '2026-10-05', title: 'Stats, properly', items: [
     'A Stats button in the header opens your stats full screen.',
     'Accuracy over time, which fractions you mix up, and whether you cut too thin or too thick.',
@@ -1478,6 +1486,14 @@ function load(){
 }
 function save(){ try{ localStorage.setItem(KEY('halfball-stats'), JSON.stringify(stats)); }catch(e){} }
 let stats = load();
+// once per player: grades (and the grades in the log, and a practice pick) onto the 14-grade ladder (see SHOOT_V)
+if(stats.shoot && (stats.shoot.v | 0) < SHOOT_V){
+  const s = stats.shoot, top = SHOOT_GRADES.length - 1, mv = g => Math.min(oldShootG(g | 0), top);
+  s.g = mv(s.g); if(s.best != null) s.best = mv(s.best); if(s.bestBefore != null) s.bestBefore = mv(s.bestBefore);
+  for(const e of stats.log) if(e){ if(e.sg != null) e.sg = mv(e.sg); if(e.pr != null) e.pr = mv(e.pr); }   // sg, pr: only Ladder shots carry them
+  if(settings.practice != null){ settings.practice = mv(+settings.practice); saveSettings(); }
+  s.v = SHOOT_V; save();
+}
 let shot = null, answered = false;
 
 // ---------- physics ----------
@@ -1681,7 +1697,7 @@ const gradeFor = p => GRADE_FROM.reduce((g, t, i)=>p >= t ? i : g, 0);
 // Phones: a small touch screen. They get mostly shorter shots (balls easier to see) and lighter graphics by default.
 const IS_PHONE = (()=>{ try{ return matchMedia('(hover: none) and (pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600; }catch(e){ return false; } })();
 const longShare = () => IS_PHONE ? 0.2 : 0.5, PHONE_MAX_D = 42;   // short and long evenly: long shots aren't harder here (no cueing), so distance only comes in as a weak spot
-const leanK = () => { if(isShooting()) return 0.8 + shootLevel()*(1.2/(SHOOT_GRADES.length - 1));   // the ladder leans on your weak spots from F, harder as you climb
+const leanK = () => { if(isShooting()) return 0.8 + gradeOf(shootLevel())*(1.2/(SHOOT_GRADES.length - 1));   // the ladder leans on your weak spots from F, harder as you climb
   if(settings.task === 'flash') return flashLean();
   const g = level(); return g===null || g < LEAN_AT ? 0 : 0.8 + (g - LEAN_AT)*(1.2/(GRADES.length-1-LEAN_AT)); };
 // Flash gets harder as you get better: the lean on your weak spots (fractions and distances you miss) grows with your last 100
@@ -1760,12 +1776,12 @@ let fpsStart = () => {};
 window.addEventListener('hashchange', e=>{ if(/#dev\b/.test(e.newURL) !== /#dev\b/.test(e.oldURL)) location.reload(); });
 function setGradeForTesting(i){
   settings.practice = null; saveSettings(); setTimeout(renderPracticeChip, 0);
-  if(settings.tutSeen){ const tr = isShooting() ? 'shoot' : 'read'; for(const k in LESSONS) if((LESSONS[k].track || 'read') === tr && LESSONS[k].at > i) delete settings.tutSeen[k]; saveSettings(); }   // lessons above the picked grade play again when you reach them
+  if(settings.tutSeen){ const tr = isShooting() ? 'shoot' : 'read'; for(const k in LESSONS) if((LESSONS[k].track || 'read') === tr && LESSONS[k].at > (tr === 'shoot' ? stepOf(i) : i)) delete settings.tutSeen[k]; saveSettings(); }   // lessons above the picked grade play again when you reach them
   if(!hasBaseline()){   // #dev skips the baseline: record a stand-in so everything that needs one opens up
     const p0 = GRADE_FROM[Math.min(i, GRADE_FROM.length-1)];
     stats.sessions = (stats.sessions||[]).concat({id:'dev', task:'sess', size:100, n:100, right:p0, made:p0, start:Date.now(), end:Date.now(), base:1, dev:1, stand:p0, down:p0, grade:i});
   }
-  if(true){ stats.shoot = {g: i, best: i, pts: 0, v: 1}; settings.flashTable = gradeTable(i); if(i < LADDER_PICK_AT) settings.tablePick = null; saveSettings(); save(); showSessIdle(); renderBadge(true); renderProgress(); dealFresh(); return; }
+  if(true){ stats.shoot = {g: i, best: i, pts: 0, v: SHOOT_V}; settings.flashTable = gradeTable(stepOf(i)); if(stepOf(i) < LADDER_PICK_AT) settings.tablePick = null; saveSettings(); save(); showSessIdle(); renderBadge(true); renderProgress(); dealFresh(); return; }
   aidsOffBelow(-1, i);   // testing: every aid you're past starts off
   stats.level = {g: i, best: i, pts: 0, v: 2}; save(); showSessIdle();
   enforceLocks(); syncPressed(); renderBadge(true); renderProgress(); renderStats();
@@ -1789,22 +1805,31 @@ const LADDER_DOWN = {8:'Cuts back on the fractions', 9:'Back to cuts the plain f
 // Halfball: the Shoot half. You aim and strike the cue ball yourself; the engine plays it out.
 
 // ---------- the Shoot ladder ----------
-const SH = {noPath:1, noLine:2, noGhost:3, down:4, ownLine:5, any:6, speed:7, throw:8, follow:9, stun:10, draw:11, cushion:12, english:13, all:14, full:15};
-// Short names for the ladder (the lessons explain each step)
+// The skill steps. Their ids key the shot library (shots.bin's sections, LIB_STEPS) and every 'from this step on' check, so
+// they never change: id 5 (once 'your aim line') is retired and no grade plays it. Grades map onto steps through GRADE_STEP.
+const SH = {noPath:1, noLine:2, noGhost:3, down:4, any:6, speed:7, throw:8, follow:9, stun:10, draw:11, cushion:12, english:13, all:14, full:15};
+// grade index (SHOOT_GRADES, stats.shoot.g) → the step it plays
+const GRADE_STEP = [0, SH.noPath, SH.noLine, SH.noGhost, SH.down, SH.any, SH.speed, SH.throw, SH.follow, SH.stun, SH.draw, SH.cushion, SH.english, SH.all];
+const stepOf = g => GRADE_STEP[Math.min(Math.max(0, g | 0), GRADE_STEP.length - 1)];
+const gradeOf = st => { const i = GRADE_STEP.findIndex(x=>x >= st); return i < 0 ? GRADE_STEP.length - 1 : i; };   // the first grade at or past a step
+const stepGrade = st => SHOOT_GRADES[gradeOf(st)];   // the letter that brings a step ('Unlocks at …')
+// Short names for the ladder, by grade (the lessons explain each step)
 const SHOOT_TEXT = [
   'Every fraction, with aids', 'No path', 'No guide line', 'No ghost ball',
-  'Cue and hand', 'Your aim line',
+  'Cue and hand',
   'Any angle · 9 ft table', 'Speed', 'Throw',
   'Center ball: follow', 'Center ball: stun', 'Center ball: draw', 'Center ball: two rails', 'English', 'Everything'];
-const SHOOT_UP = {1:'No path', 2:'No guide line', 3:'👻 No ghost ball', 4:'🧍 Cue and hand', 5:'🎯 Your aim line',
-  6:'📐 Any angle', 7:'🎚️ Speed', 8:'🌀 Throw', 9:'⤴️ Center ball: follow', 10:'⏹️ Center ball: stun', 11:'⤵️ Center ball: draw', 12:'↩️ Center ball: two rails', 13:'🌪️ English', 14:'🏆 Everything'};
-const SHOOT_DOWN = {3:'Ghost ball back', 4:'Shoot standing again', 5:'Down on the right line again', 6:'Fraction angles only', 7:'Speed set for you', 9:'No more zones · tip back to centre', 11:'No more draw', 13:'No more english'};
+// the level-up / level-down notes, by step
+const SHOOT_UP = {[SH.noPath]:'No path', [SH.noLine]:'No guide line', [SH.noGhost]:'👻 No ghost ball', [SH.down]:'🧍 Cue and hand',
+  [SH.any]:'📐 Any angle', [SH.speed]:'🎚️ Speed', [SH.throw]:'🌀 Throw', [SH.follow]:'⤴️ Center ball: follow', [SH.stun]:'⏹️ Center ball: stun', [SH.draw]:'⤵️ Center ball: draw', [SH.cushion]:'↩️ Center ball: two rails', [SH.english]:'🌪️ English', [SH.all]:'🏆 Everything'};
+const SHOOT_DOWN = {[SH.noGhost]:'Ghost ball back', [SH.down]:'Shoot standing again', [SH.any]:'Fraction angles only', [SH.speed]:'Speed set for you', [SH.follow]:'No more zones · tip back to centre', [SH.draw]:'No more draw', [SH.english]:'No more english'};
 const READ_TOP = 11;   // finishing the Read ladder (A) opens Shoot and Free play
 const shootUnlocked = () => true;
-// the table grows with you: 7 ft to start, 8 ft at D, 9 ft at C+ (with any angle) (Sessions by your grade; Flash and Free play by your best)
-const TABLE_AT = {'8': 2, '9': 6};
+// the table grows with you: 7 ft to start, 8 ft at D, 9 ft at C (with any angle) (Sessions by your grade; Flash and Free play by your best)
+// By step, like every unlock: 8 ft with no guide line, 9 ft with any angle
+const TABLE_AT = {'8': SH.noLine, '9': SH.any};
 const tableUnlocked = sz => sz === '7' || DEV || ladderBest() >= TABLE_AT[sz];
-// the biggest table a grade brings
+// the biggest table a step brings
 const gradeTable = g => g >= TABLE_AT['9'] ? '9' : g >= TABLE_AT['8'] ? '8' : '7';
 // The Ladder plays on the table of the grade you're playing (practising a lower grade: that grade's own) until S;
 // from S you pick any size for it (settings.tablePick). Flash plays on its own pick (settings.flashTable), any size
@@ -1814,16 +1839,16 @@ const ladderPickOpen = () => ladderBest() >= LADDER_PICK_AT;
 const ladderTable = () => ladderPickOpen() && ['7','8','9'].includes(settings.tablePick) ? settings.tablePick : gradeTable(shootLevel());
 const flashTableNow = () => tableUnlocked(settings.flashTable) ? settings.flashTable : gradeTable(ladderBest());
 const progTable = () => GEN.g != null ? gradeTable(GEN.g) : settings.task === 'flash' ? flashTableNow() : ladderTable();
-// a grade reached for the first time that opens a bigger table (returns the size, or null): the Ladder moves to it with
-// the grade, and your Flash table moves up to it too
+// a step reached for the first time that opens a bigger table (returns the size, or null): the Ladder moves to it with
+// the grade, and your Flash table moves up to it too (before, to: steps)
 function tableUp(before, to){
   const sz = ['9', '8'].find(z=>to >= TABLE_AT[z] && before < TABLE_AT[z]);
   if(!sz) return null;
   if(!(+settings.flashTable >= +sz)){ settings.flashTable = sz; saveSettings(); }
   return sz;
 }
-const ladderBest = () => stats.shoot ? Math.max(stats.shoot.g, stats.shoot.best ?? 0) : 0;
-const FLASH_AT = SH.any, FREE_AT = SH.any, FAST_FLASH_GRADE = SH.all;   // Flash opens at C+ (any angle), at 1.5 s; 0.75 s Flash at S; Free play with any angle too (off for now)
+const ladderBest = () => stats.shoot ? stepOf(Math.max(stats.shoot.g, stats.shoot.best ?? 0)) : 0;   // the step of your best grade: every unlock goes by it
+const FLASH_AT = SH.any, FREE_AT = SH.any, FAST_FLASH_GRADE = SH.all;   // Flash opens at C (any angle), at 1.5 s; 0.75 s Flash at S; Free play with any angle too (off for now)
 const flashUnlocked = () => DEV || ladderBest() >= FLASH_AT;
 // your shaft: maple to start; the low-deflection carbon shaft opens at S (and you're switched to it the first time you get there)
 const CARBON_AT = SH.all;
@@ -1834,11 +1859,12 @@ const freeUnlocked = () => DEV || ladderBest() >= FREE_AT;
 const isShoot = () => settings.task === 'shoot';
 const isFree = () => settings.task === 'free';
 const isShooting = () => isShoot() || isFree();
-function ensureShootLevel(){ if(!stats.shoot) stats.shoot = {g:0, best:0, pts:0, v:1}; return stats.shoot; }
+function ensureShootLevel(){ if(!stats.shoot) stats.shoot = {g:0, best:0, pts:0, v:SHOOT_V}; return stats.shoot; }
 // You can go back to any grade you've passed and practise it as long as you like: those shots aren't scored.
 const practicing = () => isShoot() && settings.practice != null && stats.shoot && +settings.practice < stats.shoot.g;
-const GEN = {g: null, bucket: null};   // while the shot library is being built: the grade it's building for
-const shootLevel = () => GEN.g != null ? GEN.g : isFree() ? (stats.shoot ? Math.max(stats.shoot.g, stats.shoot.best ?? 0) : 0) : practicing() ? +settings.practice : (stats.shoot ? stats.shoot.g : 0);
+const GEN = {g: null, bucket: null};   // while the shot library is being built: the step it's building for
+// the step being played (not the grade index: see GRADE_STEP)
+const shootLevel = () => GEN.g != null ? GEN.g : isFree() ? ladderBest() : practicing() ? stepOf(+settings.practice) : stepOf(stats.shoot ? stats.shoot.g : 0);
 function setPractice(i){
   const g = stats.shoot ? stats.shoot.g : 0;
   settings.practice = i != null && i < g ? i : null; saveSettings();
@@ -2128,8 +2154,8 @@ function otherWays(s, zs, lvl){
 // tools/gen-shots.js), and your device can build its own on top. A shot is stored in 13 bytes: both balls and the zone
 // centre to 0.05", the aim point's offset from the pocket's centre, the pocket, the fraction, the strokes that land it
 // and the tip. Each is re-checked after rounding, and can be played mirrored left-right.
-// keys: a zone step's grade (B+ to S-), or the grade itself for the grades without zones (F to B)
-const ZONE_STEPS = [SH.follow, SH.stun, SH.draw, SH.cushion, SH.english], BASIC_STEPS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+// keys: step ids (SH): a zone step (B to A+), or the step itself for the grades without zones (F to B-)
+const ZONE_STEPS = [SH.follow, SH.stun, SH.draw, SH.cushion, SH.english], BASIC_STEPS = GRADE_STEP.filter(k=>k <= SH.throw);   // (shots.bin still has the retired step 5's section: nothing deals it)
 const LIB_STEPS = [...BASIC_STEPS, ...ZONE_STEPS], LIB_RULES = 10, REC = 13;
 const isZoneStep = k => ZONE_STEPS.includes(+k), LIB_PER_OF = k => isZoneStep(k) ? 1000 : 300;   // what your device builds (the shipped file has far more)
 const tableFor = k => { const g0 = GEN.g; GEN.g = +k; try{ return progTable(); } finally { GEN.g = g0; } };
@@ -2336,7 +2362,7 @@ function makeRec(step, bucket){
   return recOk(r, step) ? r : null;
 }
 function libGrowOne(){
-  const L = libLoad(), have = k => mineCount(k) + shippedCount(k), g = stats.shoot ? stats.shoot.g : 0, mine = zoneStep(g) || (g <= SH.throw ? g : null);
+  const L = libLoad(), have = k => mineCount(k) + shippedCount(k), g = stepOf(stats.shoot ? stats.shoot.g : 0), mine = zoneStep(g) || (g <= SH.throw ? g : null);
   const open = LIB_STEPS.filter(k=>have(k) < LIB_PER_OF(k) && tableFor(k) === curTable);   // only steps played on the table that's up
   if(!open.length) return LIB_STEPS.some(k=>have(k) < LIB_PER_OF(k)) ? null : false;
   // the step you're playing fills first, then whichever is shortest
@@ -2863,10 +2889,10 @@ function takeShot(id){
   cancelAnimationFrame(featherRaf);
   const play = () => {
   if(isShoot() && practicing()){   // practice: logged as practice, nothing scored
-    logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, gh: 1, pr: g});
+    logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, gh: 1, pr: gradeOf(g)});
   } else if(isShoot()){
     const prevStreak = curStreak();
-    logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, z: s.zone ? (run.inZone ? 1 : 0) : undefined, sc: run.scratch ? 1 : undefined, sv: +ratio.toFixed(2), sg: g,
+    logEntry({t:'shoot', p:id, ra: right.id, m: run.made ? 1 : 0, ok: full ? 1 : partial ? .5 : 0, z: s.zone ? (run.inZone ? 1 : 0) : undefined, sc: run.scratch ? 1 : undefined, sv: +ratio.toFixed(2), sg: gradeOf(g),
       zk: s.zone ? s.zone.step : undefined, wl: s.zone ? s.zone.lvl : undefined, sl: ctrl().speed ? nearestCoarse(speedLevel()) : undefined, tp: ctrl().up || ctrl().side ? stroke.tip.map(v=>+(+v).toFixed(2)) : undefined});   // for the Stats view: the zone's shot type, the stroke it wanted and yours, the tip
     if(!partial){
       const from = shootLevel(); stats.shoot.bestBefore = Math.max(stats.shoot.best ?? 0, stats.shoot.g);
@@ -2967,18 +2993,17 @@ function renderBadge(pop){
 }
 let lvlTimer = 0;
 function showLevel(d, from){
-  const L = trk(), to = L.g, notes = [], shootT = true;
-  if(d > 0 && !shootT) aidsOffBelow(L.bestBefore ?? from, to);
-  if(d > 0){ const n = (shootT ? SHOOT_UP : LADDER_UP)[to]; if(n && !(!shootT && to <= 7 && L.bestBefore >= to)) notes.push(n); }   // aid steps only the first time
-  const up = d > 0 ? tableUp(L.bestBefore ?? from, to) : null; if(up) notes.push(`🎱 ${up} ft table`);   // a bigger table: you move up to it
+  const L = trk(), to = stepOf(L.g), was = L.bestBefore != null ? stepOf(L.bestBefore) : from, notes = [], shootT = true;   // from, to, was: steps
+  if(d > 0){ const n = SHOOT_UP[to]; if(n) notes.push(n); }
+  const up = d > 0 ? tableUp(was, to) : null; if(up) notes.push(`🎱 ${up} ft table`);   // a bigger table: you move up to it
   else if((shootT ? SHOOT_DOWN : LADDER_DOWN)[from]) notes.push((shootT ? SHOOT_DOWN : LADDER_DOWN)[from]);
   if(d > 0 && to >= CARBON_AT && settings.shaftGot !== '1'){   // the first time at S: the carbon shaft is yours, and in your hands
     settings.shaft = 'carbon'; settings.shaftGot = '1'; saveSettings(); notes.push('🖤 Carbon shaft unlocked: less deflection');
   }
-  if(d > 0) for(const k of ['tstyle', 'ballSet']) for(const [v, at] of Object.entries(LOOK_AT[k])) if(at > (L.bestBefore ?? from) && at <= to && LOOK_NAME[v]) notes.push(`🎨 ${LOOK_NAME[v]} unlocked`);   // in Settings > Table
+  if(d > 0) for(const k of ['tstyle', 'ballSet']) for(const [v, at] of Object.entries(LOOK_AT[k])) if(at > was && at <= to && LOOK_NAME[v]) notes.push(`🎨 ${LOOK_NAME[v]} unlocked`);   // in Settings > Table
   enforceLocks(); syncPressed(); renderBadge(true);
   $('lvlhead').textContent = d > 0 ? 'Level up' : 'Down a grade';
-  $('lvlgrade').textContent = trkGrades()[to];
+  $('lvlgrade').textContent = trkGrades()[L.g];
   $('lvlnote').textContent = notes.join(' · ');
   const c = $('lvlcard'); c.classList.toggle('down', d < 0); c.hidden = false; c.classList.remove('show'); void c.offsetWidth; c.classList.add('show');
   clearTimeout(lvlTimer); lvlTimer = setTimeout(()=>{ c.hidden = true; }, d > 0 ? 2800 : 2000);
@@ -4151,7 +4176,7 @@ function dealInner(){
   if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
   // a new element is explained the first time you reach the grade that brings it in
   if(!tut.on && GEN.g == null && location.hash !== '#test' && $('stancecover').hidden && (settings.task === 'sess' || settings.task === 'shoot')){   // (never while the library tools run: a lesson left open made every stored shot a short one)
-    const tr = settings.task === 'shoot' ? 'shoot' : 'read', g = tr === 'shoot' ? ensureShootLevel().g : (level() ?? -1);
+    const tr = settings.task === 'shoot' ? 'shoot' : 'read', g = tr === 'shoot' ? stepOf(ensureShootLevel().g) : (level() ?? -1);   // lessons are at a step
     const k = Object.keys(LESSONS).find(k=>k !== 'intro' && (LESSONS[k].track || 'read') === tr && LESSONS[k].at <= g && !(settings.tutSeen || {})[k]);
     if(k) return startTut(k);
   }
@@ -5200,7 +5225,7 @@ function renderStats(){
 // ---------- the Stats view: over the table and panel on a desktop, the whole screen on a phone ----------
 const SV = {open: false, tab: 'overview', task: null, opener: null, pushed: false};
 const svTabs = () => window.HBStats ? HBStats.TABS : [];
-function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, hot: STREAK_HOT, shoot: stats.shoot}; }
+function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, gradeStep: GRADE_STEP, spinAt: gradeOf(SH.follow), hot: STREAK_HOT, shoot: stats.shoot}; }
 function svRender(){
   if(!window.HBStats) return;
   const hasFlash = SV.task === 'flash' || flashUnlocked() || stats.log.some(e=>e.t === 'flash');
@@ -5322,23 +5347,23 @@ function hideLockTip(){ clearTimeout(lockTip.timer); lockTip.timer = 0; lockTip.
 function syncPressed(){
   $('flashtime').hidden = settings.task !== 'flash';   // Flash's display time sits with Flash itself (0.75 s opens at S)
   tableBox.classList.toggle('walkable', walkOn());
-  for(const sz of ['8', '9']){ const lk = !tableUnlocked(sz), b = document.querySelector(`[data-set="flashTable"][data-val="${sz}"]`); lockBtn(b, lk, `Unlocks at ${SHOOT_GRADES[TABLE_AT[sz]]}`); b.querySelector('.lock').hidden = !lk; }
+  for(const sz of ['8', '9']){ const lk = !tableUnlocked(sz), b = document.querySelector(`[data-set="flashTable"][data-val="${sz}"]`); lockBtn(b, lk, `Unlocks at ${stepGrade(TABLE_AT[sz])}`); b.querySelector('.lock').hidden = !lk; }
   { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open;   // before S: the grade's table, shown as the pick; the others lock
-    document.querySelectorAll('[data-set="tablePick"]').forEach(b=>{ const lk = !open && b.dataset.val !== lt; lockBtn(b, lk, `Unlocks at ${SHOOT_GRADES[LADDER_PICK_AT]}`); b.querySelector('.lock').hidden = !lk; }); }
-  { const lk = !carbonUnlocked(), b = document.querySelector('[data-set="shaft"][data-val="carbon"]'); lockBtn(b, lk, `Unlocks at ${SHOOT_GRADES[CARBON_AT]}`); $('shaftlock').hidden = !lk; }
-  for(const k of ['tstyle', 'ballSet']) document.querySelectorAll(`[data-set="${k}"]`).forEach(b=>{ const lk = !lookOpen(k, b.dataset.val); lockBtn(b, lk, `Unlocks at ${SHOOT_GRADES[LOOK_AT[k][b.dataset.val]]}`); const s = b.querySelector('.lock'); if(s) s.hidden = !lk; });
+    document.querySelectorAll('[data-set="tablePick"]').forEach(b=>{ const lk = !open && b.dataset.val !== lt; lockBtn(b, lk, `Unlocks at ${stepGrade(LADDER_PICK_AT)}`); b.querySelector('.lock').hidden = !lk; }); }
+  { const lk = !carbonUnlocked(), b = document.querySelector('[data-set="shaft"][data-val="carbon"]'); lockBtn(b, lk, `Unlocks at ${stepGrade(CARBON_AT)}`); $('shaftlock').hidden = !lk; }
+  for(const k of ['tstyle', 'ballSet']) document.querySelectorAll(`[data-set="${k}"]`).forEach(b=>{ const lk = !lookOpen(k, b.dataset.val); lockBtn(b, lk, `Unlocks at ${stepGrade(LOOK_AT[k][b.dataset.val])}`); const s = b.querySelector('.lock'); if(s) s.hidden = !lk; });
   const lockFlash = !flashUnlocked();
-  lockBtn($('task-flash'), lockFlash, `Unlocks at ${SHOOT_GRADES[FLASH_AT]}`); $('flashlock').hidden = !lockFlash;
+  lockBtn($('task-flash'), lockFlash, `Unlocks at ${stepGrade(FLASH_AT)}`); $('flashlock').hidden = !lockFlash;
   document.querySelectorAll('[data-set]').forEach(b=>b.setAttribute('aria-pressed', settings[b.dataset.set]===b.dataset.val));
   document.querySelectorAll('[data-set="tablePick"]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.val === ladderTable()));   // the table the Ladder plays on
   document.querySelectorAll('[data-set="flashTable"]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.val === flashTableNow()));
   $('task-sess').setAttribute('aria-pressed', settings.task==='sess' || settings.task==='shoot');
   $('task-free').setAttribute('aria-pressed', settings.task==='free');
-  const fu = freeUnlocked(); lockBtn($('task-free'), !fu, `Unlocks at ${SHOOT_GRADES[FREE_AT]}`); $('freelock').hidden = fu;
+  const fu = freeUnlocked(); lockBtn($('task-free'), !fu, `Unlocks at ${stepGrade(FREE_AT)}`); $('freelock').hidden = fu;
   $('trackseg').hidden = true;
   $('track-read').setAttribute('aria-pressed', settings.task==='sess'); $('track-shoot').setAttribute('aria-pressed', settings.task==='shoot');
   document.querySelectorAll('[data-set]').forEach(b=>{ if(BASE_LOCKED.includes(b.dataset.set)) b.disabled = baseRun(); });
-  lockBtn($('flash-750'), fastFlashLocked(), `Unlocks at ${SHOOT_GRADES[FAST_FLASH_GRADE]}`); $('fastlock').hidden = !fastFlashLocked();
+  lockBtn($('flash-750'), fastFlashLocked(), `Unlocks at ${stepGrade(FAST_FLASH_GRADE)}`); $('fastlock').hidden = !fastFlashLocked();
   $('modehint').textContent = isPlace()
     ? (settings.view!=='top' && settings.cam==='aim' ? 'Ghost ball mode always uses the ball line, since the aim line would give it away.' : 'Set the ghost ball where the cue ball must be at contact.')
     : HINTS[settings.mode];
@@ -5549,13 +5574,7 @@ const SL_DOWN = [
   {aids:{}, next:true,
    text:'<b>Call the fraction</b> and you <b>step behind the aim line</b> and <b>get down on it</b>, your <b>cue</b> and <b>bridge hand</b> in the picture as at a real table (you can make them see-through in Settings).'},
   {finish:true, aids:{},
-   text:'You get down on the line of the fraction <b>you call</b>. If it looks wrong from down there, call another: you get back up and move to its line. <b>Call the same one again</b> to shoot.'},
-];
-const SL_OWNLINE = [
-  {deg:30, aids:{}, next:true,
-   text:'Down on the shot, a wrong line should look wrong. If it does, call another fraction: you get back up, move to its line and get down again.'},
-  {finish:true, aids:{},
-   text:'<b>Call it again</b> to shoot. A wrong line should look wrong: trust what you see once you\'re down.'},
+   text:'You get down on the line of the fraction <b>you call</b>. A wrong line should look wrong once you’re down: if it does, call another and you get back up and move to its line. <b>Call the same one again</b> to shoot.'},
 ];
 const SL_SPEED = [
   {deg:30, aids:{}, ui:['speed'], next:true,
@@ -5635,7 +5654,6 @@ const SL_ALL = [
 const LESSONS = {
   shoot:   {name:'Calling the fraction', at:0, track:'shoot', steps:SL_SHOOT},
   down:    {name:'Cue and hand', at:SH.down, track:'shoot', steps:SL_DOWN},
-  ownline: {name:'Your aim line', at:SH.ownLine, track:'shoot', steps:SL_OWNLINE},
   any:     {name:'Any angle', at:SH.any, track:'shoot', steps:SL_ANY},
   speed:   {name:'Speed', at:SH.speed, track:'shoot', steps:SL_SPEED},
   throw:   {name:'Throw', at:SH.throw, track:'shoot', steps:TSTEPS_THROW},
@@ -5655,7 +5673,7 @@ const lessonsOpen = () => Object.entries(LESSONS).filter(([, L])=>{
 });
 function openTutMenu(v){
   $('tutmenu').hidden = !v;
-  if(v) $('tutlist').innerHTML = lessonsOpen().map(([k, L])=>`<button data-lesson="${k}">${L.name}<small>${L.at ? (L.track === 'shoot' ? SHOOT_GRADES : GRADES)[L.at] : 'Start'}</small></button>`).join('');
+  if(v) $('tutlist').innerHTML = lessonsOpen().map(([k, L])=>`<button data-lesson="${k}">${L.name}<small>${L.at ? (L.track === 'shoot' ? stepGrade(L.at) : GRADES[L.at]) : 'Start'}</small></button>`).join('');
 }
 function tutAid(key){
   const v = (tstep().aids || {})[key];
