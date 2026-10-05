@@ -533,6 +533,12 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .menucard{padding-inline:16px}.menuhead{margin-inline:-16px;padding-inline:16px}
   .sesslive #sessend{min-height:44px;padding:0 4px}
   .stat span,.insights dt{font-size:12px}
+  .wrap{gap:8px}.buildtag{margin-top:4px}.main,.main.persp{gap:10px}   /* the mode switch a little higher */
+  /* a lesson: the table and the fraction buttons stay together, the coach card under them, compact,
+     its text scrolling inside so the whole card (and its Next) fits the screen with the toolbars showing */
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}
+  .coach{padding:10px 12px;gap:6px}
+  .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - (100vw - 32px)*2/3 - 332px));max-height:max(60px, calc(100dvh - (100vw - 32px)*2/3 - 332px))}
 }
 @media (max-width:439px){header h1{font-size:0;gap:0}header h1::before{width:38px;height:38px}}   /* the wordmark's text stays for screen readers */
 /* Menus and covers: the close button stays in reach while a long menu scrolls, and nothing sits under the notch or the home bar */
@@ -590,6 +596,9 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .quick{min-height:44px}
   .answers{gap:6px}.answers button{padding:7px 0 5px;font-size:24px;min-height:52px}
   .tabpanel{flex:none;min-height:0;overflow-y:visible;overflow-x:clip}
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}   /* a lesson: the coach card under the fraction buttons */
+  .coach{padding:10px 12px;gap:6px}
+  .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - 290px));max-height:max(60px, calc(100dvh - 290px))}
   .menu{padding:calc(56px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
   .plmark{width:64px;height:64px;margin-bottom:10px}.plword{font-size:44px}.pltag{margin-top:8px;font-size:15px}.plpills{margin-top:10px}   /* the title screen: a smaller hero, so the players come sooner */
 }
@@ -1041,7 +1050,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 470;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 471;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
