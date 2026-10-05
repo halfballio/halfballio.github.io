@@ -333,7 +333,7 @@ function tabShots(d){
     const where = e => { const [x, y] = e.tp; return Math.abs(x) > .05 ? (x < 0 ? 'Left english' : 'Right english') : y > .05 ? 'Top (follow)' : y < -.05 ? 'Bottom (draw)' : 'Centre'; };
     const R = ['Top (follow)', 'Centre', 'Bottom (draw)', 'Left english', 'Right english'].map(label=>{ const x = TP.filter(e=>where(e) === label), zz = x.filter(e=>e.z != null); return {label, n: x.length, made: x.filter(e=>e.m).length, zn: zz.length, zok: zz.filter(e=>e.z === 1).length}; }).filter(r=>r.n);
     grid.push(card('Spin', 'Where you struck the cue ball, and what happened', tipMap(TP) + table(['Tip', 'Shots', 'Pocketed', 'In zone'], R.map(r=>[r.label, num(r.n), pc(r.made, r.n), r.zn ? pc(r.zok, r.zn) : '–']), 'Tip position against outcome')));
-  } else grid.push(card('Spin', 'Where you struck the cue ball', empty('No spin results yet', `You set the spin from grade ${G[9]} on. Shots played before this update aren’t included.`)));
+  } else grid.push(card('Spin', 'Where you struck the cue ball', empty('No spin results yet', `You set the spin from grade ${G[9]} on.`)));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 // the cue ball face with a dot per tip position used: size by how often, fill by the zone rate there
@@ -376,7 +376,7 @@ function tabHistory(d, w){
 function tabSessions(d, w){
   const G = d.ctx.grades, S = sessions(d), list = S.list, grid = [];
   if(!list.length){
-    return empty('No sessions yet', `Each time you play shows up here as a session. A break of ${SESSION_GAP} minutes or more starts a new one.${S.untimed ? ' Shots played before this update aren’t included.' : ''}`);
+    return empty('No sessions yet', `Each time you play shows up here as a session. A break of ${SESSION_GAP} minutes or more starts a new one.`);
   }
   const shots = list.reduce((a, s)=>a + s.n, 0), mins = list.reduce((a, s)=>a + (s.legacy ? 0 : s.end - s.start), 0);
   grid.push(`<div class="svkpis mini wide">${kpi(num(list.length), 'Sessions', '')}${kpi(num(Math.round(shots/list.length)), 'Shots a session', 'average')}${kpi(fmtDur(mins).replace(' min', 'm').replace(' h ', 'h '), 'Time played', 'timed sessions')}${kpi(`${pct(list.reduce((a, s)=>a + s.ok, 0), shots)}%`, d.shoot ? 'Full marks' : 'Called right', 'across sessions')}</div>`);
