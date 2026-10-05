@@ -1211,7 +1211,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 492;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 493;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -3652,7 +3652,35 @@ function arrowAt(){
   if(!shot || !shot.P || settings.view === 'top' || (tut.on && tut.zb > .5) || noPocket()) return null;
   const E = engineTable().pockets[POCKETS.indexOf(shot.P)], t = performance.now()/1000;
   const mv = settings.gfxBob !== '0';   // Still: the arrows hold still
-  return {p: E.hole, z: 4.2 + (mv ? .7*Math.sin(t*2*Math.PI/1.6) : 0), spin: mv ? t*.6 : 0};
+  const {T, d} = pocketArrowPose(E.hole), bob = mv ? .7*Math.sin(t*2*Math.PI/1.6) : 0;
+  return {p: [T[0] - d[0]*bob, T[1] - d[1]*bob], z: T[2] - d[2]*bob, dir: d, spin: mv ? t*.6 : 0};
+}
+// A pocket at the very top of the view (a far corner, above all on a phone's narrower lens) has no room above it: the
+// arrow floating straight up over it would be cut off by the top of the table. Then it leans over toward the middle of
+// the view, just as far as it must to stay in the picture, down to lying on its side next to the pocket, pointing at it.
+const arrowLean = {side: 1};
+function pocketArrowPose(hole){
+  const up = {T: [hole[0], hole[1], 4.2], d: [0, 0, -1]}, cam = lastCam;   // T: the tip (bob at rest), d: the way it points
+  if(!cam) return up;
+  const q = cam.toCam([hole[0], hole[1], 0]); if(q[2] <= NEAR) return up;
+  const x = cam.proj(q)[0], r = norm3(cross3([0, 0, 1], cam.f));
+  if(Math.abs(x - VW/2) > VW*.06) arrowLean.side = x < VW/2 ? 1 : -1;   // its tail goes toward the middle (kept as it is near the middle, so it never flips back and forth)
+  const h = [r[0]*arrowLean.side, r[1]*arrowLean.side];
+  const pose = a => { const s = Math.sin(a), c = Math.cos(a); return {T: [hole[0] + h[0]*4.2*s, hole[1] + h[1]*4.2*s, Math.max(3.4, 4.2*c)], d: [-h[0]*s, -h[1]*s, -c]}; };
+  const fits = P => {   // the head's rim and the end of the shaft, at the top of the bob, stay a little inside the top of the view
+    for(const [k, w] of [[1.8, 1.1], [4, .42]]){
+      const c = cam.toCam([P.T[0] - P.d[0]*(k + .7), P.T[1] - P.d[1]*(k + .7), P.T[2] - P.d[2]*(k + .7) + w]);
+      if(c[2] <= NEAR || cam.proj(c)[1] < 10) return false;
+    }
+    return true;
+  };
+  if(fits(up)) return up;
+  const MAX = 110*Math.PI/180;   // past level, a little: the tail dips, still clear of the rail
+  let lo = 0, hi = MAX;
+  for(let a = Math.PI/36; a <= MAX + 1e-9; a += Math.PI/36){ if(fits(pose(a))){ hi = a; break; } lo = a; }
+  if(lo >= MAX) return pose(MAX);
+  for(let i = 0; i < 6; i++){ const m = (lo + hi)/2; if(fits(pose(m))) hi = m; else lo = m; }   // just as far as it must
+  return pose(hi);
 }
 // the same arrow, in the zone's colour, over the middle of the cue ball's zone (until the shot's played)
 function zoneArrowAt(){
@@ -3706,7 +3734,7 @@ function placeArrow(which, F, T){
 }
 function setArrows(){   // true while the arrows are moving (bobbing, or gliding to or from the edge of the view)
   const A = arrowAt(), Z = zoneArrowAt();
-  G3.setArrow(A);   // the pocket's arrow just floats over the pocket
+  G3.setArrow(A);   // the pocket's arrow floats over the pocket (or leans in beside it, at the top of the view)
   const zp = placeArrow('zone', Z, Z && [Z.p[0], Z.p[1], .03]), k = arrowPose.zone.k;
   G3.setArrow(zp, 'zone');
   return !!((A || zp) && settings.gfxBob !== '0') || (k > 0 && k < 1);
