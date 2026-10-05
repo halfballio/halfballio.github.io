@@ -611,6 +611,14 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   /* a lesson: the table and the fraction buttons stay together, the coach card under them, compact,
      its text scrolling inside so the whole card (and its Next) fits the screen with the toolbars showing */
   .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}
+  /* Flash: its display time sits beside the mode switch, on one row (the group's label still reads it out), so the table,
+     the fractions, the result card and Next shot fit the screen with the toolbars showing */
+  .panel:has(> #flashtime:not([hidden])){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:10px}
+  .panel:has(> #flashtime:not([hidden])) > *{grid-column:1/-1;min-width:0}
+  .panel:has(> #flashtime:not([hidden])) > :is(.modes,#flashtime){grid-column:auto}
+  #flashtime{margin:0;gap:0;font-size:0;align-self:stretch}
+  #flashtime .seg{flex-wrap:nowrap;align-items:stretch}
+  #flashtime .seg button{min-height:44px;padding-inline:9px;white-space:nowrap}
   .coach{padding:10px 12px;gap:6px}
   .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - (100vw - 32px)*2/3 - 332px));max-height:max(60px, calc(100dvh - (100vw - 32px)*2/3 - 332px))}
 }
@@ -1203,7 +1211,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 490;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 491;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
