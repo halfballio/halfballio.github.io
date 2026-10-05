@@ -281,7 +281,7 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .tab{font:600 14px var(--body);background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);min-height:40px;padding:8px 12px;margin-bottom:-1px;cursor:pointer;transition:color var(--t-fast) var(--ease)}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
-.tabpanel{display:flex;flex-direction:column;gap:16px;min-height:260px;overflow-x:clip}   /* never scroll sideways; clip keeps the sticky Stats header working */
+.tabpanel{display:flex;flex-direction:column;gap:12px;overflow-x:clip}   /* never scroll sideways */
 .tabpanel > section{border:0;padding-top:0}
 .sessrow{min-height:34px;display:flex;align-items:center}
 .sesslive{display:flex;align-items:center;gap:8px;width:100%;font-size:13px;color:var(--muted)}
@@ -346,44 +346,14 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .sumdone:hover{background:rgba(242,234,216,.07);border-color:rgba(242,234,216,.55)}
 .panel .sumdone,.menucard .sumdone{background:var(--surface);color:var(--ink);border-color:var(--line-strong);box-shadow:var(--shadow-1)}   /* the same secondary button on the light panel and in menus */
 .panel .sumdone:hover,.menucard .sumdone:hover{background:var(--surface-2);border-color:var(--muted)}
-.sesslist{display:flex;flex-direction:column;gap:4px;font-size:13px}
-.sesslist .srow{display:grid;grid-template-columns:1fr auto;gap:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.sesslist .srow b{color:var(--ink);font-weight:600}
 .mblock{display:flex;flex-direction:column;gap:6px}
 .mblock h2{margin:0}
-.byfrac .row.thin{opacity:.5}
-.row .lab.wide{font:500 13px var(--body);color:var(--ink)}
-.byfrac.bins .row{grid-template-columns:64px 1fr 76px}
-.form{display:flex;align-items:flex-end;gap:4px;height:64px;border-bottom:1px solid var(--line);background:linear-gradient(to top,transparent calc(50% - .5px),var(--line) calc(50% - .5px),var(--line) calc(50% + .5px),transparent calc(50% + .5px))}
-.form i{flex:1;max-width:28px;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
-.form i.thin{opacity:.5}
-.stathead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:3;background:var(--bg);padding:8px 0;margin:-8px 0 0;border-bottom:1px solid var(--line)}
-.stathead h2{margin:0}
-.subtabs button{padding:5px 12px}
-.subpanel{display:flex;flex-direction:column;gap:16px}
-.subpanel[hidden]{display:none}
-.form .empty{color:var(--muted);font-size:13px;align-self:center}
-/* accuracy-over-time chart: one dot per finished session */
-.trend{position:relative;height:150px;margin:6px 8px 18px 38px;touch-action:pan-y}
-.trend .grid{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
-.trend .grid.base{border-top-color:color-mix(in srgb,var(--muted) 45%,transparent)}
-.trend .ylab{position:absolute;left:-34px;width:28px;text-align:right;transform:translateY(-50%);font:500 11px var(--mono);color:var(--muted)}
-.trend .xlab{position:absolute;top:calc(100% + 4px);font-size:11px;color:var(--muted);white-space:nowrap}
-.trend svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.trend .dot{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
-.trend .dot.base{background:var(--bg);box-shadow:inset 0 0 0 2px var(--accent),0 0 0 2px var(--bg)}
-.trend .dot.on{width:12px;height:12px;margin:-6px 0 0 -6px}
-.trend .xhair{position:absolute;top:0;bottom:0;border-left:1px dashed var(--muted);opacity:.6;pointer-events:none}
-.trend .tip{position:absolute;top:-6px;transform:translate(-50%,-100%);background:var(--ink);color:var(--bg);font-size:12px;line-height:1.3;padding:5px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:2}
-.trend .tip b{font-size:13px}
 #fpsmeter{font-family:ui-monospace,Menlo,monospace}
 .plbuild{font:500 12px/1.4 var(--body);color:#8e9caa;margin-top:8px;letter-spacing:.02em}
 #playercover .plbuild{text-transform:none;letter-spacing:.02em;font-size:12px;font-weight:500}
 .buildtag{flex:none;margin:8px 0 0 2px;font:500 12px/1.2 var(--body);color:var(--muted)}
 .buildtag a,.plbuild a{color:inherit;text-decoration:underline;text-decoration-color:rgba(142,156,170,.6);text-underline-offset:3px}
 .buildtag a:hover,.plbuild a:hover{color:var(--ink)}#playercover .plbuild a:hover{color:var(--cream)}
-.trend .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center}
-.tabpanel .pgrid{grid-template-columns:1fr;gap:18px}
 .tabpanel .options{gap:12px 18px}
 .quick .ql{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
 .quick .ql.tap{font-size:13px}
@@ -534,7 +504,6 @@ html.kbd .next:disabled .key{color:var(--muted);border-color:var(--line-strong)}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 4px 8px;box-shadow:var(--shadow-1)}
 .stat b{display:block;font-family:var(--display);font-size:28px;line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin-bottom:2px}
 .stat span{display:block;font-size:11px;font-weight:600;line-height:1.3;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.byfrac{display:flex;flex-direction:column;gap:6px}
 .row{display:grid;grid-template-columns:38px 1fr 76px;gap:10px;align-items:center;font-size:13px}
 .row .lab{font-family:var(--display);font-weight:700;font-size:18px}
 .bar{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
@@ -782,6 +751,7 @@ html.svopen,html.svopen body{overflow:hidden}
 .svback{width:auto;display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 14px 0 8px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:600 15px var(--body);cursor:pointer;flex:none;transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
 .svback:hover{background:var(--surface-2);border-color:var(--muted)}
 .svtitle{margin:0;font:700 26px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--ink);display:flex;align-items:baseline;gap:10px;min-width:0}
+.svtitle:focus{outline:none}
 .svtitle small{font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .svmode{margin-left:auto;flex:none}
 .svmode .ico{width:11px;height:11px;margin-left:4px}
@@ -796,8 +766,10 @@ html.svopen,html.svopen body{overflow:hidden}
 .svbody:focus{outline:none}
 @media (min-width:760px){.svbody{padding:20px 24px 32px}}
 .svin{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-.svgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;align-items:start}
-.svgrid > .svkpis,.svcard.wide{grid-column:1/-1}
+.svin > .svgrid:last-child{margin-bottom:-16px}
+.svgrid{columns:2 400px;column-gap:16px}   /* two columns when there's room; cards flow down them so short ones don't leave gaps */
+.svgrid > *{break-inside:avoid;margin-bottom:16px}
+.svgrid > .svkpis,.svgrid > .svcard.wide{column-span:all}
 .svcard{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow-1)}
 .svch h3{margin:0;font:700 20px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase}
 .svch p{margin:3px 0 14px;font-size:13px;line-height:1.4;color:var(--muted)}
@@ -852,6 +824,7 @@ html.svopen,html.svopen body{overflow:hidden}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .statsview{--heat-span:36%}}
 :root[data-theme="dark"] .statsview{--heat-span:36%}
 .svheat td.c{background:color-mix(in srgb,var(--accent) calc(8% + var(--s)*var(--heat-span)),var(--surface));color:var(--ink)}
+@media (max-width:480px){.svheat{border-spacing:2px}.svheat td{min-width:40px;height:42px}.svheat th{font-size:16px;padding:0 2px}.svheat td.tot,.svheat th.tot{min-width:30px;padding-left:2px}}
 .svheat td.tot,.svheat th.tot{background:none;font:500 12px var(--mono);color:var(--muted);min-width:36px;padding-left:6px}
 /* legends */
 .svlegend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12px;color:var(--muted)}
@@ -1238,7 +1211,7 @@ html.svopen,html.svopen body{overflow:hidden}
     <section class="statsview" id="statsview" role="dialog" aria-modal="true" aria-labelledby="sv-title" hidden>
       <div class="svtop">
         <button class="svback" id="svclose" aria-label="Close stats, back to the table" title="Back (Esc)"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Back</span></button>
-        <h2 class="svtitle" id="sv-title">Stats<small id="sv-who"></small></h2>
+        <h2 class="svtitle" id="sv-title" tabindex="-1">Stats<small id="sv-who"></small></h2>
         <div class="seg svmode" id="svmode" role="group" aria-label="Which mode's stats" hidden><button data-svt="shoot" aria-pressed="true">Ladder</button><button data-svt="flash" aria-pressed="false">Flash</button></div>
       </div>
       <div class="svtabs" id="svtabs" role="tablist" aria-label="Stats sections"></div>
@@ -1339,7 +1312,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 493;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 494;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -5091,7 +5064,7 @@ function openStats(v, opts = {}){
     $('sv-who').textContent = ME && ME.name && PL.list.length > 1 ? ME.name : '';
     svRender();
     $('svbody').scrollTop = 0;
-    $('svtab-' + SV.tab).focus({preventScroll: true});
+    $('sv-title').focus({preventScroll: true});   // into the dialog; Tab goes on to Back, the mode and the tabs
     try{ history.pushState({hbStats: 1}, ''); SV.pushed = true; }catch(e){ SV.pushed = false; }   // the phone's back gesture closes it
   } else {
     view.hidden = true;

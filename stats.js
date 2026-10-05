@@ -324,7 +324,7 @@ function tabShots(d){
   } else grid.push(card('Speed', 'Your speed against outcomes', empty(`Speed is yours from ${G[7]}`, 'Each shot’s speed and result shows here.')));
   // scratches
   const scr = d.L.filter(e=>e.sc).length, P = d.L.filter(e=>e.sv != null || e.z != null || e.sc != null);
-  grid.push(card('Scratches', 'Cue ball in a pocket', P.length ? `<div class="svkpis mini">${kpi(`${pct(scr, P.length)}%`, 'Scratch rate', `${num(scr)} of ${num(P.length)}`)}${kpi(num(d.L.slice(-100).filter(e=>e.sc).length), 'Last 100 shots', '')}</div>`
+  grid.push(card('Scratches', 'Cue ball in a pocket', P.length ? `<div class="svkpis mini">${kpi(`${pct(scr, P.length)}%`, 'Scratch rate', `${num(scr)} of ${num(P.length)}`)}${kpi(num(d.L.slice(-100).filter(e=>e.sc).length), 'Scratches', 'last 100 shots')}</div>`
     + (scr ? `<h4>Scratch rate by shot type</h4>` + bars(Object.entries({'Follow': 9, 'Stun': 10, 'Draw': 11, 'Two rails': 12, 'English': 13}).map(([label, k])=>{ const x = Z.filter(e=>zk(e) === k); return {label, n: x.length, ok: x.filter(e=>e.sc).length}; }).filter(r=>r.n), {min: 5}).replace(/<ul class="svbars"/, '<ul class="svbars bad"') : '<p class="svnote">No scratches.</p>')
     : empty('No shot results yet', 'Scratches show once you play Ladder shots.')));
   // spin
@@ -343,7 +343,7 @@ function tipMap(TP){
   const pts = Object.values(m), max = Math.max(...pts.map(p=>p.n));
   let s = `<svg class="svtip" viewBox="-1.25 -1.25 2.5 2.5" width="150" height="150" role="img" aria-label="Tip positions used: ${pts.length}. The most used: ${pts.sort((a, b)=>b.n - a.n).slice(0, 3).map(p=>`${p.n} shots`).join(', ')}">`;
   s += `<circle r="1" class="face"/><line x1="-1" x2="1" y1="0" y2="0" class="cross"/><line y1="-1" y2="1" x1="0" x2="0" class="cross"/><circle r=".5" class="lim"/>`;
-  pts.forEach(p=>{ const r = .06 + .12*Math.sqrt(p.n/max); s += `<circle cx="${p.x}" cy="${-p.y}" r="${r.toFixed(3)}" class="tipd" style="fill-opacity:${p.zn ? (.25 + .75*p.z/p.zn).toFixed(2) : .25}"/>`; });
+  pts.forEach(p=>{ const r = .035 + .075*Math.sqrt(p.n/max); s += `<circle cx="${p.x}" cy="${-p.y}" r="${r.toFixed(3)}" class="tipd" style="fill-opacity:${p.zn ? (.25 + .75*p.z/p.zn).toFixed(2) : .25}"/>`; });
   return `<div class="svtipw">${s}</svg><p class="svnote">Bigger dot: used more. Darker: more zones hit from there. Inner ring: half the ball’s radius.</p></div>`;
 }
 
