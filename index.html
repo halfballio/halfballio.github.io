@@ -426,6 +426,7 @@ body.dragging{-webkit-user-select:none;user-select:none}
 .answers button span{font:500 11px var(--mono);color:var(--muted);letter-spacing:.02em}
 .answers button:hover:not(:disabled){border-color:var(--accent);background:var(--surface-2)}
 .answers button:disabled{cursor:default}
+.answers.locked button,.mods.locked button{opacity:.45;pointer-events:none;box-shadow:none}   /* a new player's first visit: nothing to call until the first lesson */
 .answers button.aimed{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .answers button.right{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good);background:color-mix(in srgb,var(--good) 15%,var(--surface))}
 .answers button.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
@@ -1130,7 +1131,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 474;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 475;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1146,6 +1147,13 @@ function plGrade(id){   // their Shoot grade, for the picker
   let s = null; try{ s = JSON.parse(lsGet(plKey('halfball-stats', id))); }catch(e){}
   if(!s || (!s.shoot && !(s.log || []).length)) return 'New';
   return SHOOT_GRADES[Math.min(Math.max(0, s.shoot ? s.shoot.g | 0 : 0), SHOOT_GRADES.length - 1)];
+}
+// the game starts at the top: no reload after a pick, so the title screen's scroll (and the phone keyboard the name field
+// brought up) would carry over and open the game scrolled far down. Again once the keyboard has gone and the page has settled.
+function toTop(){
+  const a = document.activeElement; if(a && a !== document.body && a.blur) a.blur();
+  const top = () => { try{ window.scrollTo(0, 0); }catch(e){} [document.scrollingElement, document.documentElement, document.body, ...document.querySelectorAll('#playercover, .sumcover, .panel, .tabpanel')].forEach(el=>{ if(el) el.scrollTop = 0; }); };
+  top(); requestAnimationFrame(top); setTimeout(top, 350);
 }
 let plPick = null;   // set while the game waits behind the title screen: a pick starts it right here, no reload
 function playAs(id){
@@ -1186,7 +1194,7 @@ function showPlayers(){
 let picked = null; try{ picked = sessionStorage.getItem('halfball-go'); sessionStorage.removeItem('halfball-go'); }catch(e){}
 if(!picked && PL.at && Date.now() - PL.at < 15000) picked = PL.cur;   // just picked, where there's no sessionStorage
 let ME = TEST ? {id: 'p0', name: 'Test'} : PL.list.find(p=>p.id === picked) || null;   // every visit starts at the title screen, even with one player
-if(!ME){ ME = await new Promise(go=>{ plPick = go; showPlayers(); }); $('playercover').hidden = true; }   // nobody picked yet: the game waits behind the picker, then starts
+if(!ME){ ME = await new Promise(go=>{ plPick = go; showPlayers(); }); $('playercover').hidden = true; toTop(); }   // nobody picked yet: the game waits behind the picker, then starts
 meId = ME.id;
 if(!TEST){ PL.cur = ME.id; delete PL.at; savePL(); try{ sessionStorage.setItem('halfball-player', ME.id); }catch(e){} }
 const KEY = k => plKey(k, ME.id);
@@ -3012,7 +3020,7 @@ function perspSVG(s, reveal, view){
     pcache = {key, back: G3 ? '' : perspBack(cam, s, reveal, segs, ring), front: G3 ? '' : perspFront(cam, s, reveal, segs, ring),
       fx: ring && !reveal ? `<path d="${ring}" fill="none" stroke="#ffd34d" stroke-width="1.65"/>` : ''};
   }
-  return {fx: pcache.fx, back: pcache.back, dyn: perspDyn(cam, s, reveal), front: pcache.front, top: perspTop(cam, s, reveal)};
+  return {fx: s.bare ? '' : pcache.fx, back: pcache.back, dyn: perspDyn(cam, s, reveal), front: pcache.front, top: perspTop(cam, s, reveal)};
 }
 // the jaws: the cushion carried round from each point into the pocket, face and top, in cushion blue
 function jawsSVG(cam, onlySide){
@@ -3078,7 +3086,7 @@ const refOn = k => settings[k] !== '0';
 // (it fades out over half a second once you've called the shot, rather than vanishing)
 const OB_MARK_FADE = 500;
 function obMarkA(){
-  const s = shot; if(!s || !s.extra || !s.extra.length) return 0;
+  const s = shot; if(!s || s.bare || !s.extra || !s.extra.length) return 0;
   if(!answered){ s.markOff = null; return 1; }
   if(s.markOff == null) s.markOff = performance.now();
   return Math.max(0, 1 - (performance.now() - s.markOff)/OB_MARK_FADE);
@@ -3127,11 +3135,11 @@ function perspDyn(cam, s, reveal){
   // balls, far to near
   const A = s.anim, F = reveal && !A ? s.final : null;
   const cbP = A ? A.cb : F ? F.cb : s.cb;   // null once the cue ball has dropped into a pocket
-  const items = tut.on && tut.zb > 0.5 || !cbP ? [] : [{p: cbP, kind:'cb', z: A && A.cbZ != null ? Math.min(R, A.cbZ) : R, shadow: A && A.cbShadow != null ? A.cbShadow : 1, pocket: A && A.cbPocket}];   // the tutorial close-up looks from in front of the cue ball
-  if(A ? A.ob : F ? F.ob : true) items.push({p: A ? A.ob : F ? F.ob : s.ob, kind:'ob', scale: A && A.obZ < R ? 1 : A ? A.obScale : 1, z: A ? A.obZ : R, shadow: A ? A.obShadow : 1, pocket: A && A.obPocket, M: A ? A.obM : F ? F.obM : null});
+  const items = s.bare || tut.on && tut.zb > 0.5 || !cbP ? [] : [{p: cbP, kind:'cb', z: A && A.cbZ != null ? Math.min(R, A.cbZ) : R, shadow: A && A.cbShadow != null ? A.cbShadow : 1, pocket: A && A.cbPocket}];   // the tutorial close-up looks from in front of the cue ball
+  if(!s.bare && (A ? A.ob : F ? F.ob : true)) items.push({p: A ? A.ob : F ? F.ob : s.ob, kind:'ob', scale: A && A.obZ < R ? 1 : A ? A.obScale : 1, z: A ? A.obZ : R, shadow: A ? A.obShadow : 1, pocket: A && A.obPocket, M: A ? A.obM : F ? F.obM : null});
   // S: the other balls on the table (where the engine has them while it plays, and where they stopped)
   const xb = A && A.extra ? A.extra : F && F.extra ? F.extra : (s.extra || []).map(x=>({x, p: x.p, z: R, shadow: 1, M: null}));
-  if(!(tut.on && tut.zb > 0.5)) for(const b of xb) if(b.p) items.push({p: b.p, kind:'xb', x: b.x, z: b.z ?? R, shadow: b.shadow ?? 1, pocket: b.pocket, M: b.M});
+  if(!s.bare && !(tut.on && tut.zb > 0.5)) for(const b of xb) if(b.p) items.push({p: b.p, kind:'xb', x: b.x, z: b.z ?? R, shadow: b.shadow ?? 1, pocket: b.pocket, M: b.M});
   const contact = A && A.trail.ob;   // the balls have met and are diverging
   // once the balls meet: a faint mark where the object ball started, so the lines out of it start from something
   // (always yellow, like the line to the pocket: a ball's own colour can vanish on the cloth)
@@ -3235,7 +3243,7 @@ const stanceIn = () => (+settings.heightCm >= 150 && +settings.heightCm <= 200 ?
 function rigAlpha(s){
   const td = !!(tut.on && s && s.cam && s.cam.tutDown);   // a lesson's coach down on the shot: cue and hand too
   const fl = flashDown();
-  if((!isShoot() && !fl) || (tut.on && !td) || settings.view === 'top' || !s) return {a:0};
+  if((!isShoot() && !fl) || (tut.on && !td) || settings.view === 'top' || !s || s.bare) return {a:0};
   const g = shootLevel(), c = rigCam(s);
   if(!td && ((!fl && g < SH.down) || !c || !c.T)) return {a:0};
   const base = rigOpacity(),   // your setting, 50–100%
@@ -3482,7 +3490,7 @@ function dashedLine(cam, pts, col, op, dash){
 }
 // ---------- performance numbers (shown on #dev) ----------
 const PERF = {drawMs: 0, glMs: 0, draws: 0, gls: 0, dealMs: 0};
-const replayBare = s => !!(s && s.replay && s.replay.bare);
+const replayBare = s => !!(s && (s.bare || (s.replay && s.replay.bare)));   // (bare: a new player's empty table, before the first lesson)
 function draw(reveal){ const t0 = performance.now(); drawInner(reveal); syncUpBtn(); PERF.drawMs += performance.now() - t0; PERF.draws++; }
 function drawInner(reveal){
   if(replayBare(shot)) reveal = false;   // the right shot coming up: a bare table, as before any shot
@@ -3698,6 +3706,7 @@ function prepareNext(){
 }
 function deal(){ const t0 = performance.now(); try{ return dealInner(); } finally { PERF.dealMs = performance.now() - t0; } }
 function dealInner(){
+  if(callLock){ if(!$('stancecover').hidden || tour.on) return; lockCalls(false); }   // a new player: nothing dealt until the stance card and the tour are done
   if(cueStroke && cueStroke.s === shot) return;   // mid-stroke: the shot goes first
   if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
   // a new element is explained the first time you reach the grade that brings it in
@@ -4215,7 +4224,12 @@ function renderSessionHistory(){
 
 // With speed & throw a call has two parts, fraction and thick / center / thin, picked in either order.
 let pend = {f:null, m:null};
-const canCall = () => !answered && shot && !isPlace() && !anim && $('sessidlecover').hidden && $('endcover').hidden;
+let callLock = false;   // a brand-new player: no shot and no calls until the first lesson (or skipping the tour) deals one
+function lockCalls(v){
+  callLock = v; ['answers', 'mods'].forEach(id=>$(id).classList.toggle('locked', v));
+  document.querySelectorAll('#answers button, #mods button').forEach(b=>{ b.disabled = v; });
+}
+const canCall = () => !callLock && !answered && shot && !isPlace() && !anim && $('sessidlecover').hidden && $('endcover').hidden;
 function markPend(){
   document.querySelectorAll('#answers button').forEach(b=>b.classList.toggle('sel', b.dataset.id===pend.f));
   document.querySelectorAll('#mods button').forEach(b=>b.classList.toggle('sel', b.dataset.mod===pend.m));
@@ -5184,7 +5198,7 @@ function tutRailShot(){
   const s = shot, cb = [W/2, H*.3], ob = [W/2, H*.56], w = norm(sub(ob, cb));
   Object.assign(s, {cb, ob, gb: sub(ob, mul(w, 2*R)), v: w, u: w, uC: w, n: w, sign: 1, theta: 0, pathDeg: 0, gbLook: null, strk: null, seq: null});
 }
-const noPocket = () => tut.on && !!tstep().noPocket;
+const noPocket = () => (tut.on && !!tstep().noPocket) || !!(shot && shot.bare);
 function freshCall(){   // same shot, ready to be called again
   if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
   answered = false; shot.pick = null; shot.final = null; shot.anim = null; shot.t0 = performance.now();
@@ -5553,6 +5567,7 @@ document.addEventListener('keydown', e=>{
   if(!$('startcover').hidden){ if(e.key==='Enter' || e.key===' '){ startFlashMode(); e.preventDefault(); } return; }
   if(e.key==='Shift' && !e.repeat && !$('cover').hidden && !$('replay').hidden){ replay(); e.preventDefault(); return; }   // Shift replays: Flash's replay,
   if(e.key==='Shift' && !e.repeat && !$('showright').hidden && !anim){ replayRightNow(); e.preventDefault(); return; }   // or the right shot after a miss
+  if(callLock) return;   // a new player before the first lesson: keys 1–5 and Enter have nothing to call
   const k = parseInt(e.key,10);
   if(tut.on && !tstep().ask) return;
   if(!isPlace() && k>=1 && k<=REFS.length && !answered){ pickFrac(REFS[k-1].id); e.preventDefault(); }
@@ -5785,6 +5800,7 @@ sizeTable();
 if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_STEPS, tableFor, libVer, parseShipped, fromLibrary, shippedOk, dealtOk: (s, k)=>{ if(!s.zone){ const q = strikeOf(s), st = +k === SH.throw ? throwStroke(s) : {V: q.V, tip: [0, q.b]}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch; } const st = {V: STROKE_MPH[s.zone.lvl]*MPH, tip: s.zone.tip}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch && r.inZone; }, setShipped: x=>{ SHIPPED = x; }, isZoneStep, shotOf, zoneSpotOk, handRoomMax: s=>{ const g0 = GEN.g; GEN.g = 0; try{ return handRoom(s); } finally { GEN.g = g0; } }, makeRec, encodeRec, decodeRec, recOk, REC, setTable: (t)=>{ setTable(t, settings.pockets); }, curTable: ()=>curTable};
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
 deal();
+if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
 syncStreakPill();
 if(!settings.tut && !(stats.log || []).length && !baselines().length){ settings.tut = 1; saveSettings(); }   // first visit: the Shooting lesson opens on the first shot
 // Ask the browser to keep this site's storage (scores, settings) instead of evicting it under storage pressure.
