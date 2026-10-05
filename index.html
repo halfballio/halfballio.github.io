@@ -521,6 +521,20 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .opt{flex-wrap:wrap}
 }
 @media (max-width:420px){.answers button{font-size:24px}.lean,.legend{grid-template-columns:96px 1fr 64px}}
+/* Phones, portrait: the header on one row (the mark alone when there's no room for the wordmark), so the table and the answers fit one screen */
+@media (max-width:760px){
+  header{flex-wrap:nowrap;align-items:center;gap:8px}
+  header > div:first-child{flex:none}
+  .hright{gap:6px;min-width:0}
+  .plwrap{min-width:0}
+  .plchip{max-width:9em;padding:0 10px 0 12px}
+  .gradebadge{min-width:52px}
+  .menu{padding:calc(60px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
+  .menucard{padding-inline:16px}.menuhead{margin-inline:-16px;padding-inline:16px}
+  .sesslive #sessend{min-height:44px;padding:0 4px}
+  .stat span,.insights dt{font-size:12px}
+}
+@media (max-width:439px){header h1{font-size:0;gap:0}header h1::before{width:38px;height:38px}}   /* the wordmark's text stays for screen readers */
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.gradebadge.pop,.lvlcard.show b{animation:none}}
 
 /* Desktop: one screen, two columns on a shared grid.
@@ -990,7 +1004,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 466;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 467;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
