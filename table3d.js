@@ -6,7 +6,7 @@
 const T3 = root.THREE;
 let COL = {cloth:0x24609c, shelf:0x1f5689, cushion:0x2569a8, nose:0x1a4f80, rail:0x4b4f55, railEdge:0x33363b,   /* grey rails, as on tournament tables */ hole:0x050505, diamond:0xeadcbf, room:0x15100c};
 
-function make(canvas){
+function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few less facets (still round at any size a phone shows them)
   if(!T3) return null;
   let renderer;
   const AA = (root.localStorage && (()=>{ try{ return JSON.parse(localStorage.getItem('halfball-settings') || '{}').gfxAA; }catch(e){ return null; } })()) !== '0';   // antialiasing is fixed when the renderer is made
@@ -178,7 +178,19 @@ function make(canvas){
     const t = new T3.CanvasTexture(cv); t.anisotropy = 4;
     return texCache[key] = t;
   }
-  const sphere = new T3.SphereGeometry(1, 48, 32);
+  // the numbers are drawn in the page's condensed font: on a first visit (or a slow phone) it can still be on its way when the
+  // balls are first drawn, and they'd keep the fallback's numbers. When it arrives, the numbered balls are drawn again.
+  try{
+    const NUMF = '700 20px "Barlow Condensed"', fonts = root.document && root.document.fonts;
+    if(fonts && fonts.check && !fonts.check(NUMF)) fonts.load(NUMF).then(()=>{
+      const old = [];
+      for(const k in texCache) if(!k.startsWith('cb')){ old.push(texCache[k]); delete texCache[k]; }
+      if(!old.length) return;
+      if(opts.redraw) opts.redraw();   // setBalls picks up the new textures
+      setTimeout(()=>old.forEach(t=>t.dispose()), 1000);
+    }, ()=>{});
+  }catch(e){}
+  const sphere = opts.lite ? new T3.SphereGeometry(1, 32, 24) : new T3.SphereGeometry(1, 48, 32);   // 32 round: under half a pixel off round even down on the shot
   function ball(id, R){
     if(balls[id]) return balls[id];
     const m = new T3.Mesh(sphere, new T3.MeshStandardMaterial({roughness:.18, metalness:0}));
@@ -196,14 +208,13 @@ function make(canvas){
       if(m.material.map !== tex){ m.material.map = tex; m.material.needsUpdate = true; }
       const op = b.opacity ?? 1;
       m.material.transparent = op < 1; m.material.opacity = op; m.material.depthWrite = op >= 1; m.castShadow = op >= 1;
-      const M = mul3(b.M || ID, b.base || ID);
-      m.matrix.set(M[0][0]*R, M[0][1]*R, M[0][2]*R, b.p[0], M[1][0]*R, M[1][1]*R, M[1][2]*R, b.p[1], M[2][0]*R, M[2][1]*R, M[2][2]*R, b.z, 0, 0, 0, 1);
+      const A = b.M || ID, B = b.base || ID, e = (i, j) => (A[i][0]*B[0][j] + A[i][1]*B[1][j] + A[i][2]*B[2][j])*R;   // M·base, with no arrays made every frame
+      m.matrix.set(e(0,0), e(0,1), e(0,2), b.p[0], e(1,0), e(1,1), e(1,2), b.p[1], e(2,0), e(2,1), e(2,2), b.z, 0, 0, 0, 1);
       m.matrixWorldNeedsUpdate = true; m.visible = true;
     }
     for(const id in balls) if(!seen[id]) balls[id].visible = false;
   }
   const ID = [[1,0,0],[0,1,0],[0,0,1]];
-  const mul3 = (A, B) => A.map(r=>[0,1,2].map(j=>r[0]*B[0][j] + r[1]*B[1][j] + r[2]*B[2][j]));
 
   // ---------- the target pocket: a yellow arrow floating over it, pointing down ----------
   function makeArrow(color){
@@ -212,14 +223,14 @@ function make(canvas){
     const shaft = new T3.Mesh(new T3.CylinderGeometry(.42, .42, 2.2, 20), mat); shaft.rotation.x = Math.PI/2; shaft.position.z = 2.9;
     g.add(head, shaft); g.visible = false; world.add(g); return g;
   }
-  const DOWN = new T3.Vector3(0, 0, -1);
+  const DOWN = new T3.Vector3(0, 0, -1), DIR = new T3.Vector3();
   const arrows = {pocket: makeArrow(0xffd34d), zone: makeArrow(0x5be0c8)};
   function setArrow(a, which = 'pocket'){   // a: {p:[x, y], z} (the tip), or null
     const g = arrows[which]; g.visible = !!a;
     if(a){
       g.position.set(a.p[0], a.p[1], a.z);
       const d = a.dir || [0, 0, -1];   // the way the tip points (straight down when it floats over its target)
-      g.quaternion.setFromUnitVectors(DOWN, new T3.Vector3(d[0], d[1], d[2]).normalize());
+      g.quaternion.setFromUnitVectors(DOWN, DIR.set(d[0], d[1], d[2]).normalize());
       g.rotateZ(a.spin || 0);
     }
   }
@@ -265,6 +276,11 @@ function make(canvas){
   // graphics settings: resolution (pixel ratio cap) and shadows ('soft', 'hard' or 'off')
   function setQuality(q){
     if(q.ratio) renderer.setPixelRatio(Math.min(q.ratio, root.devicePixelRatio || 1));
+    if(q.shadowSize && q.shadowSize !== sun.shadow.mapSize.x){   // the shadow map's size: a new one is made at the next shadow update
+      sun.shadow.mapSize.set(q.shadowSize, q.shadowSize);
+      if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
+      renderer.shadowMap.needsUpdate = true;
+    }
     if(q.shadows){
       renderer.shadowMap.enabled = q.shadows !== 'off';
       renderer.shadowMap.type = q.shadows === 'hard' ? T3.BasicShadowMap : T3.PCFSoftShadowMap;

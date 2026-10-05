@@ -3,8 +3,8 @@
 // Each is an 8-bar head, written out, looped as 16 bars: the second time the tune rests for four bars.
 (function(root){
 'use strict';
-let ctx = null, out = null, mix = null, send = null, noise = null, metal = null, crackle = null;
-let timer = 0, track = null, nextT = 0, step = 0, vol = 0.5, tok = 0, sleepTimer = 0;
+let ctx = null, out = null, mix = null, send = null, noise = null, metal = null, metalIn = null, metalOsc = null, crackle = null;
+let timer = 0, track = null, nextT = 0, step = 0, vol = 0.5, tok = 0, sleepTimer = 0, away = false;
 const KS = {};
 const LEVEL = 0.3;
 const mtof = m => 440*Math.pow(2, (m - 69)/12);
@@ -25,7 +25,8 @@ function impulse(secs, decayPow, bright){   // a reverb: stereo decaying noise t
 function ensure(){
   if(ctx) return true;
   const AC = root.AudioContext || root.webkitAudioContext; if(!AC) return false;
-  ctx = new AC();
+  // 'playback': music doesn't need a fast reaction, and bigger audio buffers wake a phone's CPU less often
+  try{ ctx = new AC({latencyHint: 'playback'}); }catch(e){ ctx = new AC(); }
   out = ctx.createGain(); out.gain.value = 0;
   mix = ctx.createGain(); send = ctx.createGain();
   const rev = ctx.createConvolver(); rev.buffer = impulse(2.6, 2.6, 0.5);
@@ -36,17 +37,24 @@ function ensure(){
   out.connect(hp); hp.connect(lim); lim.connect(ctx.destination);
   noise = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
   const d = noise.getChannelData(0); for(let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1;
-  // the ride cymbal's metal: six inharmonic square waves, high-passed, always running into one gate
+  // the ride cymbal's metal: six inharmonic square waves, high-passed, into one gate (the waves run only while a track
+  // with a ride plays: see metalOn)
   metal = ctx.createGain(); metal.gain.value = 0;
-  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 8200; bp.Q.value = 0.5;
+  const bp = metalIn = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 8200; bp.Q.value = 0.5;
   const hp2 = ctx.createBiquadFilter(); hp2.type = 'highpass'; hp2.frequency.value = 6200;
-  [205.3, 304.4, 369.6, 522.7, 540, 800].forEach(f=>{
-    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = f*1.83; g.gain.value = 0.16;
-    o.connect(g); g.connect(bp); o.start();
-  });
   bp.connect(hp2); hp2.connect(metal); route(metal, 0.3);
   return true;
 }
+function metalOn(){
+  if(metalOsc) return;
+  metalOsc = [205.3, 304.4, 369.6, 522.7, 540, 800].map(f=>{
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = f*1.83; g.gain.value = 0.16;
+    o.connect(g); g.connect(metalIn); o.start(); return o;
+  });
+}
+function metalOff(){ if(metalOsc){ metalOsc.forEach(o=>{ try{ o.stop(); o.disconnect(); }catch(e){} }); metalOsc = null; } }
+const asleep = () => ctx && ctx.state !== 'running' && ctx.state !== 'closed';   // 'suspended', or iOS's 'interrupted' (a call, an alarm, Siri)
+function wake(){ if(asleep()){ try{ const p = ctx.resume(); if(p && p.catch) p.catch(()=>{}); }catch(e){} } }
 function route(node, wet){
   node.connect(mix);
   if(wet){ const s = ctx.createGain(); s.gain.value = wet; node.connect(s); s.connect(send); }
@@ -256,6 +264,7 @@ function warm(id){ if(id === 'felt'){ const T = TRACKS.felt; T.voice.flat().conc
 function schedule(){
   const T = TRACKS[track]; if(!T) return;
   const beat = 60/T.bpm, d8 = beat/2;
+  if(nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05;   // fell behind (a throttled timer): pick up from now, never a burst of missed notes
   while(nextT < ctx.currentTime + 0.3){
     const s = step % 128, pass = s >> 6, bar = (s >> 3) & 7, e = s & 7;
     const t = nextT + (e % 2 ? (T.swing - 0.5)*beat : 0);
@@ -268,7 +277,7 @@ function play(id){
   if(!TRACKS[id]){ stop(); return; }
   if(!ensure()) return;
   clearTimeout(sleepTimer);
-  if(ctx.state === 'suspended') ctx.resume();
+  wake();
   if(track === id && timer) return;
   const now = ctx.currentTime, my = ++tok, wait = timer ? 300 : 0;
   out.gain.cancelScheduledValues(now); out.gain.setTargetAtTime(0, now, 0.08);
@@ -276,10 +285,11 @@ function play(id){
   setTimeout(()=>{
     if(my !== tok) return;
     stopCrackle(); warm(id);
+    if(id === 'parlor') metalOn(); else metalOff();   // only Parlor has a ride cymbal
     track = id; step = 0; nextT = ctx.currentTime + 0.1;
     out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(vol*LEVEL, ctx.currentTime, 0.5);
     if(TRACKS[id].crackle) startCrackle();
-    timer = setInterval(schedule, 50); schedule();
+    if(!away){ timer = setInterval(schedule, 50); schedule(); }
   }, wait);
 }
 function stop(){
@@ -287,10 +297,24 @@ function stop(){
   track = null; const my = ++tok; clearInterval(timer); timer = 0;
   out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(0, ctx.currentTime, 0.15);
   clearTimeout(sleepTimer);
-  sleepTimer = setTimeout(()=>{ if(my === tok && !track){ stopCrackle(); try{ ctx.suspend(); }catch(e){} } }, 2500);   // rest the cymbal bank when quiet
+  sleepTimer = setTimeout(()=>{ if(my === tok && !track){ stopCrackle(); metalOff(); try{ ctx.suspend(); }catch(e){} } }, 2500);   // rest the cymbal bank and the context when quiet
 }
 function setVolume(v){ vol = Math.max(0, Math.min(1, v)); if(ctx && track) out.gain.setTargetAtTime(vol*LEVEL, ctx.currentTime, 0.1); }
-function unlock(){ if(ensure() && ctx.state === 'suspended') ctx.resume(); }   // call from a tap, so the browser lets it play later
-function resume(){ if(ctx && ctx.state === 'suspended' && track) ctx.resume(); }
+// call from a tap, so the browser lets it play later; with nothing playing it goes back to sleep after a moment
+function unlock(){ if(!ensure()) return; wake(); if(!track){ clearTimeout(sleepTimer); sleepTimer = setTimeout(()=>{ if(!track) try{ ctx.suspend(); }catch(e){} }, 2500); } }
+// back after the page was hidden, a call or an alarm: wake the context and the scheduler (call from a tap: iOS needs one)
+function resume(){
+  if(!ctx || !track || away) return;
+  wake();
+  if(!timer){ timer = setInterval(schedule, 50); schedule(); }
+}
+// the page hidden (another tab, another app, the screen off): stop the scheduler and the context, so a phone isn't kept
+// busy for music nobody hears; it picks up where it was on coming back (or on the next tap, where the browser needs one)
+if(root.document) root.document.addEventListener('visibilitychange', ()=>{
+  away = root.document.hidden;
+  if(!ctx || !track) return;
+  if(away){ clearInterval(timer); timer = 0; try{ ctx.suspend(); }catch(e){} }
+  else resume();
+});
 root.Music = {play, stop, setVolume, resume, unlock, tracks: Object.fromEntries(Object.entries(TRACKS).map(([k, T])=>[k, T.name])), playing: ()=>track};
 })(typeof window !== 'undefined' ? window : this);
