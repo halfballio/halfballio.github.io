@@ -222,6 +222,17 @@ header h1::before{content:"";flex:none;width:40px;height:40px;border-radius:50%;
 .tippad svg{width:84px;height:84px;cursor:crosshair;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 .ckeys{display:flex;gap:2px}
 .speedbar .ckeys kbd{cursor:pointer}
+/* the right shot being replayed: the tip and speed show its stroke, in gold, and can't be changed until it's done */
+.ctlrow::before{content:'Replay';position:absolute;right:0;bottom:calc(100% + 6px);font:600 10px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 2px #000;opacity:0;transition:opacity .4s var(--ease);pointer-events:none}
+.ctlrow.replaying::before{opacity:1}
+.ctlrow small,.ctlrow .ckeys{transition:color .4s var(--ease),opacity .4s var(--ease)}
+.speedtrack,.tippad svg{transition:box-shadow .4s var(--ease)}
+.tippad svg{border-radius:50%}
+.ctlrow.replaying small{color:var(--gold-hi)}
+.ctlrow.replaying .ckeys{opacity:.35}
+.ctlrow.replaying .speedtrack{box-shadow:inset 0 0 0 1px var(--gold),0 0 0 1px rgba(240,191,52,.55),0 2px 6px rgba(0,0,0,.35)}
+.ctlrow.replaying .tippad svg{box-shadow:0 0 0 1.5px var(--gold)}
+.ctlrow.replaying .speedbar,.ctlrow.replaying .tippad svg,.ctlrow.replaying kbd{cursor:default}
 @media (hover:none){.ctlrow .ckeys{display:none}   /* no keyboard: no keycaps, but speed's arrows stay as buttons */
   .ctlrow .speedbar .ckeys{display:flex;gap:6px}.ctlrow .speedbar .ckeys kbd{height:32px;min-width:32px;font-size:16px;border-radius:6px}}
 .modes button{font-size:15px;font-weight:600;min-height:40px;padding:8px 14px;display:inline-flex;align-items:center;justify-content:center}
@@ -425,6 +436,12 @@ button:focus-visible,[role="button"]:focus-visible,a:focus-visible,input:focus-v
 .detail b{color:var(--ink);font-family:var(--mono);font-weight:500}
 .placeholder{color:var(--muted);font-size:14px;grid-column:1/-1;margin:0}
 .answers button{position:relative}
+/* the right shot being replayed: its fraction lit in gold, the others stand back */
+.answers button::after{content:'Replay';position:absolute;top:-8px;left:50%;transform:translateX(-50%);font:700 9px/1.4 var(--body);letter-spacing:.12em;text-transform:uppercase;padding:0 6px;border-radius:999px;background:var(--gold);color:var(--gold-ink);opacity:0;transition:opacity .4s var(--ease);pointer-events:none}
+.answers button{transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease),opacity .4s var(--ease)}
+.answers.replaying button:not(.playing){opacity:.45}
+.answers.replaying button.playing{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold),0 0 0 3px rgba(240,191,52,.22)}
+.answers.replaying button.playing::after{opacity:1}
 /* keyboard hints: small keycaps, only on devices with a mouse/trackpad (so, a keyboard) */
 .key{display:none}
 @media (hover:hover) and (pointer:fine){.touchonly{display:none}}
@@ -973,7 +990,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 465;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 466;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -2235,21 +2252,43 @@ function renderShootControls(){
   const on = isShooting() && (!tut.on || tl.length > 0), c0 = tl ? ctrlAt(LESSONS[tut.lesson].at) : null, c = tl ? {speed: tl.includes('speed'), up: tl.includes('tip'), down: tl.includes('tip') && c0.down, side: tl.includes('tip') && c0.side} : ctrl();   // a lesson's tip pad offers what its grade does
   box.hidden = !on; $('lookwrap').hidden = !(isShooting() && settings.view !== 'top');   // the eye stays in lessons, so a shot that runs off the view can still be followed
   $('speedbar').classList.toggle('tuthl', !!tl && tl.includes('speed')); $('tippad').classList.toggle('tuthl', !!tl && tl.includes('tip'));
+  // the right shot being replayed: the controls show its stroke and its fraction (only shown: your own settings and call stay as they are)
+  const rp = !tl && on && answered && shot && shot.replay && shot.replay.ctl ? shot.replay : null;
+  $('ctlrow').classList.toggle('replaying', !!rp && !!(c.speed || c.up || c.side));
+  let lit = false;
+  document.querySelectorAll('#answers button').forEach(b=>{ const on1 = !!rp && b.dataset.id === rp.id; b.classList.toggle('playing', on1); lit = lit || on1; });
+  $('answers').classList.toggle('replaying', lit);
   if(!on){ $('tippad').hidden = true; $('speedbar').hidden = true; return; }
   $('speedbar').hidden = !c.speed;
   $('freebtns').hidden = !isFree() || !!tl;
   $('tippad').hidden = !(c.up || c.side);
-  if(c.speed){
-    const n = tl && tut.ctl ? tut.ctl.lvl : speedLevel(), f = n/10;
-    $('speedfill').style.height = (f*100).toFixed(1) + '%';
-    $('speedval').textContent = coarseSpeed() ? COARSE_LBL[n] : String(n);
-  }
+  const n = rp ? levelForSpeed(rp.V) : tl && tut.ctl ? tut.ctl.lvl : speedLevel();
+  const t = (rp ? rp.tip : tl ? (tut.ctl ? tut.ctl.tip : [0, 0]) : shot ? shotStroke(shot).tip : [0, 0]) || [0, 0];   // a lesson can open before its first shot is dealt
+  paintCtl(t, n/10);
+  if(c.speed) $('speedval').textContent = coarseSpeed() ? COARSE_LBL[n] : String(n);
   if(c.up || c.side){
-    const t = (tl ? (tut.ctl ? tut.ctl.tip : [0, 0]) : shot ? shotStroke(shot).tip : [0, 0]) || [0, 0];   // a lesson can open before its first shot is dealt
-    $('tipdot').setAttribute('cx', (t[0]).toFixed(2)); $('tipdot').setAttribute('cy', (-t[1]).toFixed(2));
     $('tiplimit').setAttribute('d', tipLimitPath(c));
     $('tipkeys').innerHTML = [c.up && 'W', c.side && 'A', c.down && 'S', c.side && 'D', 'X'].filter(Boolean).map(k=>`<kbd${k === 'X' ? ' title="Centre"' : ''}>${k}</kbd>`).join('');   // X: back to centre
   }
+}
+// The tip dot and the speed fill. Usually they jump to where you put them; set ctlGlideMs first and they glide there
+// instead (into the right shot's stroke as its replay begins, and back to yours after).
+let ctlNow = null, ctlTo = null, ctlRaf = 0, ctlGlideMs = 0;
+function paintCtl(tip, f){
+  const to = {tip: [tip[0], tip[1]], f}, ms = ctlGlideMs; ctlGlideMs = 0;
+  const same = (a, b) => !!a && !!b && a.f === b.f && a.tip[0] === b.tip[0] && a.tip[1] === b.tip[1];
+  if(ctlRaf && same(to, ctlTo)) return;   // already on its way there
+  cancelAnimationFrame(ctlRaf); ctlRaf = 0; ctlTo = to;
+  const put = v => { ctlNow = v;
+    $('tipdot').setAttribute('cx', v.tip[0].toFixed(3)); $('tipdot').setAttribute('cy', (-v.tip[1]).toFixed(3));
+    $('speedfill').style.height = (v.f*100).toFixed(1) + '%'; };
+  const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if(!ms || !ctlNow || calm || same(to, ctlNow)) return put(to);
+  const from = ctlNow, t0 = performance.now(), mix = (a, b, e) => a + (b - a)*e;
+  const step = now => { const u = Math.min(1, (now - t0)/ms), e = ease(u);
+    put({tip: [mix(from.tip[0], to.tip[0], e), mix(from.tip[1], to.tip[1], e)], f: mix(from.f, to.f, e)});
+    ctlRaf = u < 1 ? requestAnimationFrame(step) : 0; };
+  ctlRaf = requestAnimationFrame(step);
 }
 function tipLimitPath(c){   // a dot at every point you can strike: the centre, then rings round the clock
   return tipPoints(c).map(([x, y])=>`M${(x - .035).toFixed(3)} ${(-y).toFixed(3)}a.035 .035 0 1 0 .07 0a.035 .035 0 1 0 -.07 0`).join('');
@@ -4141,10 +4180,11 @@ function showRightShot(){
   // practice strokes, and the stroke. Played like any shot: you come up out of the way as the balls come back at your cue.
   const c = s.cam, routine = !!(c && c.T), downOn = routine && shootLevel() >= SH.down;
   const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);   // reduced motion: shorter moves
-  const rp = s.replay = {V: st.V, tip: st.tip, feather: false};
+  const rp = s.replay = {V: st.V, tip: st.tip, feather: false, id: nearestRef(cutForDir(s, dir)).id};   // id: the fraction it's played at
+  const ctlBack = () => { ctlGlideMs = calm ? 0 : 450; renderShootControls(); };   // the controls back to your own stroke and call
   const tw = routine ? (c.tw = (c.tw || 0) + 1) : 0;   // owns the camera: a stand-up still running stops where it is
   const live = () => { const ok = shot === s && s.replay === rp && (!routine || c.tw === tw);
-    if(!ok){ s.swapA = null; if(shot === s && s.replay === rp){ s.replay = null; draw(true); } }   // cut short: nothing left behind, the references come back
+    if(!ok){ s.swapA = null; if(shot === s && s.replay === rp){ s.replay = null; draw(true); ctlBack(); } }   // cut short: nothing left behind, the references come back
     return ok; };
   const tween = (ms, f, done) => { const t0 = performance.now();
     const tick = now => { if(!live()) return; const u = Math.min(1, (now - t0)/Math.max(1, ms)); f(u); draw(true); if(u < 1) requestAnimationFrame(tick); else done(); };
@@ -4154,12 +4194,13 @@ function showRightShot(){
     const obT = run.sim.events.find(e=>e.ids && e.ids[0]==='o' && e.t > hitT && (e.type==='cushion' || e.type==='jaw' || e.type==='pocket'));
     const upAt = downOn ? Math.min(obT ? obT.t*1000 + 120 : Infinity, rigHitMs(s, run, dir)) : Infinity;   // as a played shot: up as the object ball gets there,
     if(isFinite(upAt)) setTimeout(()=>{ if(shot === s && s.replay === rp) standUp(s); }, upAt);                 // or sooner if a ball's coming back at your cue or hand
-    animateShot({made: run.made}, ()=>{ if(s.replay === rp) s.replay = null; draw(true); standUp(s); }, '#ffd34d', run);
+    animateShot({made: run.made}, ()=>{ if(s.replay === rp){ s.replay = null; if(shot === s) ctlBack(); } draw(true); standUp(s); }, '#ffd34d', run);
   };
   const swapMs = calm ? 300 : 800;
   const across = () => {
     const from = routine ? shootCam(s, settings.view) : null;   // the view right now: the move starts from exactly here
     s.follow = 0; s.aimDir = dir;
+    rp.ctl = true; ctlGlideMs = calm ? 0 : swapMs; renderShootControls();   // the tip, speed and fraction glide to the right shot's as the balls go back
     if(routine){ c.fromCam = from; c.phase = 'shift'; c.k = 0; c.fHold = 0; c.downAt = null; }
     let swapped = false;
     tween(swapMs, u => {
