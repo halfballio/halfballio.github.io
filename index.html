@@ -1211,7 +1211,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 491;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 492;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -3718,7 +3718,7 @@ function applyGfx(){
   if(!settings.gfxV){ if(IS_PHONE){ settings.gfxRatio = '1'; settings.gfxShadows = 'hard'; } settings.gfxV = 1; }   // once: phones move to the lighter defaults
   if(!GFX.ratio.includes(settings.gfxRatio)) settings.gfxRatio = IS_PHONE ? '1' : '1.5';   // phones start lighter
   if(!GFX.shadows.includes(settings.gfxShadows)) settings.gfxShadows = IS_PHONE ? 'hard' : 'soft';
-  if(!GFX.aa.includes(settings.gfxAA)) settings.gfxAA = '1';
+  if(!GFX.aa.includes(settings.gfxAA)) settings.gfxAA = IS_PHONE ? '0' : '1';   // phones: off (as the renderer was made)
   if(!GFX.bob.includes(settings.gfxBob)) settings.gfxBob = '30';
   if(!settings.gfxBobV){ try{ if(matchMedia('(prefers-reduced-motion: reduce)').matches) settings.gfxBob = '0'; }catch(e){} settings.gfxBobV = 1; }   // once: reduced motion starts with the arrows Still (Settings can still set them moving)
   if(G3 && G3.setQuality) G3.setQuality({ratio: +settings.gfxRatio, shadows: settings.gfxShadows, shadowSize: IS_PHONE ? 1024 : 2048});   // a phone's small screen doesn't need the 2048 map: a quarter of the work when balls move
@@ -3755,7 +3755,9 @@ function ringArc3(P){
 }
 // the table in 3D (table3d.js); without WebGL everything is drawn in the SVG as before
 let G3 = null, G3BALLS = [], boxPx = [600, 400];
-try{ G3 = window.Table3D ? Table3D.make(document.getElementById('table3d'), {lite: IS_PHONE, redraw: ()=>{ if(shot && !anim) draw(answered); }}) : null; }catch(e){ G3 = null; }
+if((settings.gfxAAV | 0) < 1){ if(IS_PHONE) settings.gfxAA = '0'; settings.gfxAAV = 1; }   // once: phones start with antialiasing off (turn it back on in Settings and it stays on)
+if(!['1','0'].includes(settings.gfxAA)) settings.gfxAA = IS_PHONE ? '0' : '1';   // set before the renderer is made: antialiasing can't change after
+try{ G3 = window.Table3D ? Table3D.make(document.getElementById('table3d'), {lite: IS_PHONE, aa: settings.gfxAA !== '0', redraw: ()=>{ if(shot && !anim) draw(answered); }}) : null; }catch(e){ G3 = null; }
 if(!G3) document.getElementById('table3d').style.display = 'none';
 // the ball's own frame for its texture: the number spot is painted at local +x, so turn +x onto where the spot starts
 function spotBase(sp){
