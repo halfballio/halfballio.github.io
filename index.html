@@ -230,8 +230,10 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .ctlrow kbd{box-sizing:border-box;height:20px;min-width:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;font:600 11px/1 var(--body);border-radius:5px;background:rgba(242,234,216,.94);color:var(--navy);border:0;box-shadow:inset 0 -1px 0 rgba(15,34,51,.25),0 1px 2px rgba(0,0,0,.35);white-space:nowrap}
 .lookbtn{position:relative;display:grid;place-items:center;padding:0;width:44px;height:44px;border-radius:50%;border:1px solid rgba(242,234,216,.32);background:rgba(15,34,51,.82);color:var(--cream);font-size:18px;cursor:pointer;touch-action:none;box-shadow:var(--shadow-2);transition:background var(--t-fast) var(--ease)}
 .lookbtn:hover{background:rgba(30,58,84,.9)}.lookbtn svg{width:22px;height:22px}
-.focusbtn[aria-pressed="true"]{border-color:var(--gold)}.focusbtn:disabled{opacity:.45;cursor:default}.focusbtn:disabled:hover{background:rgba(15,34,51,.82)}
+.focusbtn:disabled{opacity:.45;cursor:default}.focusbtn:disabled:hover{background:rgba(15,34,51,.82)}
 .focusbtn:disabled + .ckeys{opacity:.45}
+.focusbtn .fdot{transition:opacity var(--t-fast) var(--ease)}.focusbtn[aria-pressed="true"] .fdot{opacity:0}
+@media (prefers-reduced-motion:reduce){.focusbtn .fdot{transition:none}}
 .radio{position:absolute;left:8px;top:10px;z-index:5;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:0;cursor:pointer;color:var(--cream)}
 .radio .radiodisc{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--gold);background:rgba(15,34,51,.82);color:var(--gold);box-shadow:var(--shadow-2);transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
 .radio .radiodisc svg{width:20px;height:20px}
@@ -1159,7 +1161,7 @@ html.svopen,html.svopen body{overflow:hidden}
         <div class="ctlrow" id="ctlrow">   <!-- bottom right, left to right: step back, tip, speed; bottoms and keycaps in line -->
           <div class="lookwrap" id="upwrap" hidden><button class="lookbtn upbtn" id="upbtn" aria-label="Stand up off the shot" title="Stand up (Esc)" data-title-kbd="Stand up (Esc)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14M12 20V9M7 13.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="ckeys"><kbd>Esc</kbd></span></div>
           <div class="lookwrap" id="lookwrap"><button class="lookbtn" id="lookbtn" aria-label="Step back: hold to see the whole table" title="Step back (hold Space)" data-title-kbd="Step back (hold Space)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><span class="ckeys"><kbd>Space</kbd></span></div>
-          <div class="lookwrap" id="focuswrap" hidden><button class="lookbtn focusbtn" id="focusbtn" aria-label="Look around the object ball" aria-pressed="false" title="Swap the view’s centre (V)" data-title-kbd="Swap the view’s centre (V)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.94 3.92A8.6 8.6 0 1 1 6.47 5.41M5.84 9.33 6.47 5.41 2.5 5.35" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle id="focusball" cx="12" cy="12" r="4.8" fill="#f4efe0"/><path id="focusband" d="M7.511 10.3A4.8 4.8 0 0 0 7.511 13.7H16.489A4.8 4.8 0 0 0 16.489 10.3z" fill="#f4efe0" style="display:none"/><circle cx="12" cy="12" r="4.8" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width=".9"/></svg></button><span class="ckeys"><kbd>V</kbd></span></div>
+          <div class="lookwrap" id="focuswrap" hidden><button class="lookbtn focusbtn" id="focusbtn" aria-label="Look around the object ball" aria-pressed="false" title="Swap the view’s centre (V)" data-title-kbd="Swap the view’s centre (V)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle class="fdot" cx="12" cy="12" r="2.6" fill="#d2362b"/></svg></button><span class="ckeys"><kbd>V</kbd></span></div>
           <div class="tippad" id="tippad" hidden><small>Tip</small>
             <svg id="tipsvg" viewBox="-1.15 -1.15 2.3 2.3" aria-label="Where the cue tip strikes: tap to set"><circle r="1" fill="#f4efe0" stroke="#cfc6ae" stroke-width=".04"/><path id="tiplimit" d="" fill="#1b6fd1" fill-opacity=".45"/><line x1="-1" y1="0" x2="1" y2="0" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><line x1="0" y1="-1" x2="0" y2="1" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><circle id="tipdot" r=".14" fill="#1b6fd1" stroke="#fff" stroke-width=".04"/></svg>
             <span class="ckeys" id="tipkeys"></span>
@@ -1342,7 +1344,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 499;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 500;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1427,6 +1429,9 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 500, date: '2026-10-05', title: 'The focus button, redrawn', items: [
+    'The focus button is simpler: a ring with a red dot while the view turns round the cue ball, no dot for the object ball.',
+  ]},
   {build: 499, date: '2026-10-05', title: 'Stats, properly', items: [
     'A Stats button in the header opens your stats full screen.',
     'Accuracy over time, which fractions you mix up, and whether you cut too thin or too thick.',
@@ -3241,9 +3246,9 @@ function pivotToggle(){
   if(!pivotOk() || !pivotBall(shot, 'o')) return false;
   pivotPt(shot); setPivot(pivot.id === 'c' ? 'o' : 'c'); tutLook('swap', pivot.id); return true;
 }
-// The focus button, next to the eye: its face is the ball you're looking around (the cue ball, or the object ball in its
-// colour). It's there when the drag is, and greyed out while the shot has the view (stepping in, down, the stroke, a replay).
-let focusFace = '';
+// The focus button, next to the eye: a ring like the eye's, with the cue ball's red dot while the view turns round the
+// cue ball and without it while it turns round the object ball.
+// It's there when the drag is, and greyed out while the shot has the view (stepping in, down, the stroke, a replay).
 function syncFocusBtn(){
   const w = $('focuswrap'), b = $('focusbtn'); if(!w || !b) return;
   const on = walkOn() && isShooting() && settings.view !== 'top' && !!shot;
@@ -3252,11 +3257,7 @@ function syncFocusBtn(){
   const s = shot; if(pivot.s !== s) pivotPt(s);
   const o = pivot.id === 'o', dis = !pivotOk();
   if(b.disabled !== dis) b.disabled = dis;
-  const col = o ? ballCol(s) : '#f4efe0', num = o ? +s.color[1] : 0, face = col + num;
-  if(face === focusFace) return;
-  focusFace = face;
-  $('focusball').setAttribute('fill', num > 8 ? '#f4efe0' : col);   // a stripe: white, with its colour round the middle
-  $('focusband').setAttribute('fill', col); $('focusband').style.display = num > 8 ? '' : 'none';
+  if(b.getAttribute('aria-pressed') === String(o)) return;
   b.setAttribute('aria-pressed', o ? 'true' : 'false');
   b.setAttribute('aria-label', o ? 'Look around the cue ball' : 'Look around the object ball');
 }
