@@ -189,6 +189,14 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .hlogo .lnum.pop{animation:logopop .32s cubic-bezier(.2,1.4,.4,1)}
 @keyframes logopop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.hlogo .lnum.pop{animation:none}}
+.hlogo::after{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0}
+.hlogo.cheer::after{animation:logocheer .6s ease-out}   /* a streak shot: the sparks from the pocket land here and the disc rings once */
+@keyframes logocheer{0%{opacity:1;box-shadow:0 0 0 0 rgba(246,205,85,.9),0 0 6px 2px rgba(246,205,85,.7)}100%{opacity:1;box-shadow:0 0 0 14px rgba(246,205,85,0),0 0 16px 6px rgba(246,205,85,0)}}
+.table-box.cheer{animation:tablecheer .9s ease-out}   /* ...and the table's edge glows gold for a moment */
+@keyframes tablecheer{0%,100%{box-shadow:var(--shadow-2)}25%{box-shadow:var(--shadow-2),0 0 0 2px rgba(246,205,85,.85),0 0 22px 4px rgba(246,205,85,.45)}}
+.cheerfx{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:45}
+@media (prefers-reduced-motion:reduce){.hlogo.cheer::after{animation:logoglow .9s ease-in-out}}
+@keyframes logoglow{0%,100%{opacity:0;box-shadow:0 0 10px 3px rgba(246,205,85,.75)}40%{opacity:1;box-shadow:0 0 10px 3px rgba(246,205,85,.75)}}
 .sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
 .seg{display:inline-flex;background:var(--chip);border:1px solid var(--line);border-radius:var(--r);padding:3px;gap:2px;flex-wrap:wrap}
 .seg button{font:500 13px var(--body);min-height:32px;border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;transition:color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
@@ -1195,7 +1203,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 487;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 488;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -2675,6 +2683,7 @@ function takeShot(id){
     const st = curStreak();
     if(full && st >= STREAK_HOT) playSound('streak', st); else if(!full && prevStreak >= STREAK_HOT) playSound('streakEnd');
     showStreak(st, !full && prevStreak >= STREAK_HOT ? prevStreak : 0);
+    if(full && st >= STREAK_HOT) cheer(st, prevStreak < STREAK_HOT);
   }
   // the verdict as a small table: your call and the right one, your stroke and the one it wanted, and what the balls did
   const spd = strokeName, want = s.zone && s.zone.lvl ? s.zone.lvl : pocketLvl, mine = speedLevel();
@@ -4079,6 +4088,95 @@ function showStreak(cur, endedAt){   // the logo holds the count: the balls fade
     streakTimer = setTimeout(()=>el.classList.remove('over'), 1500);   // the final count rests on the navy disc, then the balls come back
   } else clear();
 }
+// A streak shot called right: a little gold burst where the eye is (the pocket, as the ball drops), and a few sparks
+// that fly up to the logo, so the eye follows them to the count; the table's edge glows once. About a second, then gone:
+// the canvas is made for it and removed after, so the page goes back to idle. Reduced motion: just the glows, no sparks.
+let cheerQ = null, cheerFx = null;
+function cheer(n, first){   // queued at the call; animateShot fires it as the object ball drops (or now, if nothing's rolling)
+  if(tut.on || settings.streaks === '0') return;
+  const s = shot; if(cheerQ) clearTimeout(cheerQ.at);
+  cheerQ = {n, first, s};
+  if(settings.animate === '0') return cheerGo();
+  setTimeout(()=>{ if(cheerQ && cheerQ.s === s && !cheerQ.at) cheerGo(); }, 4000);   // never lost if the shot isn't played out
+}
+function cheerAt(s, run){   // from animateShot: when the object ball reaches its pocket
+  if(!cheerQ || cheerQ.s !== s || cheerQ.at) return;
+  const e = run && run.obIn, ms = e ? Math.min(e.t*1000 + 60, 3500) : 250;
+  cheerQ.at = setTimeout(cheerGo, ms);
+}
+function cheerKick(el, cls, ms){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls), ms); }
+function cheerStop(){ if(cheerFx){ cancelAnimationFrame(cheerFx.raf); cheerFx.cv.remove(); cheerFx = null; } }
+function cheerGo(){
+  const q = cheerQ; cheerQ = null; if(!q) return;
+  clearTimeout(q.at); cheerStop();
+  if(tut.on || settings.streaks === '0') return;
+  const logo = $('hlogo'), box = document.querySelector('.table-box');
+  const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  cheerKick(box, 'cheer', 950);
+  if(calm || q.s !== shot || !box){ cheerKick(logo, 'cheer', 950); return; }   // no sparks: a soft glow on the table and the logo
+  // where it starts: the target pocket on screen (kept inside the table's box)
+  const br = box.getBoundingClientRect(), svg = $('table');
+  if(!br.width){ cheerKick(logo, 'cheer', 650); return; }
+  let from = null;
+  try{
+    let x, y;
+    if(settings.view === 'top'){ x = q.s.P.c[0]; y = q.s.P.c[1]; }
+    else { const c = lastCam && lastCam.toCam([q.s.P.c[0], q.s.P.c[1], 0]); if(c && c[2] > NEAR) [x, y] = lastCam.proj(c); }
+    if(x != null){ const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; const m = svg.getScreenCTM(); if(m){ const r = pt.matrixTransform(m); from = [r.x, r.y]; } }
+  }catch(e){}
+  if(!from || !isFinite(from[0]) || !isFinite(from[1])) from = [br.left + br.width/2, br.top + br.height*.4];
+  const pad = 14; from = [Math.max(br.left + pad, Math.min(br.right - pad, from[0])), Math.max(br.top + pad, Math.min(br.bottom - pad, from[1]))];
+  const lr = logo ? logo.getBoundingClientRect() : null, to = lr && lr.width ? [lr.left + lr.width/2, lr.top + lr.height/2] : null;
+  // a little more for a longer streak: more at 10, 15 and 20, then no more; the first one (at 6) a little bigger
+  const tier = (q.n >= 10) + (q.n >= 15) + (q.n >= 20), k = Math.max(.7, Math.min(1.2, br.width/700));
+  const nBurst = Math.round(Math.min(18, q.first ? 16 : 9 + 2*tier)*(IS_PHONE ? .75 : 1)), nFly = to ? Math.min(5, q.first ? 4 : 2 + tier) : 0;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), W0 = innerWidth, H0 = innerHeight;
+  const cv = document.createElement('canvas'); cv.className = 'cheerfx'; cv.setAttribute('aria-hidden', 'true');
+  cv.width = Math.round(W0*dpr); cv.height = Math.round(H0*dpr);
+  const g = cv.getContext && cv.getContext('2d');
+  if(!g){ cheerKick(logo, 'cheer', 650); return; }
+  document.body.appendChild(cv); g.scale(dpr, dpr);
+  const sparks = [];
+  for(let i = 0; i < nBurst; i++){
+    const a = -Math.PI/2 + (Math.random() - .5)*Math.PI*1.7, v = (130 + Math.random()*150)*k*(q.first ? 1.15 : 1);
+    sparks.push({x: from[0], y: from[1], vx: Math.cos(a)*v, vy: Math.sin(a)*v, life: .5 + Math.random()*.35, w: (1.4 + Math.random())*k});
+  }
+  const fly = [];
+  for(let i = 0; i < nFly; i++){   // each on its own curve up to the logo, alternating sides
+    const dx = to[0] - from[0], dy = to[1] - from[1], L = Math.hypot(dx, dy) || 1, side = (i % 2 ? 1 : -1)*(.18 + .14*Math.random())*L;
+    fly.push({t0: .05 + i*.07, dur: .62 + Math.random()*.12, c: [from[0] + dx*.45 - dy/L*side, Math.max(to[1] + 6, from[1] + dy*.45 + dx/L*side - .12*L)], tr: []});
+  }
+  const END = nFly ? .05 + (nFly - 1)*.07 + .9 : .95;
+  let landed = !nFly, last = performance.now();
+  const t0 = last, fx = cheerFx = {cv, raf: 0};
+  const frame = now => {
+    if(cheerFx !== fx) return;
+    const t = (now - t0)/1000, dt = Math.max(0, Math.min(.05, (now - last)/1000)); last = now;
+    g.clearRect(0, 0, W0, H0); g.lineCap = 'round';
+    if(t < .5){ const u = t/.5; g.strokeStyle = `rgba(255,211,77,${(1 - u)*.8})`; g.lineWidth = 2*k*(1 - u) + .5; g.beginPath(); g.arc(from[0], from[1], (6 + 30*u*(2 - u))*k, 0, 2*Math.PI); g.stroke(); }   // a ring opens at the pocket
+    for(const p of sparks){
+      if(t > p.life) continue;
+      const f = Math.exp(-2.6*dt); p.vx *= f; p.vy = p.vy*f + 300*k*dt; p.x += p.vx*dt; p.y += p.vy*dt;
+      const al = 1 - (t/p.life)**2;
+      g.strokeStyle = `rgba(255,214,90,${al})`; g.lineWidth = p.w;
+      g.beginPath(); g.moveTo(p.x - p.vx*.035, p.y - p.vy*.035); g.lineTo(p.x, p.y); g.stroke();
+      g.fillStyle = `rgba(255,248,220,${al})`; g.beginPath(); g.arc(p.x, p.y, p.w*.6, 0, 2*Math.PI); g.fill();
+    }
+    for(const p of fly){
+      const u = (t - p.t0)/p.dur; if(u <= 0) continue;
+      if(u < 1){
+        const e = u < .5 ? 2*u*u : 1 - 2*(1 - u)*(1 - u), a = 1 - e;
+        p.tr.push([a*a*from[0] + 2*a*e*p.c[0] + e*e*to[0], a*a*from[1] + 2*a*e*p.c[1] + e*e*to[1]]); if(p.tr.length > 7) p.tr.shift();
+      } else { if(!landed){ landed = true; cheerKick(logo, 'cheer', 650); } p.tr.shift(); }   // the first to land rings the logo
+      if(!p.tr.length) continue;
+      g.lineWidth = 2.2*k; g.strokeStyle = 'rgba(240,191,52,.75)'; g.beginPath(); p.tr.forEach(([x, y], i)=>i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
+      const [hx, hy] = p.tr[p.tr.length - 1]; g.fillStyle = '#fff3c4'; g.strokeStyle = '#c9971c'; g.lineWidth = 1;
+      g.beginPath(); g.arc(hx, hy, 2.6*k, 0, 2*Math.PI); g.fill(); g.stroke();
+    }
+    if(t < END) fx.raf = requestAnimationFrame(frame); else cheerStop();
+  };
+  fx.raf = requestAnimationFrame(frame);
+}
 // calling the shot: soft mallet tones in a hall
 function mallet(o, t, f, g, dur, damp){   // partials near 1:4:10, each fading at its own rate, a slow tremolo
   const tr = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain(), end = t + dur;
@@ -4486,6 +4584,7 @@ function answer(id, mod){
     b.className = b.dataset.mod===showM ? 'right' : b.dataset.mod===mod ? (oc.made ? 'also' : 'wrong') : '';
   });
   if(!aided) showStreak(newStreak, !ok && prevStreak >= STREAK_HOT ? prevStreak : 0);
+  if(!aided && ok && newStreak >= STREAK_HOT) cheer(newStreak, prevStreak < STREAK_HOT);
   if(settings.animate !== '0'){
     const play = ()=>animateShot(oc, ms=>{ standUp(s0); reveal(ms); }, ok ? '#ffd34d' : MISS);
     if(rig0.a > .01){   // Flash, down on it: the cue comes through on the line it's played on (your call's), then the balls roll
@@ -4660,6 +4759,7 @@ function animateShot(oc, done, obCol, pre, rightPre){   // rightPre: the right c
   s.final = {obPath: oTrail.map(q=>q.p), cb: run.cbIn ? null : cEnd.p, spin: {M: cEnd.M}, ob: run.obIn ? null : oEnd.p, obM: oEnd.M, stop: null,
     trail: {cb: cTrail.map(q=>q.p)}, extra: xEnd};
   anim = {done, t0, total, bus, raf: requestAnimationFrame(frame)};
+  cheerAt(s, run);   // a streak shot: the celebration as the ball drops
 }
 function finishAnim(){
   if(!anim) return;
@@ -5971,7 +6071,7 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   // deal as the game would at a grade and table (task 'shoot' or 'flash'), with the reach it gives
   testDeal: (task, g, t)=>{ const sh = ensureShootLevel(), g0 = sh.g, t0 = settings.task; sh.g = g; settings.task = task; try{ setTable(t, settings.pockets); const s = task === 'flash' ? dealShot() : addExtras(shootDeal()); return {s, reach: reachOf(s), max: reachMax(), tb: curTable}; } finally { sh.g = g0; settings.task = t0; } },
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
-  camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }};
+  camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), cheerLive: ()=>!!cheerFx || !!cheerQ};
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
 deal();
 if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
