@@ -676,6 +676,12 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .routinechip{min-height:36px}
   .practicechip:active,.routinechip:active{background:rgba(30,58,84,.98)}
 }
+/* phones: the first-launch stance card is a sheet along the bottom of the screen, not inside the short table, so all of it
+   (height, distance, colours, Done) can be reached, with the table above it still showing the view as it changes */
+@media (max-width:760px){
+  .stancecard{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:60;
+    max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+}
 </style>
 </head>
 <body>
@@ -1131,7 +1137,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 478;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 479;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
