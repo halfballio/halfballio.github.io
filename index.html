@@ -1240,7 +1240,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 494;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 495;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -6308,7 +6308,7 @@ function wnSync(){   // the dot on ? and the menu item follow what's unseen
   let dot = h.querySelector('.wndot'); if(n && !dot) h.insertAdjacentHTML('beforeend', '<span class="wndot" aria-hidden="true"></span>'); else if(!n && dot) dot.remove();
   h.setAttribute('aria-label', n ? 'Tutorials and what’s new: new updates' : 'Tutorial');
   let b = $('wnopen');
-  if(!b){ $('tourreplay').insertAdjacentHTML('afterend', '<button id="wnopen"></button>'); b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
+  if(!b){ $('tourreplay').insertAdjacentHTML('beforebegin', '<button id="wnopen"></button>');   // first in the list b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
   b.innerHTML = 'What’s new' + (n ? '<span class="wnpill">New</span>' : WHATS_NEW[0] ? `<small>${wnVer(WHATS_NEW[0])} · ${wnDate(WHATS_NEW[0].date)}</small>` : '');
 }
 // sinceSeen: the one-time card, only the builds since you last looked (the three newest, the rest a tap away); otherwise all of it
