@@ -1131,7 +1131,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 475;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 476;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1762,6 +1762,7 @@ function bridgeLen(s, u){
 // mechanical bridge, and you'd read the shot from 6 ft away. Checked as shots are dealt (not when the library is built),
 // along the aim line from the cue ball back to the cushion behind it.
 const REACH_PER_HEIGHT = 0.52;
+const REACH_LIB_CM = 175;   // the library stores shots in reach at the default height; dealing checks your own
 const reachMax = () => REACH_PER_HEIGHT*stanceIn();
 const reachOf = s => railBehind(s.cb, norm(sub(s.gbLook || s.gb, s.cb)));
 const inReach = s => GEN.g != null || reachOf(s) <= reachMax();
@@ -2052,6 +2053,7 @@ function makeRec(step, bucket){
   let s = null; try{ s = shootDeal(); }catch(e){ s = null; } finally { GEN.g = null; GEN.bucket = null; }
   if(!s || (isZoneStep(step) ? !s.zone || s.zone.step !== +step : !!s.zone)) return null;
   if(+step >= SH.down && !handRoom(s)) return null;   // only shots with room for the bridge hand get stored
+  if(reachOf(s) > REACH_PER_HEIGHT*REACH_LIB_CM/2.54) return null;   // and only shots in reach from the rail at the default height
   const r = recOf(s);
   return recOk(r, step) ? r : null;
 }
