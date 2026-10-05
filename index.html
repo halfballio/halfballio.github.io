@@ -385,14 +385,30 @@ body.dragging{-webkit-user-select:none;user-select:none}
 .cover small{font:400 13px var(--body);color:var(--cream-2);letter-spacing:0;text-transform:none}
 #cover{z-index:3}   /* Flash's call card (with Replay) sits above the table drawing, so its buttons take clicks */
 .tablecol{min-width:0}
-.streakpill{position:absolute;top:12px;left:72px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:999px;font:600 14px var(--body);letter-spacing:.02em;pointer-events:none}
-.streakpill b{font:700 20px/1 var(--display);font-variant-numeric:tabular-nums}
-.streakpill.hot{background:var(--gold);color:var(--gold-ink);box-shadow:0 0 0 3px rgba(240,191,52,.22),0 6px 18px rgba(0,0,0,.35)}
-.streakpill.hot .spark{width:8px;height:8px;border-radius:50%;background:#fff6d6;box-shadow:0 0 8px 2px rgba(255,246,214,.8)}
-.streakpill.pop{animation:streakpop .35s cubic-bezier(.2,1.6,.4,1)}
-.streakpill.over{background:rgba(15,34,51,.92);color:var(--cream);border:1px solid var(--navy-line);box-shadow:var(--shadow-2)}
-@keyframes streakpop{0%{transform:scale(.7)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){.streakpill.pop,.streakpill .spark{animation:none!important}}
+/* the streak: a gold rail-sight diamond with the count, pinned to the grade badge's corner in the header, never over the table or its pockets */
+.badgewrap{position:relative;display:flex;flex:none}
+.streakdia{position:absolute;left:-13px;top:-9px;z-index:3;width:30px;height:30px;display:grid;place-items:center;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));transition:opacity .9s var(--ease)}
+#badge[hidden] + .streakdia{position:static}   /* no grade badge in this mode: the diamond stands on its own in the header */
+.streakdia::before,.streakdia::after{content:"";position:absolute;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.streakdia::before{inset:0;background:var(--bg)}   /* a cut-out ring so it reads against the navy badge */
+.streakdia::after{inset:2px;background:linear-gradient(135deg,var(--gold-hi),var(--gold) 55%,#c9971c)}
+.streakdia b{position:relative;z-index:1;font:700 15px/1 var(--display);color:var(--gold-ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.streakdia.n3 b{font-size:11.5px}
+.streakdia.pop{animation:streakpop .6s cubic-bezier(.2,1.5,.4,1)}
+@keyframes streakpop{0%{transform:scale(.55);filter:drop-shadow(0 0 0 rgba(240,191,52,0))}45%{transform:scale(1.4);filter:drop-shadow(0 0 7px rgba(240,191,52,.9))}100%{transform:scale(1);filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}}
+.streakdia.over::after{background:var(--navy-3)}
+.streakdia.over b{color:var(--cream-2)}
+.streakdia.fade{opacity:0}
+/* brief notes (aids locking or unlocking, a streak starting or ending): a toast in the header that fades, never over the table */
+header{position:relative}
+.hdtoast{position:absolute;left:50%;top:50%;z-index:8;display:flex;align-items:center;gap:8px;max-width:calc(100% - 8px);padding:7px 14px 7px 12px;border-radius:999px;background:var(--navy);color:var(--cream);border:1px solid var(--navy-line);box-shadow:var(--shadow-2);font:600 13px/1.25 var(--body);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,-50%) translateY(-6px);transition:opacity .25s var(--ease),transform .25s var(--ease)}
+.hdtoast::before{content:"";flex:none;width:8px;height:8px;background:var(--gold);transform:rotate(45deg)}
+.hdtoast span{overflow:hidden;text-overflow:ellipsis}
+.hdtoast b{color:var(--gold);font-variant-numeric:tabular-nums}
+.hdtoast.dim::before{background:var(--cream-2)}
+.hdtoast.show{opacity:1;transform:translate(-50%,-50%)}
+.srsay{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (prefers-reduced-motion:reduce){.streakdia.pop{animation:none!important}.hdtoast{transform:translate(-50%,-50%)}}
 /* shot breakdown: one fixed-size box, scrolls inside if a long explanation ever overflows */
 .result{min-height:0}
 .result svg{width:100%;max-width:440px;height:auto;margin:0 auto;display:block}
@@ -727,10 +743,12 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="hright">
       <div class="plwrap" id="plwrap" hidden><button class="plchip" id="plchip" aria-haspopup="menu" aria-expanded="false" title="Switch player"><span id="plchipname"></span> ▾</button>
         <div class="plmenu" id="plmenu" role="menu" hidden></div></div>
-      <div class="gradebadge" id="badge" hidden role="button" tabindex="0" aria-label="Your grade: open progress"><small id="badgetrack">Read</small><b id="badgeg"></b><span class="bbar"><i id="badgefill"></i></span></div>
+      <div class="badgewrap"><div class="gradebadge" id="badge" hidden role="button" tabindex="0" aria-label="Your grade: open progress"><small id="badgetrack">Read</small><b id="badgeg"></b><span class="bbar"><i id="badgefill"></i></span></div><div class="streakdia" id="streakpill" hidden aria-hidden="true"><b></b></div></div>
       <button class="cog helpbtn" id="help" aria-label="Tutorial" title="Tutorial">?</button>
       <button class="cog" id="cog" aria-label="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M10.3 2.8h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9-2.6-.5v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
     </div>
+    <div class="hdtoast" id="hdtoast" hidden aria-hidden="true"><span></span></div>
+    <div class="srsay" id="streaksr" role="status" aria-live="polite" aria-atomic="true"></div>
   </header>
 
 
@@ -901,7 +919,6 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <button class="link endkeep" id="endkeep">Keep playing</button>
           </div>
         </div>
-        <div class="streakpill" id="streakpill" hidden aria-live="polite"></div>
         <div class="speedchip" id="speedchip" hidden></div>
         <button class="routinechip" id="routinechip" hidden></button>
         <button class="practicechip" id="practicechip" hidden></button>
@@ -1138,7 +1155,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 480;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 481;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -3944,25 +3961,34 @@ function ping(out, t, f0, dur, gain, f1, type){   // a damped partial
 const jit = (f, amt)=>f*(1 + (Math.random() - 0.5)*amt);
 const semis = (f, n)=>f*Math.pow(2, n/12);
 const STREAK_HOT = 6;   // "on a streak" means more than 5 right in a row
-let streakTimer = null;
-function notice(text){   // a brief note in the pill spot, e.g. an aid locking or unlocking
-  const el = $('streakpill'); clearTimeout(streakTimer);
-  el.classList.remove('hot','pop'); el.classList.add('over'); el.textContent = text; el.hidden = false;
-  streakTimer = setTimeout(syncStreakPill, 3200);
+let streakTimer = null, toastTimer = null;
+function say(text){ const s = $('streaksr'); if(s) s.textContent = text; }   // the one polite status for screen readers
+function toast(html, dim){   // a brief note in the header, away from the table's pockets: fades in, then out
+  const el = $('hdtoast'); if(!el) return; clearTimeout(toastTimer);
+  el.firstChild.innerHTML = html; el.classList.toggle('dim', !!dim); el.classList.remove('show');
+  el.hidden = false; void el.offsetWidth; el.classList.add('show'); say(el.textContent);
+  toastTimer = setTimeout(()=>{ el.classList.remove('show'); toastTimer = setTimeout(()=>{ el.hidden = true; }, 300); }, 3000);
 }
-function showStreak(cur, endedAt){
+function notice(text){ toast(String(text).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))); }   // e.g. an aid locking or unlocking
+function showStreak(cur, endedAt){   // the gold diamond on the grade badge holds the count; it pops as it grows
   const el = $('streakpill'); clearTimeout(streakTimer);
-  if(tut.on){ el.hidden = true; return; }   // lessons: nothing over the table
-  if(settings.streaks === '0'){ el.hidden = true; return; }   // streaks switched off: no pill
-  el.classList.remove('hot','over','pop');
+  const off = tut.on || settings.streaks === '0';   // lessons, or streaks switched off: no diamond
+  const was = el.hidden ? 0 : +el.dataset.n || 0;
+  el.classList.remove('pop','over','fade');
+  if(off){ el.hidden = true; el.dataset.n = 0; return; }
   if(cur >= STREAK_HOT){
-    el.innerHTML = `<span class="spark"></span>Streak <b>${cur}</b>`;
-    el.classList.add('hot'); el.hidden = false; void el.offsetWidth; el.classList.add('pop');
+    el.firstChild.textContent = cur; el.dataset.n = cur; el.classList.toggle('n3', cur > 99);
+    el.title = `Streak: ${cur} right in a row`; el.hidden = false;
+    if(cur !== was){
+      void el.offsetWidth; el.classList.add('pop');
+      if(was < STREAK_HOT && cur === STREAK_HOT) toast(`On a streak: <b>${cur}</b> in a row`); else say(`Streak ${cur}`);
+    }
   } else if(endedAt){
-    el.innerHTML = `Streak over at <b>${endedAt}</b>`;
-    el.classList.add('over'); el.hidden = false;
-    streakTimer = setTimeout(()=>{ el.hidden = true; }, 2600);
-  } else el.hidden = true;
+    el.firstChild.textContent = endedAt; el.dataset.n = 0; el.classList.toggle('n3', endedAt > 99);
+    el.title = ''; el.classList.add('over'); el.hidden = false;
+    toast(`Streak over at <b>${endedAt}</b>`, true);
+    streakTimer = setTimeout(()=>{ el.classList.add('fade'); streakTimer = setTimeout(()=>{ el.hidden = true; el.classList.remove('over','fade'); }, 900); }, 1800);
+  } else { el.hidden = true; el.dataset.n = 0; }
 }
 // calling the shot: soft mallet tones in a hall
 function mallet(o, t, f, g, dur, damp){   // partials near 1:4:10, each fading at its own rate, a slow tremolo
@@ -5553,7 +5579,7 @@ function revealAnswer(){
   const bits = [lab];
   if(ctrl().speed) bits.push(COARSE_LBL[z ? z.lvl : levelForSpeed(strikeOf(s).V)] + ' stroke');
   if(z && (ctrl().up || ctrl().side)) bits.push(tipLabel(z.tip));
-  notice('🔍 ' + bits.join(' · '));
+  notice(bits.join(' · '));
 }
 // a cheat: type t-i-n-c-l quickly (under half a second between letters) and every grade opens
 { let typed = '', at = 0;
@@ -5570,7 +5596,7 @@ function revealAnswer(){
     if(settings.shaftGot !== '1'){ settings.shaft = 'carbon'; settings.shaftGot = '1'; }   // as reaching S does
     saveSettings(); save(); renderBadge(true); renderProgress(); renderPracticeChip();
     enforceLocks(); syncPressed(); renderShootControls(); renderStats();   // every lock opens at once: Flash, tables, looks, shaft (menus included, even if open)
-    notice('🔓 All grades unlocked');
+    notice('All grades unlocked');
     if(!anim) dealFresh();
   }, true);
 }
