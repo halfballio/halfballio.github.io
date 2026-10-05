@@ -990,7 +990,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 467;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 468;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
@@ -3664,14 +3664,33 @@ function finishRound(){
 const lbl = r => r.id==='full' ? 'full' : r.label;
 
 // ---------- sounds: the table in a small room, mallet tones in a hall, dry clicks for buttons ----------
-let actx = null;
+// iPhone and iPad: the 'ambient' audio session, chosen on purpose. The game's sounds and its music follow the ring/silent
+// switch like any game's would, and mix with whatever else is playing (your own music or a podcast) instead of stopping it.
+// ('playback' would sound with the switch on silent, and pause your other audio.) Where navigator.audioSession isn't there,
+// Safari's Web Audio already behaves this way.
+try{ if(navigator.audioSession) navigator.audioSession.type = 'ambient'; }catch(e){}
+let actx = null, actxKick = 0, actxIdle = 0;
 function audioCtx(){
-  if(!actx){ const AC = window.AudioContext || window.webkitAudioContext; try{ actx = new AC({latencyHint:'interactive'}); }catch(e){ actx = new AC(); } }
-  if(actx.state === 'suspended') actx.resume();
+  if(!actx){ const AC = window.AudioContext || window.webkitAudioContext; try{ actx = new AC({latencyHint:'interactive'}); }catch(e){ actx = new AC(); } actxKick = 0; }
+  if(actx.state !== 'running' && actx.state !== 'closed'){   // 'suspended', or iOS's 'interrupted' after a call, an alarm or Siri
+    if(!actxKick) actxKick = performance.now();
+    try{ const p = actx.resume(); if(p && p.then) p.then(()=>{ actxKick = 0; }, ()=>{}); }catch(e){}
+  } else actxKick = 0;
   return actx;
 }
-// browsers only allow audio after a user gesture: wake it on the first touch or key, so the first answer isn't late
-['pointerdown','keydown'].forEach(t=>window.addEventListener(t, ()=>{ if(settings.sound !== '0') try{ audioCtx(); }catch(e){} }, {capture:true, passive:true}));
+// rest the sound context when nothing's played for a while (the next tap wakes it, before its sound is made)
+function actxRest(){ clearTimeout(actxIdle); actxIdle = setTimeout(()=>{ if(actx && actx.state === 'running') try{ actx.suspend(); }catch(e){} }, 20000); }
+// browsers only allow audio after a user gesture: wake it on every touch or key, so the first answer isn't late. If a
+// context won't wake (iOS can leave one stuck after a call or a long time in the background), a fresh one is made.
+['pointerdown','keydown'].forEach(t=>window.addEventListener(t, ()=>{
+  if(settings.sound === '0') return;
+  try{
+    if(actx && actxKick && actx.state !== 'running' && performance.now() - actxKick > 1500){ try{ actx.close(); }catch(e){} actx = null; }
+    audioCtx(); actxRest();
+  }catch(e){}
+}, {capture:true, passive:true}));
+// the page hidden: the context rests (iOS stops it anyway), and wakes on the next sound or tap
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && actx && actx.state === 'running') try{ actx.suspend(); }catch(e){} });
 // everything the game plays goes out through one chain: nothing below what a phone speaker can play, and a limiter, so a
 // burst of clicks never clips (small speakers turn clipping into buzz and crackle). Same idea as the music's chain.
 let master = null;
@@ -3699,7 +3718,7 @@ function reverbBus(secs, decayPow, bright, wet, level){   // a bus that plays dr
 // each context's noise and buses, made once; each reverb only when first needed (a convolver costs a phone some work)
 let fxKit = null;
 function sfx(){
-  audioCtx();
+  audioCtx(); actxRest();
   if(!fxKit || fxKit.ctx !== actx){
     const noise = actx.createBuffer(1, actx.sampleRate, actx.sampleRate), d = noise.getChannelData(0);
     for(let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1;
