@@ -1131,7 +1131,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 477;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 478;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1178,8 +1178,8 @@ function showPlayers(){
   $('pllist').innerHTML = PL.list.map(p=>`<div class="plrow"><button class="startbtn plpick" data-id="${p.id}"><span>${plEsc(p.name)}</span><small>${plGrade(p.id)}</small></button><button class="pldel" data-del="${p.id}" aria-label="Delete ${plEsc(p.name)}" title="Delete">✕</button></div>`).join('');
   $('plnew').hidden = full; $('plback').hidden = !meId;
   $('plbuild').innerHTML = `<a href="mailto:${CONTACT}">Contact us</a> · <a href="${SOURCE}" target="_blank" rel="noopener">build ${VERSION}</a>`;
-  $('playercover').hidden = false;
-  if(!n) $('plname').focus({preventScroll: true});
+  $('playercover').hidden = false; $('playercover').scrollTop = 0;
+  if(!n && !matchMedia('(hover: none)').matches) $('plname').focus({preventScroll: true});   // not on a phone: there it would raise the keyboard and scroll the title away
   if(plWired) return; plWired = true;
   $('pllist').addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b) return; if(b.dataset.del) delPlayer(b.dataset.del); else if(b.dataset.id) playAs(b.dataset.id); });
   $('plnew').addEventListener('submit', e=>{
