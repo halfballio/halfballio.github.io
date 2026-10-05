@@ -230,6 +230,8 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .ctlrow kbd{box-sizing:border-box;height:20px;min-width:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;font:600 11px/1 var(--body);border-radius:5px;background:rgba(242,234,216,.94);color:var(--navy);border:0;box-shadow:inset 0 -1px 0 rgba(15,34,51,.25),0 1px 2px rgba(0,0,0,.35);white-space:nowrap}
 .lookbtn{position:relative;display:grid;place-items:center;padding:0;width:44px;height:44px;border-radius:50%;border:1px solid rgba(242,234,216,.32);background:rgba(15,34,51,.82);color:var(--cream);font-size:18px;cursor:pointer;touch-action:none;box-shadow:var(--shadow-2);transition:background var(--t-fast) var(--ease)}
 .lookbtn:hover{background:rgba(30,58,84,.9)}.lookbtn svg{width:22px;height:22px}
+.focusbtn[aria-pressed="true"]{border-color:var(--gold)}.focusbtn:disabled{opacity:.45;cursor:default}.focusbtn:disabled:hover{background:rgba(15,34,51,.82)}
+.focusbtn:disabled + .ckeys{opacity:.45}
 .radio{position:absolute;left:8px;top:10px;z-index:5;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:0;cursor:pointer;color:var(--cream)}
 .radio .radiodisc{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--gold);background:rgba(15,34,51,.82);color:var(--gold);box-shadow:var(--shadow-2);transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
 .radio .radiodisc svg{width:20px;height:20px}
@@ -686,7 +688,7 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
 }
 @media (hover:none) and (pointer:coarse){   /* phones and tablets: smaller controls, the eye and stand-up on the left, tip and speed on the right */
   .ctlrow{left:8px;right:8px;bottom:8px;gap:10px}
-  #lookwrap{margin-right:auto}
+  #lookwrap,#focuswrap{margin-right:auto}#lookwrap:has(+ #focuswrap:not([hidden])){margin-right:0}   /* the focus button sits beside the eye */
   .lookbtn{width:36px;height:36px;font-size:15px}
   .tippad svg{width:60px;height:60px}
   .speedbar{gap:3px}.speedbar b{font-size:11px}
@@ -1012,6 +1014,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="ctlrow" id="ctlrow">   <!-- bottom right, left to right: step back, tip, speed; bottoms and keycaps in line -->
           <div class="lookwrap" id="upwrap" hidden><button class="lookbtn upbtn" id="upbtn" aria-label="Stand up off the shot" title="Stand up (Esc)" data-title-kbd="Stand up (Esc)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14M12 20V9M7 13.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="ckeys"><kbd>Esc</kbd></span></div>
           <div class="lookwrap" id="lookwrap"><button class="lookbtn" id="lookbtn" aria-label="Step back: hold to see the whole table" title="Step back (hold Space)" data-title-kbd="Step back (hold Space)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><span class="ckeys"><kbd>Space</kbd></span></div>
+          <div class="lookwrap" id="focuswrap" hidden><button class="lookbtn focusbtn" id="focusbtn" aria-label="Look around the object ball" aria-pressed="false" title="Swap the view’s centre (V)" data-title-kbd="Swap the view’s centre (V)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.94 3.92A8.6 8.6 0 1 1 6.47 5.41M5.84 9.33 6.47 5.41 2.5 5.35" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle id="focusball" cx="12" cy="12" r="4.8" fill="#f4efe0"/><path id="focusband" d="M7.511 10.3A4.8 4.8 0 0 0 7.511 13.7H16.489A4.8 4.8 0 0 0 16.489 10.3z" fill="#f4efe0" style="display:none"/><circle cx="12" cy="12" r="4.8" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width=".9"/></svg></button><span class="ckeys"><kbd>V</kbd></span></div>
           <div class="tippad" id="tippad" hidden><small>Tip</small>
             <svg id="tipsvg" viewBox="-1.15 -1.15 2.3 2.3" aria-label="Where the cue tip strikes: tap to set"><circle r="1" fill="#f4efe0" stroke="#cfc6ae" stroke-width=".04"/><path id="tiplimit" d="" fill="#1b6fd1" fill-opacity=".45"/><line x1="-1" y1="0" x2="1" y2="0" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><line x1="0" y1="-1" x2="0" y2="1" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><circle id="tipdot" r=".14" fill="#1b6fd1" stroke="#fff" stroke-width=".04"/></svg>
             <span class="ckeys" id="tipkeys"></span>
@@ -1240,7 +1243,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 494;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 495;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1325,6 +1328,11 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 495, date: '2026-10-05', title: 'The focus button', items: [
+    'A new button next to the eye swaps the view\'s centre between the cue ball and the object ball. V does the same.',
+    'Its face shows the ball you\'re looking around.',
+    'Tapping a ball no longer moves the view.',
+  ]},
   {build: 494, from: 493, date: '2026-10-05', title: 'Look around any ball', items: [
     'Tap or click a ball and dragging turns the view around it. Tap the cue ball, or press V, to come back.',
     'Calling, getting down and shooting always return to the cue ball\'s view.',
@@ -2616,6 +2624,7 @@ function renderShootControls(){
   const tl = tut.on && isShooting() ? (tstep().ui || []) : null;   // in a lesson: just the controls the step is about, lit up
   const on = isShooting() && (!tut.on || tl.length > 0), c0 = tl ? ctrlAt(LESSONS[tut.lesson].at) : null, c = tl ? {speed: tl.includes('speed'), up: tl.includes('tip'), down: tl.includes('tip') && c0.down, side: tl.includes('tip') && c0.side} : ctrl();   // a lesson's tip pad offers what its grade does
   box.hidden = !on; $('lookwrap').hidden = !(isShooting() && settings.view !== 'top');   // the eye stays in lessons, so a shot that runs off the view can still be followed
+  syncFocusBtn();
   $('speedbar').classList.toggle('tuthl', !!tl && tl.includes('speed')); $('tippad').classList.toggle('tuthl', !!tl && tl.includes('tip'));
   // the right shot being replayed: the controls show its stroke and its fraction (only shown: your own settings and call stay as they are)
   const rp = !tl && on && answered && shot && shot.replay && shot.replay.ctl ? shot.replay : null;
@@ -3090,19 +3099,18 @@ function camFrom(E, f, hfov){
 // ---------- walk around the cue ball (Normal mode) ----------
 // Dragging swings the eye around a vertical axis through the cue ball, as you do at the table: the cue ball stays put under your bridge.
 let walk = null;   // {ang (radians), blend 0..1 for the snap back}
-// The pivot: tap a ball and the drag swings you round that ball instead; tap the cue ball to come back (V swaps cue ball and
-// object ball). It's only for reading the shot: a new shot, and anything the shot does (calling, stepping in, getting down,
-// the stroke, the shot, standing up, a replay), puts it back on the cue ball.
-const pivot = {id: 'c', s: null, from: null, t0: 0, ring: null, raf: 0};
+// The pivot: the focus button (or V) swaps the drag between swinging round the cue ball and round the object ball. It's
+// only for reading the shot: a new shot, and anything the shot does (calling, stepping in, getting down, the stroke, the
+// shot, standing up, a replay), puts it back on the cue ball, and the button's face with it.
+const pivot = {id: 'c', s: null, from: null, t0: 0, raf: 0};
 const calmNow = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-function pivotBall(s, id){   // where that ball is drawn now (after the shot, where it stopped); null if it's gone
+function pivotBall(s, id){   // where that ball is drawn now (after the shot, where it stopped)
   if(id === 'c') return s.cb;
-  if(id === 'o') return answered && s.final ? s.final.ob : s.ob;
-  const x = !answered && (s.extra || []).find(b=>b.id === id); return x ? x.p : null;
+  return answered && s.final ? s.final.ob : s.ob;
 }
 function pivotPt(s){
   if(s !== shot) return s.cb;
-  if(pivot.s !== s){ pivot.s = s; pivot.id = 'c'; pivot.from = null; pivot.ring = null; }   // each shot starts on the cue ball
+  if(pivot.s !== s){ pivot.s = s; pivot.id = 'c'; pivot.from = null; }   // each shot starts on the cue ball
   const P = pivotBall(s, pivot.id) || s.cb;
   if(!pivot.from) return P;
   const u = Math.min(1, (performance.now() - pivot.t0)/250);
@@ -3111,42 +3119,41 @@ function pivotPt(s){
 }
 function pivotBusy(s){ const c = s && s.cam; return !s || !!(anim || cueStroke || s.replay || look.k > 0 || (tut.on && tut.zb > 0) || s.swapA != null || (c && (c.moving || c.k > 0))); }   // stepping in, down on it, coming up (back up, k is 0 again)
 const pivotOk = () => walkOn() && !!shot && settings.view !== 'top' && !pivotBusy(shot) && $('sesscover').hidden && $('startcover').hidden && $('sessidlecover').hidden;
-function setPivot(id, ring){
+function setPivot(id){
   const s = shot; if(!s) return;
   const from = pivotPt(s);
   if(id !== pivot.id){ pivot.from = calmNow() ? null : from; pivot.t0 = performance.now(); pivot.id = id; }
-  if(ring) pivot.ring = {id, t0: performance.now()};
   cancelAnimationFrame(pivot.raf);
-  const step = () => {   // the glide and the ring's fade, then one last frame without them
-    const now = performance.now(), on = (pivot.from && now - pivot.t0 < 250) || (pivot.ring && now - pivot.ring.t0 < 600);
+  const step = () => {   // the glide, then one last frame without it
+    const on = pivot.from && performance.now() - pivot.t0 < 250;
     if(shot === s && !anim) draw(answered);
     pivot.raf = on ? requestAnimationFrame(step) : 0;
   };
   pivot.raf = requestAnimationFrame(step);
-  if(ring) tutLook('tap', id);
+  syncFocusBtn();
 }
-// which ball a tap is on, if any: within about a ball's radius of its picture, the nearest
-function pivotAt(ev){
-  const s = shot, cam = lastCam; if(!s || !cam || settings.view === 'top') return null;
-  const pt = svgEl.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
-  const q = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-  let best = null, bd = 1.3;
-  for(const id of ['c', 'o', ...(answered ? [] : (s.extra || []).map(b=>b.id))]){
-    const p = id === 'c' && answered && s.final ? s.final.cb : pivotBall(s, id); if(!p) continue;   // the cue ball where it stopped (you still look around its spot)
-    const c = cam.toCam([p[0], p[1], R]); if(c[2] < NEAR) continue;
-    const [x, y] = cam.proj(c), d = Math.hypot(x - q.x, y - q.y)/(cam.focal*R/c[2]);
-    if(d < bd){ bd = d; best = id; }
-  }
-  return best;
+function pivotToggle(){
+  if(!pivotOk() || !pivotBall(shot, 'o')) return false;
+  pivotPt(shot); setPivot(pivot.id === 'c' ? 'o' : 'c'); tutLook('swap', pivot.id); return true;
 }
-function pivotToggle(){ if(!pivotOk() || !pivotBall(shot, 'o')) return false; pivotPt(shot); setPivot(pivot.id === 'c' ? 'o' : 'c', true); return true; }
-// the ring that says which ball you're looking around: gold, fading over 0.6 s
-function pivotRing(cam, s){
-  const g = pivot.ring; if(!g || pivot.s !== s) return '';
-  const u = (performance.now() - g.t0)/600, p = pivotBall(s, g.id); if(u >= 1 || !p) return '';
-  const c = cam.toCam([p[0], p[1], R]); if(c[2] < NEAR) return '';
-  const [x, y] = cam.proj(c), r = Math.max(cam.focal*R/c[2]*(calmNow() ? 1.5 : 1.35 + .3*u), 9), a = (1 - u*u).toFixed(2);
-  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#000" stroke-opacity="${(a*.45).toFixed(2)}" stroke-width="4.5"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#ffd34d" stroke-opacity="${a}" stroke-width="2.5"/>`;
+// The focus button, next to the eye: its face is the ball you're looking around (the cue ball, or the object ball in its
+// colour). It's there when the drag is, and greyed out while the shot has the view (stepping in, down, the stroke, a replay).
+let focusFace = '';
+function syncFocusBtn(){
+  const w = $('focuswrap'), b = $('focusbtn'); if(!w || !b) return;
+  const on = walkOn() && isShooting() && settings.view !== 'top' && !!shot;
+  if(w.hidden === on) w.hidden = !on;
+  if(!on) return;
+  const s = shot; if(pivot.s !== s) pivotPt(s);
+  const o = pivot.id === 'o', dis = !pivotOk();
+  if(b.disabled !== dis) b.disabled = dis;
+  const col = o ? ballCol(s) : '#f4efe0', num = o ? +s.color[1] : 0, face = col + num;
+  if(face === focusFace) return;
+  focusFace = face;
+  $('focusball').setAttribute('fill', num > 8 ? '#f4efe0' : col);   // a stripe: white, with its colour round the middle
+  $('focusband').setAttribute('fill', col); $('focusband').style.display = num > 8 ? '' : 'none';
+  b.setAttribute('aria-pressed', o ? 'true' : 'false');
+  b.setAttribute('aria-label', o ? 'Look around the cue ball' : 'Look around the object ball');
 }
 function walkCam(s, view){
   const base = makeCam(s, view), a = walk.ang * walk.blend, P = pivotPt(s);
@@ -3275,6 +3282,7 @@ function tableSegs(){
 }
 function perspSVG(s, reveal, view){
   if(s === shot && pivot.s === s && pivot.id !== 'c' && pivotBusy(s)) setPivot('c');   // the shot is seen from the cue ball
+  if(s === shot) syncFocusBtn();
   const cam = (walk && walk.blend > 0) ? walkCam(s, view) : makeCam(s, view); lastCam = cam;
   if(!s.seq) s.seq = ++shotSeq;
   const f = [cam.toCam([0,0,0]), cam.toCam([W,H,1.6]), cam.toCam([W,0,0])].flat().map(x=>x.toFixed(3)).join(',');
@@ -3714,7 +3722,7 @@ function perspTop(cam, s, reveal){
   // pocket pointer: only when no part of the pocket ring is on screen
   const ringPts = ringArc3(s.P).map(cam.toCam).filter(c=>c[2]>NEAR).map(cam.proj);
   const ringVisible = ringPts.some(([x,y])=>x>=0 && x<=VW && y>=0 && y<=VH);
-  o += tutLayer(cam, s, reveal) + pivotRing(cam, s);
+  o += tutLayer(cam, s, reveal);
   if(!ringVisible && !(walk && walk.blend > 0) && !(tut.on && tut.zb > 0) && !noPocket()){
     const pc = cam.toCam([s.P.c[0], s.P.c[1], 1.6]);
     let dx = pc[0], dy = -pc[1];
@@ -5015,9 +5023,8 @@ svgEl.addEventListener('pointerdown', ev=>{
   if(isShooting()){
     const hitAt = screenNear(ev);
     if(isFree()){
-      const grab = id => { freeDrag = id; freeDown = {x: ev.clientX, y: ev.clientY, moved: false}; dragging = true; try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); };   // a tap without moving looks around it instead
-      if(hitAt.cb < 1.4) return grab('cb');
-      if(hitAt.ob < 1.0) return grab('ob');
+      if(hitAt.cb < 1.4){ freeDrag = 'cb'; dragging = true; try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); return; }
+      if(hitAt.ob < 1.0){ freeDrag = 'ob'; dragging = true; try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); return; }
       if(hitAt.pocket){ shot.P = hitAt.pocket; rebuildShot(shot); freeLayout = packShot(shot); draw(false); return; }
     }
     return;   // aiming by dragging is off for now: anywhere else is looking around
@@ -5030,13 +5037,12 @@ svgEl.addEventListener('pointerdown', ev=>{
 });
 svgEl.addEventListener('pointermove', ev=>{
   if(!dragging) return;
-  if(freeDrag && freeDown && !freeDown.moved){ if(Math.hypot(ev.clientX - freeDown.x, ev.clientY - freeDown.y) < 6) return; freeDown.moved = true; }
   if(freeDrag){ const p = worldFromEvent(ev); if(!p) return; const q = [Math.max(R, Math.min(W-R, p[0])), Math.max(R, Math.min(H-R, p[1]))];
     const other = freeDrag === 'cb' ? shot.ob : shot.cb; if(len(sub(q, other)) < 2*R + .05) return;
     shot[freeDrag] = q; rebuildShot(shot); freeLayout = packShot(shot); draw(false); return; }
   placeAt(worldFromEvent(ev));
 });
-let freeDrag = null, freeDown = null;
+let freeDrag = null;
 // how close a pointer is to each ball, in ball radii on screen, and which pocket it's on (if any)
 function screenNear(ev){
   const pt = svgEl.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
@@ -5047,11 +5053,7 @@ function screenNear(ev){
   for(const P of POCKETS){ const E = engineTable().pockets[POCKETS.indexOf(P)]; if(d([E.hole[0], E.hole[1], 1.6]) < E.holeR/R*1.2) out.pocket = P; }
   return out;
 }
-['pointerup','pointercancel'].forEach(t=>svgEl.addEventListener(t, ev=>{
-  const tap = t === 'pointerup' && freeDrag && freeDown && !freeDown.moved ? (freeDrag === 'cb' ? 'c' : 'o') : null;
-  dragging = false; freeDrag = null; freeDown = null;
-  if(tap && pivotOk()){ walkEndedAt = performance.now(); setPivot(tap, true); }
-}));
+['pointerup','pointercancel'].forEach(t=>svgEl.addEventListener(t, ()=>{ dragging = false; freeDrag = null; }));
 
 function outcomeFromGhost(s, g){
   const v2 = norm(sub(g, s.cb)), n2 = norm(sub(s.ob, g));
@@ -5392,14 +5394,9 @@ svgEl.addEventListener('pointermove', ev=>{
   walk = {ang: dx*walkDrag.k, el: Math.max(-EL, Math.min(EL, dy*walkDrag.kv)), blend: 1};
   walkRedraw();
 });
-function walkRelease(ev){
+function walkRelease(){
   if(!walkDrag) return;
   const moved = walkDrag.moved; walkDrag = null; document.body.classList.remove('dragging');
-  if(!moved && ev && ev.type === 'pointerup'){   // a tap on a ball: look around that one (never a call or a deal)
-    const id = pivotAt(ev);
-    if(id){ walkEndedAt = performance.now(); if(pivotOk()) setPivot(id, true); }
-    return;
-  }
   if(!moved || !walk) return;
   walkEndedAt = performance.now(); tutLook('drag');
   const from = walk.blend, start = performance.now(), dur = 320;
@@ -5503,9 +5500,9 @@ const SL_SHOOT = [
   {rail:true, noPocket:true, aids:{}, labels:['cb','ob','drag'], next:true, look:'drag',
    text:'The <b>cue ball</b> is the one you strike; it hits the <b>object ball</b>. The question is always the same: <b>how full</b> do you hit it? ' + kt('Click and drag on the table to look around the cue ball.', 'Drag on the table to look around the cue ball.')},
   {noPocket:true, aids:{}, labels:['ob','drag'], next:true, look:'ob',
-   text:kt('<b>Click the object ball</b> to look around it instead (or press <b>V</b>), then click and drag.', '<b>Tap the object ball</b> to look around it instead, then drag.')},
+   text:kt('Press the <b>focus button</b> (or <b>V</b>) to look around the object ball instead, then click and drag.', 'Tap the <b>focus button</b> to look around the object ball instead, then drag.')},
   {noPocket:true, aids:{}, labels:['cb'], next:true, look:'cb', keepPivot:true,
-   text:kt('<b>Click the cue ball</b> (or press <b>V</b>) to come back to it.', '<b>Tap the cue ball</b> to come back to it.') + ' Calling a shot always brings you back to the cue ball.'},
+   text:kt('Press the <b>focus button</b> (or <b>V</b>) again to come back to the cue ball.', 'Tap the <b>focus button</b> again to come back to the cue ball.') + ' Calling a shot always brings you back to the cue ball.'},
   {noPocket:true, aids:{ghost:1, line:1}, labels:['ghost','line'], next:true,
    text:'The <b>ghost ball</b> shows where the cue ball must be when it hits the object ball. The dotted <b>guide line</b> is the cue ball’s path.'},
   {noPocket:true, ghostAt:'full', aids:{ghost:1}, zoom:true, overlap:true, next:true,
@@ -5846,8 +5843,8 @@ function tutLook(kind, id){
   if(!tut.on) return;
   const st = tstep(); if(!st || !st.look || tut.lk === 2) return;
   const done = st.look === 'drag' ? kind === 'drag' && pivot.id === 'c'
-    : st.look === 'cb' ? kind === 'tap' && id === 'c'
-    : kind === 'tap' ? (id === 'o' ? (tut.lk = 1, false) : (tut.lk = 0, false)) : kind === 'drag' && tut.lk === 1 && pivot.id === 'o';
+    : st.look === 'cb' ? kind === 'swap' && id === 'c'
+    : kind === 'swap' ? (tut.lk = id === 'o' ? 1 : 0, false) : kind === 'drag' && tut.lk === 1 && pivot.id === 'o';
   if(!done) return;
   tut.lk = 2;
   setTimeout(()=>{ if(tut.on && tstep() === st) tutNext(); }, 700);
@@ -5978,6 +5975,8 @@ $('upbtn').addEventListener('click', e=>{ e.stopPropagation(); standUpOff(); });
   document.addEventListener('touchstart', ()=>{}, {passive: true}); }
 { const b = $('lookbtn'); b.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); uiSound('tap'); setLook(true); });
   ['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t, e=>{ e.stopPropagation(); if(look.target) setLook(false); })); b.addEventListener('click', e=>e.stopPropagation()); }
+{ const b = $('focusbtn'); b.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); });   // no focus ring left behind for Enter to press again
+  b.addEventListener('click', e=>{ e.stopPropagation(); pivotToggle(); }); }
 document.querySelectorAll('[data-stab]').forEach(b=>b.addEventListener('click', ()=>{
   document.querySelectorAll('[data-stab]').forEach(x=>x.setAttribute('aria-pressed', x === b));
   ['you','table','sound','gfx'].forEach(k=>{ $('set-' + k).hidden = b.dataset.stab !== k; });
@@ -6129,7 +6128,7 @@ $('stancedone').addEventListener('click', e=>{ e.stopPropagation(); closeStance(
 // ---------- the app tour: how to use Halfball (not how to play pool), once for a new player after the stance card ----------
 const TOUR = [
   {el: 'answers', t: 'Welcome to Halfball', p: 'Each shot, call how full you’ll hit the object ball with one of these fractions, then shoot. That’s the game.'},
-  {el: '.table-box', t: 'The table', p: 'Drag on the table to look around the cue ball; ' + kt('click', 'tap') + ' a ball to look around that one. Hold ' + kt('<b>Space</b> or the eye button', 'the eye button') + ' to step back and see the whole table.'},
+  {el: '.table-box', t: 'The table', p: 'Drag on the table to look around the cue ball; the ' + kt('focus button (or <b>V</b>)', 'focus button') + ' swaps to the object ball. Hold ' + kt('<b>Space</b> or the eye button', 'the eye button') + ' to step back and see the whole table.'},
   {el: 'badge', t: 'Your grade', p: 'Call shots right to move up. Each grade adds something new: tap your grade to see the ladder.'},
   {el: 'badge', t: 'It starts simple', p: 'You start by just calling the fraction. As you climb you’ll unlock:'
     + '<ul class="tourlist"><li>Getting down on the shot</li><li>Any angle, on a bigger table</li><li>Speed and spin</li><li>English, then everything at once</li></ul>'},
