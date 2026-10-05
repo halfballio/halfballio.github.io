@@ -1342,7 +1342,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 499;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 500;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1422,8 +1422,8 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // ---------- What's new: release notes by build, newest first ----------
 // The routine: each time a player-facing change ships, add an entry at the TOP for that build (the BUILD it ships in: the
 // pre-commit hook adds one, so that's the current BUILD + 1), or extend the top entry if it's still that build or the same
-// day's run of builds (raise `build`, keep `from`). One plain line per change, in the player's words: what they'll notice,
-// not how it works. Keep it to 2–4 lines; leave out fixes nobody would see. Shown as "1.<build>" (a range: from–build); the date is kept in the list but not shown.
+// day's run of builds (raise `build` to the latest). One plain line per change, in the player's words: what they'll notice,
+// not how it works. Keep it to 2–4 lines; leave out fixes nobody would see. Shown as "1.<build>"; the date is kept in the list but not shown.
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
@@ -1432,36 +1432,36 @@ const WHATS_NEW = [
     'Accuracy over time, which fractions you mix up, and whether you cut too thin or too thick.',
     'Zones, speed, spin and scratches, plus your streaks and sessions.',
   ]},
-  {build: 497, from: 495, date: '2026-10-05', title: 'The focus button', items: [
+  {build: 497, date: '2026-10-05', title: 'The focus button', items: [
     'A new button next to the eye swaps the view\'s centre between the cue ball and the object ball. V does the same.',
     'Its face shows the ball you\'re looking around.',
     'Tapping a ball no longer moves the view.',
   ]},
-  {build: 494, from: 493, date: '2026-10-05', title: 'Look around any ball', items: [
+  {build: 494, date: '2026-10-05', title: 'Look around any ball', items: [
     'Tap or click a ball and dragging turns the view around it. Tap the cue ball, or press V, to come back.',
     'Calling, getting down and shooting always return to the cue ball\'s view.',
     'Lesson 1 shows you how, in two short new steps.',
     'Phones: the arrow over a far pocket leans in so it stays in view.',
     'What\'s new: this list. It opens once when there\'s something new, and any time from ?.',
   ]},
-  {build: 492, from: 489, date: '2026-10-05', title: 'Streaks, sooner', items: [
+  {build: 492, date: '2026-10-05', title: 'Streaks, sooner', items: [
     'The sparks, glow and confetti for a streak shot now come with the chime as you call it, not after the ball stops.',
     'Phones: smoothing (antialiasing) starts off, so the table runs lighter. Turn it back on in Settings.',
     'Flash on phones: the display time sits beside the mode switch, so the whole shot fits the screen.',
   ]},
-  {build: 486, from: 484, date: '2026-10-05', title: 'A clearer result card', items: [
+  {build: 486, date: '2026-10-05', title: 'A clearer result card', items: [
     'The card is ready before you call and fills in place, so nothing jumps.',
     'The verdict comes first, large. Each value gets a check or a cross, with the right value beside yours when they differ.',
     'Your streak count now lives in the logo, top left.',
     'Thin cuts come up near the pocket, not from across the table.',
   ]},
-  {build: 483, from: 474, date: '2026-10-05', title: 'Shots in reach, and a new radio', items: [
+  {build: 483, date: '2026-10-05', title: 'Shots in reach, and a new radio', items: [
     'The cue ball is always within reach from the rail: no more reading a shot from the far end of the table.',
     'The radio on the table is new: tap it to change station. Music starts off.',
     'Flash: Replay on the call card works again.',
     'Phones: the title screen opens at the top, and the first-launch stance card fits the screen.',
   ]},
-  {build: 473, from: 466, date: '2026-10-04', title: 'Better on phones', items: [
+  {build: 473, date: '2026-10-04', title: 'Better on phones', items: [
     'Bigger controls on the table, with a tip and speed readout above your finger.',
     'The header fits one row, and the game fits the screen with the phone on its side.',
     'Replay shows the tip, speed and fraction of the shot being replayed.',
@@ -6316,7 +6316,7 @@ syncStreakPill(); requestAnimationFrame(alignLogo);
 if(!settings.tut && !(stats.log || []).length && !baselines().length){ settings.tut = 1; saveSettings(); }   // first visit: the Shooting lesson opens on the first shot
 // ---------- What's new (the list, WHATS_NEW, is near the top): a dot on ? while there's something unseen, the card once ----------
 const wnDate = d => { const t = new Date(d + 'T12:00:00'); return isNaN(t) ? d : t.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}); };
-const wnVer = e => '1.' + (e.from && e.from < e.build ? e.from + '–' + e.build : e.build);
+const wnVer = e => '1.' + e.build;   // just the build it shipped in
 const wnUnseen = () => WHATS_NEW.filter(e=>e.build > settings.notesSeen);
 let wnFrom = null, wnPoll = 0, wnInput = performance.now();
 function wnEntry(e, isNew){
