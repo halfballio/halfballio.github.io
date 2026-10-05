@@ -1203,7 +1203,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 489;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 490;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -4092,17 +4092,11 @@ function showStreak(cur, endedAt){   // the logo holds the count: the balls fade
 // that fly up to the logo, so the eye follows them to the count; the table's edge glows once. About a second, then gone:
 // the canvas is made for it and removed after, so the page goes back to idle. Reduced motion: just the glows, no sparks.
 let cheerQ = null, cheerFx = null;
-function cheer(n, first){   // queued at the call; animateShot fires it as the object ball drops (or now, if nothing's rolling)
+function cheer(n, first){   // at the call, with the streak's chime: the sparks, the glow and the confetti all at once
   if(tut.on || settings.streaks === '0') return;
-  const s = shot; if(cheerQ) clearTimeout(cheerQ.at);
-  cheerQ = {n, first, s};
-  if(settings.animate === '0') return cheerGo();
-  setTimeout(()=>{ if(cheerQ && cheerQ.s === s && !cheerQ.at) cheerGo(); }, 4000);   // never lost if the shot isn't played out
-}
-function cheerAt(s, run){   // from animateShot: when the object ball reaches its pocket
-  if(!cheerQ || cheerQ.s !== s || cheerQ.at) return;
-  const e = run && run.obIn, ms = e ? Math.min(e.t*1000 + 60, 3500) : 250;
-  cheerQ.at = setTimeout(cheerGo, ms);
+  if(cheerQ) clearTimeout(cheerQ.at);
+  cheerQ = {n, first, s: shot};
+  cheerGo();
 }
 // a small handful of confetti out of the streak in the logo: it bursts, drifts down the screen a little and fades (about 2 s)
 function confetti(el, n, first){
@@ -4174,6 +4168,7 @@ function cheerGo(){
   }
   const END = nFly ? .05 + (nFly - 1)*.07 + .9 : .95;
   let landed = !nFly, last = performance.now();
+  confetti(logo, q.n, q.first);   // the confetti goes with the sparks, at the call
   const t0 = last, fx = cheerFx = {cv, raf: 0};
   const frame = now => {
     if(cheerFx !== fx) return;
@@ -4193,7 +4188,7 @@ function cheerGo(){
       if(u < 1){
         const e = u < .5 ? 2*u*u : 1 - 2*(1 - u)*(1 - u), a = 1 - e;
         p.tr.push([a*a*from[0] + 2*a*e*p.c[0] + e*e*to[0], a*a*from[1] + 2*a*e*p.c[1] + e*e*to[1]]); if(p.tr.length > 7) p.tr.shift();
-      } else { if(!landed){ landed = true; cheerKick(logo, 'cheer', 650); confetti(logo, q.n, q.first); } p.tr.shift(); }   // the first to land rings the logo
+      } else { if(!landed){ landed = true; cheerKick(logo, 'cheer', 650); } p.tr.shift(); }   // the first to land rings the logo
       if(!p.tr.length) continue;
       g.lineWidth = 2.2*k; g.strokeStyle = 'rgba(240,191,52,.75)'; g.beginPath(); p.tr.forEach(([x, y], i)=>i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
       const [hx, hy] = p.tr[p.tr.length - 1]; g.fillStyle = '#fff3c4'; g.strokeStyle = '#c9971c'; g.lineWidth = 1;
@@ -4785,7 +4780,6 @@ function animateShot(oc, done, obCol, pre, rightPre){   // rightPre: the right c
   s.final = {obPath: oTrail.map(q=>q.p), cb: run.cbIn ? null : cEnd.p, spin: {M: cEnd.M}, ob: run.obIn ? null : oEnd.p, obM: oEnd.M, stop: null,
     trail: {cb: cTrail.map(q=>q.p)}, extra: xEnd};
   anim = {done, t0, total, bus, raf: requestAnimationFrame(frame)};
-  cheerAt(s, run);   // a streak shot: the celebration as the ball drops
 }
 function finishAnim(){
   if(!anim) return;
