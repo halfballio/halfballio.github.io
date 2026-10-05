@@ -216,7 +216,7 @@ header h1::before{content:"";flex:none;width:40px;height:40px;border-radius:50%;
 .practicechip b{color:var(--gold);margin-left:8px}
 .ladder li.pick{cursor:pointer}.ladder li.practice .node{outline:2px dashed var(--gold);outline-offset:2px}
 .routinechip kbd{font:600 10px var(--body);padding:1px 5px;margin-left:8px;border-radius:4px;background:rgba(242,234,216,.9);color:var(--navy)}
-@media (hover:none){.routinechip kbd{display:none}}
+html.touch .routinechip kbd{display:none}
 .speedbar{display:flex;flex-direction:column;align-items:center;gap:6px;touch-action:none;cursor:ns-resize;user-select:none}
 .speedtrack{position:relative;width:16px;height:min(26vh,170px);min-height:96px;border-radius:9px;background:rgba(15,34,51,.6);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(242,234,216,.38),0 2px 6px rgba(0,0,0,.35)}
 .speedtrack i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(var(--gold-hi),#dc9a1e)}
@@ -241,6 +241,7 @@ header h1::before{content:"";flex:none;width:40px;height:40px;border-radius:50%;
 .ctlrow.replaying .speedbar,.ctlrow.replaying .tippad svg,.ctlrow.replaying kbd{cursor:default}
 @media (hover:none){.ctlrow .ckeys{display:none}   /* no keyboard: no keycaps, but speed's arrows stay as buttons */
   .ctlrow .speedbar .ckeys{display:flex;gap:6px}.ctlrow .speedbar .ckeys kbd{height:32px;min-width:32px;font-size:16px;border-radius:6px}}
+html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html.touch .ctlrow .speedbar .ckeys{display:flex}   /* keycaps follow how you play (html.touch / .kbd); speed's arrows are buttons either way */
 .modes button{font-size:15px;font-weight:600;min-height:40px;padding:8px 14px;display:inline-flex;align-items:center;justify-content:center}
 .quick{flex-direction:column;align-items:flex-start;gap:2px;min-height:66px}
 .quick .hint{color:var(--muted);font-size:14px}
@@ -448,17 +449,15 @@ button:focus-visible,[role="button"]:focus-visible,a:focus-visible,input:focus-v
 .answers.replaying button:not(.playing){opacity:.45}
 .answers.replaying button.playing{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold),0 0 0 3px rgba(240,191,52,.22)}
 .answers.replaying button.playing::after{opacity:1}
-/* keyboard hints: small keycaps, only on devices with a mouse/trackpad (so, a keyboard) */
+/* keyboard hints: small keycaps and key wording while you play with keys (html.kbd); tap wording while you play by touch (html.touch) */
 .key{display:none}
-@media (hover:hover) and (pointer:fine){.touchonly{display:none}}
-@media (hover:hover) and (pointer:fine){
-  .key{display:inline-block;font:600 10px/1 var(--mono);letter-spacing:0;text-transform:none;color:var(--muted);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;padding:2px 4px;background:var(--surface-2)}
-  .answers .key{margin-bottom:2px}
-  .answers button{padding-top:8px}
-  .showright .key,.replay .key{margin-left:8px;vertical-align:1px}
-  .next .key{margin-left:10px;vertical-align:2px;color:var(--gold-ink);border-color:rgba(19,32,46,.35);background:transparent}
-  .next:disabled .key{color:var(--muted);border-color:var(--line-strong)}
-}
+html.touch .kbd-only,html:not(.touch) .touch-only{display:none}
+html.kbd .key{display:inline-block;font:600 10px/1 var(--mono);letter-spacing:0;text-transform:none;color:var(--muted);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;padding:2px 4px;background:var(--surface-2)}
+html.kbd .answers .key{margin-bottom:2px}
+html.kbd .answers button{padding-top:8px}
+html.kbd .showright .key,html.kbd .replay .key{margin-left:8px;vertical-align:1px}
+html.kbd .next .key{margin-left:10px;vertical-align:2px;color:var(--gold-ink);border-color:rgba(19,32,46,.35);background:transparent}
+html.kbd .next:disabled .key{color:var(--muted);border-color:var(--line-strong)}
 .next{font:700 19px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;min-height:48px;background:var(--gold);color:var(--gold-ink);border:0;border-radius:var(--r);padding:14px 16px;cursor:pointer;width:100%;box-shadow:inset 0 -2px 0 rgba(0,0,0,.14),var(--shadow-1);transition:background var(--t-fast) var(--ease)}
 .next:hover:not(:disabled){background:var(--gold-hi)}.next:active:not(:disabled){background:#e0ad25}
 .next:disabled{background:var(--chip);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);cursor:default}
@@ -838,7 +837,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="speedchip" id="speedchip" hidden></div>
         <button class="routinechip" id="routinechip" hidden></button>
         <button class="practicechip" id="practicechip" hidden></button>
-        <button class="radio" id="radio" aria-label="Music: tap to change the station" title="Music (M)">
+        <button class="radio" id="radio" aria-label="Music: tap to change the station" title="Music (M)" data-label-kbd="Music: change the station (M)" data-label-touch="Music: tap to change the station" data-title-kbd="Music (M)" data-title-touch="">
           <svg viewBox="0 0 40 30" aria-hidden="true"><path d="M12 7 L27 1" stroke="#c9d3dc" stroke-width="1.4" stroke-linecap="round"/><circle cx="27" cy="1.4" r="1.4" fill="#ffd34d"/>
             <rect x="2" y="7" width="36" height="21" rx="5" fill="#3a2618" stroke="#c9a46a" stroke-width="1.2"/>
             <circle cx="13" cy="17.5" r="6.5" fill="#24130b" stroke="#c9a46a" stroke-width=".8"/>
@@ -848,13 +847,13 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <span id="radiolbl"></span>
         </button>
         <div class="ctlrow" id="ctlrow">   <!-- bottom right, left to right: step back, tip, speed; bottoms and keycaps in line -->
-          <div class="lookwrap" id="upwrap" hidden><button class="lookbtn upbtn" id="upbtn" aria-label="Stand up off the shot" title="Stand up (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14M12 20V9M7 13.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="ckeys"><kbd>Esc</kbd></span></div>
-          <div class="lookwrap" id="lookwrap"><button class="lookbtn" id="lookbtn" aria-label="Step back: hold to see the whole table" title="Step back (hold Space)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><span class="ckeys"><kbd>Space</kbd></span></div>
+          <div class="lookwrap" id="upwrap" hidden><button class="lookbtn upbtn" id="upbtn" aria-label="Stand up off the shot" title="Stand up (Esc)" data-title-kbd="Stand up (Esc)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14M12 20V9M7 13.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="ckeys"><kbd>Esc</kbd></span></div>
+          <div class="lookwrap" id="lookwrap"><button class="lookbtn" id="lookbtn" aria-label="Step back: hold to see the whole table" title="Step back (hold Space)" data-title-kbd="Step back (hold Space)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><span class="ckeys"><kbd>Space</kbd></span></div>
           <div class="tippad" id="tippad" hidden><small>Tip</small>
             <svg id="tipsvg" viewBox="-1.15 -1.15 2.3 2.3" aria-label="Where the cue tip strikes: tap to set"><circle r="1" fill="#f4efe0" stroke="#cfc6ae" stroke-width=".04"/><path id="tiplimit" d="" fill="#1b6fd1" fill-opacity=".45"/><line x1="-1" y1="0" x2="1" y2="0" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><line x1="0" y1="-1" x2="0" y2="1" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><circle id="tipdot" r=".14" fill="#1b6fd1" stroke="#fff" stroke-width=".04"/></svg>
             <span class="ckeys" id="tipkeys"></span>
           </div>
-          <div class="speedbar" id="speedbar" hidden aria-label="Speed: drag up or down"><small>Speed</small><div class="speedtrack" id="speedtrack"><i id="speedfill"></i></div><b id="speedval"></b><span class="ckeys"><kbd data-step="1" title="Faster (↑)">↑</kbd><kbd data-step="-1" title="Slower (↓)">↓</kbd></span></div>
+          <div class="speedbar" id="speedbar" hidden aria-label="Speed: drag up or down"><small>Speed</small><div class="speedtrack" id="speedtrack"><i id="speedfill"></i></div><b id="speedval"></b><span class="ckeys"><kbd data-step="1" title="Faster (↑)" data-title-kbd="Faster (↑)" data-title-touch="Faster">↑</kbd><kbd data-step="-1" title="Slower (↓)" data-title-kbd="Slower (↓)" data-title-touch="Slower">↓</kbd></span></div>
         </div>
         <div class="lvlcard" id="lvlcard" hidden aria-live="polite"><small id="lvlhead"></small><b id="lvlgrade"></b><span id="lvlnote"></span></div>
         <div class="cover sumcover" id="startcover" hidden>   <!-- Flash: how you look, and go -->
@@ -1038,6 +1037,26 @@ function pocketEdge(ob, P, T){   // where the line from the object ball to the p
 const MISS = '#d9c2ff', NEAR_MISS_OK = '#d9c2ff';   // your call's path: informational, not a verdict
 
 const $ = id => document.getElementById(id);
+// ---------- keys or touch: the words and keycaps follow how you're playing ----------
+// <html> gets .touch or .kbd. It starts from the device (a coarse pointer or no hover: touch) and then follows you:
+// a finger on the screen switches to touch, a key or the mouse back to keys. CSS shows .kbd-only / .touch-only spans
+// and keycaps to match; kt() writes both phrasings into a text, so nothing re-renders when it switches.
+const kt = (kbd, touch) => `<span class="kbd-only">${kbd}</span><span class="touch-only">${touch}</span>`;
+const touchMode = () => document.documentElement.classList.contains('touch');
+function setInputMode(touch){
+  const h = document.documentElement;
+  if(h.classList.contains('touch') === touch && h.classList.contains('kbd') === !touch) return;
+  h.classList.toggle('touch', touch); h.classList.toggle('kbd', !touch);
+  document.querySelectorAll('[data-label-touch],[data-title-touch]').forEach(syncInputAttrs);
+}
+function syncInputAttrs(el){   // aria-labels and titles: data-label-kbd / data-label-touch, data-title-kbd / data-title-touch
+  const t = touchMode() ? 'Touch' : 'Kbd', L = el.dataset['label' + t], T = el.dataset['title' + t];
+  if(L != null) el.setAttribute('aria-label', L);
+  if(T != null){ if(T) el.setAttribute('title', T); else el.removeAttribute('title'); }
+}
+setInputMode((()=>{ try{ return matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches; }catch(e){ return false; } })());
+window.addEventListener('pointerdown', e=>{ if(e.pointerType === 'touch' || e.pointerType === 'pen') setInputMode(true); else if(e.pointerType === 'mouse') setInputMode(false); }, {capture: true, passive: true});
+window.addEventListener('keydown', e=>{ if(!['Unidentified', 'Process'].includes(e.key) && !(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName))) setInputMode(false); }, true);   // not typing a name: an on-screen keyboard isn't a keyboard
 const rnd = (a,b) => a + Math.random()*(b-a);
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const sub = (a,b)=>[a[0]-b[0],a[1]-b[1]], add=(a,b)=>[a[0]+b[0],a[1]+b[1]], mul=(a,k)=>[a[0]*k,a[1]*k];
@@ -3579,7 +3598,7 @@ function endFlash(){ clearTimeout(flashTimer); $('cover').hidden = true; $('flas
 
 // ---------- round ----------
 const PLACEHOLDER = `How full do you hit the object ball?`;
-const PLACE_HINT = `Tap or drag around the object ball to set the ghost ball. Fine-tune with the arrows, then Shoot. Keys <kbd>←</kbd> <kbd>→</kbd> nudge, <kbd>Enter</kbd> shoots.`;
+const PLACE_HINT = `Tap or drag around the object ball to set the ghost ball. Fine-tune with the arrows, then Shoot.${kt(' Keys <kbd>←</kbd> <kbd>→</kbd> nudge, <kbd>Enter</kbd> shoots.', '')}`;
 const QUESTION = {sess:'How full do you hit the object ball?', call:'How full do you hit the object ball?', flash:'How full do you hit the object ball?', place:'Where does the ghost ball go?', shoot:'How full do you hit the object ball?', free:'How full do you hit the object ball?'};
 const tableBox = document.querySelector('.table-box');
 
@@ -4160,7 +4179,7 @@ function answer(id, mod){
     if(stats.active && stats.active.task===settings.task) stats.active.pause = (stats.active.pause||0) + (animMs||0);
     if(jumpingAhead){ sessionTick(ok, counted); return; }   // going straight to the next shot: just count it, draw nothing
     draw(true);
-    $('quick').innerHTML = quickHTML + `<div class="ql tap">${aided ? 'Aid on: practice shot, not scored. ' : ''}<span class="touchonly">Tap the table for the next shot</span></div>`;
+    $('quick').innerHTML = quickHTML + `<div class="ql tap">${aided ? 'Aid on: practice shot, not scored. ' : ''}<span class="touch-only">Tap the table for the next shot</span></div>`;
     finishRound();
     sessionTick(ok, counted);
   };
@@ -4750,12 +4769,12 @@ $('track-shoot').addEventListener('click', ()=>{ if(!shootUnlocked()) return; se
 function syncRefs(){
   if($('answers').children.length) return;
   REFS = CORE; BOUNDS = boundsFor(REFS);
-  $('answers').innerHTML = REFS.map((r,i)=>`<button data-id="${r.id}" id="ans-${r.id}" aria-label="${r.label} ball, key ${i+1}"><kbd class="key" aria-hidden="true">${i+1}</kbd>${r.label}<span>${r.deg.toFixed(r.deg%1?1:0)}°</span></button>`).join('');
+  $('answers').innerHTML = REFS.map((r,i)=>`<button data-id="${r.id}" id="ans-${r.id}" aria-label="${r.label} ball${touchMode() ? '' : `, key ${i+1}`}" data-label-kbd="${r.label} ball, key ${i+1}" data-label-touch="${r.label} ball"><kbd class="key" aria-hidden="true">${i+1}</kbd>${r.label}<span>${r.deg.toFixed(r.deg%1?1:0)}°</span></button>`).join('');
 }
 syncRefs();
 // answer on press (pointerdown), not on release: a tap's click lands ~100 ms later
 $('answers').addEventListener('pointerdown', e=>{ if(e.button !== 0) return; const b=e.target.closest('button'); if(b && !b.disabled){ e.preventDefault(); pickFrac(b.dataset.id); } });
-$('mods').innerHTML = MODS.map(m=>`<button data-mod="${m.id}" id="mod-${m.id}" aria-label="${m.label}, key ${m.key}"><kbd class="key" aria-hidden="true">${m.key}</kbd>${m.label}</button>`).join('');
+$('mods').innerHTML = MODS.map(m=>`<button data-mod="${m.id}" id="mod-${m.id}" aria-label="${m.label}${touchMode() ? '' : `, key ${m.key}`}" data-label-kbd="${m.label}, key ${m.key}" data-label-touch="${m.label}"><kbd class="key" aria-hidden="true">${m.key}</kbd>${m.label}</button>`).join('');
 $('mods').addEventListener('pointerdown', e=>{ if(e.button !== 0) return; const b=e.target.closest('button'); if(b && !b.disabled){ e.preventDefault(); pickMod(b.dataset.mod); } });
 $('mods').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b && e.detail === 0) pickMod(b.dataset.mod); });
 $('answers').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b && e.detail === 0) pickFrac(b.dataset.id); });   // keyboard activation (Enter/Space on a focused button)
@@ -4919,7 +4938,7 @@ const SL_SHOOT = [
   {noPocket:true, ghostAt:'18', aids:{ghost:1}, zoom:true, overlap:true, next:true,
    text:'Just an eighth, barely touching: a <b>⅛-ball</b> hit, the thinnest you’ll call.'},
   {shot:'34', aids:{ghost:1, line:1, path:1}, labels:['pocket'], ask:'34',
-   text:'Now with a <b>pocket</b>, marked in gold; the yellow line is the object ball’s path into it. <b>Your call takes the shot</b>: the cue ball is sent to that fraction’s contact, so the right call drops. Call this one with the buttons, or keys <b>1</b>–<b>5</b>.'},
+   text:'Now with a <b>pocket</b>, marked in gold; the yellow line is the object ball’s path into it. <b>Your call takes the shot</b>: the cue ball is sent to that fraction’s contact, so the right call drops. ' + kt('Call this one with the buttons, or keys <b>1</b>–<b>5</b>.', 'Tap a fraction to call this one.')},
   {shot:'12', aids:{ghost:1, line:1, path:1}, ask:'12',
    text:'One more. Call this one.'},
   {finish:true, aids:{},
@@ -4941,7 +4960,7 @@ const SL_OWNLINE = [
 ];
 const SL_SPEED = [
   {deg:30, aids:{}, ui:['speed'], next:true,
-   text:'<b>Speed</b> is yours now: four strokes, <b>¼</b>, <b>½</b>, <b>¾</b> and <b>full</b>. <b>↑ ↓</b>, or the bar on the right of the table. Set it before you call.'},
+   text:'<b>Speed</b> is yours now: four strokes, <b>¼</b>, <b>½</b>, <b>¾</b> and <b>full</b>. ' + kt('<b>↑ ↓</b>, or the bar on the right of the table.', 'Drag the <b>Speed</b> bar on the table, or tap its arrows.') + ' Set it before you call.'},
   {aids:{}, ui:['speed'], next:true,
    text:'Rolling, a <b>¼</b> stroke (a touch shot) goes under a table length, <b>½</b> (a lag) about two, <b>¾</b> about three, and the <b>full</b> stroke (a power shot) about four, rails included.'},
   {aids:{}, ui:['speed'], next:true,
@@ -4965,7 +4984,7 @@ const SL_ANY = [
 ];
 const SL_STUN = [
   {deg:30, aids:{}, check:{k:2.6, tip:[0,0], stun:true}, ui:['tip','speed'], next:true,
-   text:'<b>Stun</b>: hit dead centre (<b>X</b>), firmly enough that the cue ball is still sliding when it arrives. With no spin it leaves along the <b>tangent line</b>, at right angles to the object ball.'},
+   text:'<b>Stun</b>: hit dead centre (' + kt('<b>X</b>', 'the middle of the <b>tip pad</b>') + '), firmly enough that the cue ball is still sliding when it arrives. With no spin it leaves along the <b>tangent line</b>, at right angles to the object ball.'},
   {aids:{}, play:{k:2.6, tip:[0,0], stun:true}, ui:['tip','speed'], next:true, text:'Watch it leave along the tangent line.'},
   {deg:0, aids:{}, play:{k:2.6, tip:[0,0], stun:true}, shows:'stop', ui:['tip','speed'], next:true, text:'Straight in, the same stroke is a <b>stop shot</b>: the cue ball stays where it hit.'},
   {deg:30, aids:{}, try:{k:2.6, tip:[0, 0]}, ui:['tip'], ask:'try',
@@ -4979,7 +4998,7 @@ const SL_FOLLOW = [
    text:'Now the cue ball has somewhere to be: land it in the <b>green zone</b>.'},
   {aids:{}, play:{k:1.2, tip:[0,0]}, ui:['tip'], next:true, text:'Watch: a centre-ball hit goes about here.'},
   {aids:{}, play:{k:1.6, tip:[0,.5]}, ui:['tip'], next:true,
-   text:'<b>Follow</b>: strike above centre with the <b>tip pad</b> (or <b>W</b>). The topspin bends the cue ball forward off the tangent line after contact.'},
+   text:'<b>Follow</b>: strike above centre with the <b>tip pad</b>' + kt(' (or <b>W</b>)', '') + '. The topspin bends the cue ball forward off the tangent line after contact.'},
   {deg:0, aids:{}, play:{k:1.6, tip:[0,.5]}, shows:'through', ui:['tip'], next:true, text:'Straight in, it rolls on through after the object ball.'},
   {deg:30, aids:{}, try:{k:1.6, tip:[0, TIP_STEP]}, ui:['tip'], ask:'try',
    text:'Your turn, with <b>half a tip</b> of follow set on the tip pad. Call the fraction to get down on its line, then call it again to shoot. Land it in the zone.'},
@@ -4989,7 +5008,7 @@ const SL_FOLLOW = [
 ];
 const SL_DRAW = [
   {deg:30, aids:{}, check:{k:2.8, tip:[0,-.55]}, ui:['tip','speed'], next:true,
-   text:'<b>Draw</b>: strike below centre (<b>S</b>). The backspin pulls the cue ball back off the tangent line after contact.'},
+   text:'<b>Draw</b>: strike below centre' + kt(' (<b>S</b>)', ' on the <b>tip pad</b>') + '. The backspin pulls the cue ball back off the tangent line after contact.'},
   {aids:{}, play:{k:2.8, tip:[0,-.55]}, ui:['tip','speed'], next:true, text:'Watch it pull back off the tangent line.'},
   {deg:0, aids:{}, play:{k:2.8, tip:[0,-.55]}, shows:'back', ui:['tip','speed'], next:true, text:'Straight in, it comes back toward you.'},
   {deg:30, aids:{}, try:{k:2.8, tip:[0, -TIP_STEP]}, ui:['tip'], ask:'try',
@@ -5006,7 +5025,7 @@ const SL_CUSHION = [
 ];
 const SL_ENGLISH = [
   {deg:35, aids:{}, check:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true,
-   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: <b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right. 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle.'},
+   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: ' + kt('<b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right.', 'tap or drag to the one you want.') + ' 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle.'},
   {aids:{}, play:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true, text:'Watch how it comes off the cushion with right english.'},
   {aids:{}, play:{k:2.6, tip:[-.45,0]}, shows:'rail', ui:['tip'], next:true, text:'The other side, the other way.'},
   {finish:true, aids:{}, text:'Side also pushes the cue ball slightly off line (<b>deflection</b>) and throws the object ball a little, so on some shots it changes which fraction to call.'},
@@ -5514,11 +5533,11 @@ $('stancedone').addEventListener('click', e=>{ e.stopPropagation(); closeStance(
 // ---------- the app tour: how to use Halfball (not how to play pool), once for a new player after the stance card ----------
 const TOUR = [
   {el: 'answers', t: 'Welcome to Halfball', p: 'Each shot, call how full you’ll hit the object ball with one of these fractions, then shoot. That’s the game.'},
-  {el: '.table-box', t: 'The table', p: 'Drag on the table to walk around it. Hold <b>Space</b> or the 👁 button to step back and see the whole table.'},
+  {el: '.table-box', t: 'The table', p: 'Drag on the table to walk around it. Hold ' + kt('<b>Space</b> or the eye button', 'the eye button') + ' to step back and see the whole table.'},
   {el: 'badge', t: 'Your grade', p: 'Call shots right to move up. Each grade adds something new: tap your grade to see the ladder.'},
   {el: 'badge', t: 'It starts simple', p: 'You start by just calling the fraction. As you climb you’ll unlock:'
     + '<ul class="tourlist"><li>Getting down on the shot</li><li>Any angle, on a bigger table</li><li>Speed and spin</li><li>English, then everything at once</li></ul>'},
-  {el: 'task-flash', t: 'Opens as you climb', p: 'A 🔒 opens as you climb: Flash mode, bigger tables, table styles and ball sets. Hover or tap a lock to see when.'},
+  {el: 'task-flash', t: 'Opens as you climb', p: 'A 🔒 opens as you climb: Flash mode, bigger tables, table styles and ball sets. ' + kt('Hover over or click a lock', 'Tap a lock') + ' to see when.'},
   {el: 'cog', t: 'Settings', p: 'Your height and stance, shooting hand, colours, table size and look, and sound.'},
   {el: 'radio', t: 'Music', p: 'Tap the radio to change the station or turn it off. Volume is in Settings › Sound.'},
   {el: 'help', t: 'Lessons', p: 'The <b>?</b> replays any lesson you’ve reached, and this tour.'},
