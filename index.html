@@ -383,6 +383,7 @@ body.dragging{-webkit-user-select:none;user-select:none}
 .table-box > #table{position:relative;z-index:1}
 .cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--navy);color:var(--gold);font:700 30px var(--display);letter-spacing:.08em;text-transform:uppercase}
 .cover small{font:400 13px var(--body);color:var(--cream-2);letter-spacing:0;text-transform:none}
+#cover{z-index:3}   /* Flash's call card (with Replay) sits above the table drawing, so its buttons take clicks */
 .tablecol{min-width:0}
 .streakpill{position:absolute;top:12px;left:72px;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:999px;font:600 14px var(--body);letter-spacing:.02em;pointer-events:none}
 .streakpill b{font:700 20px/1 var(--display);font-variant-numeric:tabular-nums}
@@ -1137,7 +1138,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 479;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 480;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
