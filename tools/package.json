@@ -1,0 +1,17 @@
+{
+  "name": "tools",
+  "version": "1.0.0",
+  "description": "Shot library tools for Halfball",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "halfballio",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  },
+  "private": true
+}
