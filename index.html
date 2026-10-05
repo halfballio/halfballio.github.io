@@ -758,6 +758,28 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .stancecard{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:60;
     max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
 }
+/* What's new: a centred card over a scrim; the head and Got it stay put while the notes scroll inside */
+.helpbtn{position:relative}
+.wndot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--bg);pointer-events:none}
+.tutlist button .wnpill,.wnentry .wnpill{font:600 10px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:4px 7px}
+.menu.wnmenu{z-index:70;align-items:center;justify-content:center;padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))}
+.wncard{width:min(100%,440px);max-height:min(100%,640px);overflow:hidden;gap:0;padding:0;animation:wnin .18s var(--ease)}
+@keyframes wnin{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.wnhead{padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+.wnhead small{display:block;font:600 11px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--gold-text)}
+.wnhead h2{margin:4px 0 0;color:var(--ink);font:700 28px/1 var(--display);letter-spacing:.04em;text-transform:uppercase}
+.wnbody{flex:1 1 auto!important;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 20px;outline:none}
+.wnentry{padding:14px 0;border-bottom:1px solid var(--line)}.wnentry:last-child{border-bottom:0}
+.wnmeta{display:flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);color:var(--muted)}
+.wnentry h3{margin:6px 0 4px;font:600 16px/1.3 var(--body);color:var(--ink)}
+.wnentry ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.45;color:var(--ink)}
+.wnentry li{margin:3px 0}.wnentry li::marker{color:var(--gold-text)}
+.wnmore{display:block;width:100%;min-height:44px;margin:4px 0 10px;background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:var(--r);font:600 14px var(--body);color:var(--muted);cursor:pointer}
+.wnmore:hover{color:var(--ink);border-color:var(--muted)}
+.wnfoot{display:flex;justify-content:flex-end;padding:12px 20px 16px;border-top:1px solid var(--line);background:var(--surface)}
+.wnfoot .startbtn{min-width:140px;padding:12px 24px}
+@media (max-width:480px){.wnfoot .startbtn{flex:1}.wnhead{padding:14px 16px 10px}.wnbody{padding:2px 16px}.wnfoot{padding:10px 16px 12px}}
+@media (prefers-reduced-motion:reduce){.wncard{animation:none}}
 </style>
 </head>
 <body>
@@ -1122,6 +1144,13 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
 
 </div>
+<div class="menu wnmenu" id="wn" hidden>   <!-- What's new: release notes; once for a returning player, any time from the ? menu -->
+  <div class="menucard wncard" role="dialog" aria-modal="true" aria-labelledby="wntitle" aria-describedby="wnkick">
+    <div class="wnhead"><small id="wnkick"></small><h2 id="wntitle">What’s new</h2></div>
+    <div class="wnbody" id="wnbody" tabindex="-1"></div>
+    <div class="wnfoot"><button class="startbtn" id="wnok">Got it</button></div>
+  </div>
+</div>
 <script src="engine.js"></script>
 <script src="vendor/three.min.js"></script>
 <script src="table3d.js"></script>
@@ -1211,7 +1240,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 492;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 493;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1287,6 +1316,41 @@ try{ Object.assign(settings, JSON.parse(localStorage.getItem(KEY('halfball-setti
 if(settings.railBack == null && settings.standBack != null){ settings.railBack = Math.max(0, Math.min(24, Math.round(+settings.standBack - 28) || 0)); delete settings.standBack; }
 try{ const v = localStorage.getItem(KEY('halfball-view')); if(v && !localStorage.getItem(KEY('halfball-settings'))) settings.view = v; }catch(e){}
 function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSON.stringify(settings)); }catch(e){} }
+
+// ---------- What's new: release notes by build, newest first ----------
+// The routine: each time a player-facing change ships, add an entry at the TOP for that build (the BUILD it ships in: the
+// pre-commit hook adds one, so that's the current BUILD + 1), or extend the top entry if it's still that build or the same
+// day's run of builds (raise `build`, keep `from`). One plain line per change, in the player's words: what they'll notice,
+// not how it works. Keep it to 2–4 lines; leave out fixes nobody would see. Shown as "1.<build> · Oct 5" (a range: from–build).
+// A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
+// A new player starts with everything seen. The whole list is always under ? › What's new.
+const WHATS_NEW = [
+  {build: 492, from: 489, date: '2026-10-05', title: 'Streaks, sooner', items: [
+    'The sparks, glow and confetti for a streak shot now come with the chime as you call it, not after the ball stops.',
+    'Phones: smoothing (antialiasing) starts off, so the table runs lighter. Turn it back on in Settings.',
+    'Flash on phones: the display time sits beside the mode switch, so the whole shot fits the screen.',
+  ]},
+  {build: 486, from: 484, date: '2026-10-05', title: 'A clearer result card', items: [
+    'The card is ready before you call and fills in place, so nothing jumps.',
+    'The verdict comes first, large. Each value gets a check or a cross, with the right value beside yours when they differ.',
+    'Your streak count now lives in the logo, top left.',
+    'Thin cuts come up near the pocket, not from across the table.',
+  ]},
+  {build: 483, from: 474, date: '2026-10-05', title: 'Shots in reach, and a new radio', items: [
+    'The cue ball is always within reach from the rail: no more reading a shot from the far end of the table.',
+    'The radio on the table is new: tap it to change station. Music starts off.',
+    'Flash: Replay on the call card works again.',
+    'Phones: the title screen opens at the top, and the first-launch stance card fits the screen.',
+  ]},
+  {build: 473, from: 466, date: '2026-10-04', title: 'Better on phones', items: [
+    'Bigger controls on the table, with a tip and speed readout above your finger.',
+    'The header fits one row, and the game fits the screen with the phone on its side.',
+    'Replay shows the tip, speed and fraction of the shot being replayed.',
+    'Opens offline, and opens quickly on a slow connection.',
+  ]},
+];
+const notesTop = Math.max(BUILD, ...WHATS_NEW.map(e=>e.build));
+if(!(settings.notesSeen >= 0)) settings.notesSeen = lsGet(KEY('halfball-settings')) ? 0 : notesTop;   // no settings yet: a new player, nothing to catch up on; a returning one sees it all
 
 const blankStats = () => ({n:0,c:0,made:0,streak:0,best:0,log:[]});
 function load(){
@@ -6107,6 +6171,66 @@ deal();
 if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
 syncStreakPill(); requestAnimationFrame(alignLogo);
 if(!settings.tut && !(stats.log || []).length && !baselines().length){ settings.tut = 1; saveSettings(); }   // first visit: the Shooting lesson opens on the first shot
+// ---------- What's new (the list, WHATS_NEW, is near the top): a dot on ? while there's something unseen, the card once ----------
+const wnDate = d => { const t = new Date(d + 'T12:00:00'); return isNaN(t) ? d : t.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}); };
+const wnVer = e => '1.' + (e.from && e.from < e.build ? e.from + '–' + e.build : e.build);
+const wnUnseen = () => WHATS_NEW.filter(e=>e.build > settings.notesSeen);
+let wnFrom = null, wnPoll = 0, wnInput = performance.now();
+function wnEntry(e, isNew){
+  return `<section class="wnentry"><div class="wnmeta"><span>${wnVer(e)} · <time datetime="${e.date}">${wnDate(e.date)}</time></span>${isNew ? '<span class="wnpill">New</span>' : ''}</div>`
+    + `<h3>${e.title}</h3><ul>${e.items.map(t=>`<li>${t}</li>`).join('')}</ul></section>`;
+}
+function wnSync(){   // the dot on ? and the menu item follow what's unseen
+  const n = wnUnseen().length, h = $('help');
+  let dot = h.querySelector('.wndot'); if(n && !dot) h.insertAdjacentHTML('beforeend', '<span class="wndot" aria-hidden="true"></span>'); else if(!n && dot) dot.remove();
+  h.setAttribute('aria-label', n ? 'Tutorials and what’s new: new updates' : 'Tutorial');
+  let b = $('wnopen');
+  if(!b){ $('tourreplay').insertAdjacentHTML('afterend', '<button id="wnopen"></button>'); b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
+  b.innerHTML = 'What’s new' + (n ? '<span class="wnpill">New</span>' : WHATS_NEW[0] ? `<small>${wnVer(WHATS_NEW[0])} · ${wnDate(WHATS_NEW[0].date)}</small>` : '');
+}
+// sinceSeen: the one-time card, only the builds since you last looked (the three newest, the rest a tap away); otherwise all of it
+function openWhatsNew(sinceSeen){
+  const unseen = new Set(wnUnseen()), list = sinceSeen ? [...unseen] : WHATS_NEW, SHOW = 3;
+  if(!list.length) return false;
+  const head = list.slice(0, sinceSeen ? SHOW : list.length), rest = list.length - head.length;
+  $('wnkick').textContent = sinceSeen ? 'Since you last played' : 'Release notes';
+  $('wnbody').innerHTML = head.map(e=>wnEntry(e, !sinceSeen && unseen.has(e))).join('')
+    + (rest ? `<button class="wnmore" id="wnmore">And ${rest} earlier update${rest > 1 ? 's' : ''}</button>` : '');
+  if(rest) $('wnmore').addEventListener('click', e=>{ e.stopPropagation(); const at = e.currentTarget; at.insertAdjacentHTML('beforebegin', list.slice(SHOW).map(x=>wnEntry(x, false)).join('')); at.remove(); $('wnok').focus({preventScroll: true}); });
+  wnFrom = document.activeElement;
+  $('wn').hidden = false; $('wnbody').scrollTop = 0;
+  $('wnok').focus({preventScroll: true});
+  clearInterval(wnPoll); wnPoll = 0;
+  return true;
+}
+function closeWhatsNew(){
+  if($('wn').hidden) return;
+  $('wn').hidden = true;
+  settings.notesSeen = Math.max(settings.notesSeen, notesTop); saveSettings(); wnSync();
+  const f = wnFrom && wnFrom.isConnected && wnFrom !== document.body ? wnFrom : $('help'); wnFrom = null;
+  try{ f.focus({preventScroll: true}); }catch(e){}
+}
+$('wnok').addEventListener('click', e=>{ e.stopPropagation(); closeWhatsNew(); });
+['click', 'pointerdown'].forEach(t=>$('wn').addEventListener(t, e=>{ e.stopPropagation(); if(t === 'click' && e.target === $('wn')) closeWhatsNew(); }));
+window.addEventListener('keydown', e=>{   // while it's up, keys stay in the card: Esc closes, Tab goes round its buttons
+  if($('wn').hidden) return;
+  e.stopPropagation();
+  if(e.key === 'Escape'){ e.preventDefault(); closeWhatsNew(); return; }
+  if(e.key === 'Tab'){
+    const f = [...$('wn').querySelectorAll('button')].filter(b=>!b.hidden), i = f.indexOf(document.activeElement);
+    if(f.length){ e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus(); }
+  }
+}, true);
+// the one-time card waits for a calm moment: a shot on the table, untouched for a moment, with nothing else up
+// (not the first-run stance card or tour, a lesson, a menu or cover, a shot rolling, or a Flash run)
+['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
+const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
+  && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
+  && ['playercover', 'stancecover', 'menu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover'].every(id=>!$(id) || $(id).hidden);
+if(!TEST){
+  wnSync();
+  if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
+}
 // Ask the browser to keep this site's storage (scores, settings) instead of evicting it under storage pressure.
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
 })();
