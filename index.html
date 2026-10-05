@@ -540,6 +540,18 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .menuhead{position:sticky;top:-12px;z-index:2;background:var(--surface);margin-top:-12px;padding-top:12px}
   #playercover,#sesscover{padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))}
 }
+/* Touch screens: tap targets of 44px in the header, panels and menus */
+@media (hover:none) and (pointer:coarse){
+  .plchip,.gradebadge{height:44px}
+  .cog,.menuclose{width:44px;height:44px;flex:none}
+  .tab,.modes button,.coachbtns .link,.coachbtns .startbtn,.coachback,.endkeep,.librebuild{min-height:44px}
+  .seg button,.fpseg button{min-height:40px}.seg.modes button{min-height:44px}
+  .menucard .seg button{min-height:44px}
+  .next{min-height:52px}
+  .menucard .optrange input,.stancecard input[type=range]{min-height:44px}
+  .optcolor input,.stancecard .stcolor input{width:56px;height:44px}
+  .buildtag a{display:inline-block;padding:12px 0;margin:-12px 0}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.gradebadge.pop,.lvlcard.show b{animation:none}}
 
 /* Desktop: one screen, two columns on a shared grid.
@@ -1009,7 +1021,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 468;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 469;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
