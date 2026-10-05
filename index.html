@@ -735,8 +735,6 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @media (max-width:439px){.statsbtn{width:40px;padding:0;justify-content:center}.statsbtn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
 .tab.on{color:var(--ink);border-bottom-color:var(--gold)}
 .tab svg{margin-left:6px;vertical-align:-2px;color:var(--muted)}
-.foot .statsopen{min-height:44px;padding:0 16px;font-size:14px;display:inline-flex;align-items:center;gap:8px;margin-left:auto}
-.foot .statsopen svg{color:var(--accent)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .statsview{position:fixed;inset:0;z-index:58;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);animation:svin .18s var(--ease) both}
@@ -1204,7 +1202,7 @@ html.svopen,html.svopen body{overflow:hidden}
           <div class="stat"><b id="s-streak">0</b><span>Streak</span></div>
           <div class="stat"><b id="s-n">0</b><span>Shots</span></div>
         </div>
-        <div class="foot"><span>Best streak: <b id="s-best">0</b></span><button class="sumdone statsopen" id="statsopen" aria-haspopup="dialog" aria-controls="statsview"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>All stats and charts</button></div>
+        <div class="foot"><span>Best streak: <b id="s-best">0</b></span></div>
       </div>
 
     </div>
@@ -1312,7 +1310,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 498;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 499;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -5089,7 +5087,7 @@ function openStats(v, opts = {}){
   });
   $('svmode').addEventListener('click', e=>{ const b = e.target.closest('[data-svt]'); if(!b || b.dataset.svt === SV.task) return; SV.task = b.dataset.svt; svRender(); });
   $('svclose').addEventListener('click', ()=>openStats(false));
-  ['statsbtn', 'statsopen', 'tabbtn-stats'].forEach(id=>$(id).addEventListener('click', ()=>openStats(!SV.open)));
+  ['statsbtn', 'tabbtn-stats'].forEach(id=>$(id).addEventListener('click', ()=>openStats(!SV.open)));
   window.addEventListener('popstate', ()=>{ if(SV.open) openStats(false, {fromPop: true}); });
   // while it's open the game behind takes no keys; Esc closes it, and Tab stays inside it
   window.addEventListener('keydown', e=>{
