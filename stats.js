@@ -185,7 +185,6 @@ function sessions(d){
 const when = m => new Date(m*60000);
 const fmtDay = m => when(m).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
 const fmtTime = m => when(m).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
-const fmtDur = mins => mins < 1 ? 'under a minute' : mins < 60 ? `${mins} min` : `${Math.floor(mins/60)} h ${String(mins % 60).padStart(2, '0')} min`;
 
 // ---------- the tabs ----------
 function modeName(d){ return d.shoot ? 'Ladder' : 'Flash'; }
@@ -378,15 +377,15 @@ function tabSessions(d, w){
   if(!list.length){
     return empty('No sessions yet', `Each time you play shows up here as a session. A break of ${SESSION_GAP} minutes or more starts a new one.`);
   }
-  const shots = list.reduce((a, s)=>a + s.n, 0), mins = list.reduce((a, s)=>a + (s.legacy ? 0 : s.end - s.start), 0);
-  grid.push(`<div class="svkpis mini wide">${kpi(num(list.length), 'Sessions', '')}${kpi(num(Math.round(shots/list.length)), 'Shots a session', 'average')}${kpi(fmtDur(mins).replace(' min', 'm').replace(' h ', 'h '), 'Time played', 'timed sessions')}${kpi(`${pct(list.reduce((a, s)=>a + s.ok, 0), shots)}%`, d.shoot ? 'Full marks' : 'Called right', 'across sessions')}</div>`);
+  const shots = list.reduce((a, s)=>a + s.n, 0);
+  grid.push(`<div class="svkpis mini wide">${kpi(num(list.length), 'Sessions', '')}${kpi(num(Math.round(shots/list.length)), 'Shots a session', 'average')}${kpi(`${pct(list.reduce((a, s)=>a + s.ok, 0), shots)}%`, d.shoot ? 'Full marks' : 'Called right', 'across sessions')}</div>`);
   const pts = list.filter(s=>s.n >= 5).map(s=>({x: fmtDay(s.start).replace(/^\w+,? /, ''), y: pct(s.ok, s.n), s}));
   grid.push(card('By session', `${d.shoot ? 'Full marks' : 'Called right'} per session of 5 shots or more`, pts.length >= 2
     ? lineChart(pts, {w: w.full, h: 190, unit: 'Each point: a session', aria: `Accuracy over ${pts.length} sessions`, read: i=>{ const s = pts[i].s; return `${fmtDay(s.start)}, ${fmtTime(s.start)}: ${pct(s.ok, s.n)}% of ${plural(s.n, 'shot')}${s.g0 != null ? ` · ${G[s.g0]}${s.g1 !== s.g0 ? ' → ' + G[s.g1] : ''}` : ''}`; }})
     : empty('Two sessions of 5 shots or more make a chart', ''), 'wide'));
   const rows = list.slice().reverse().slice(0, 60).map(s=>{
     const p = pct(s.ok, s.n), g = s.g0 != null ? (s.g1 !== s.g0 ? `${G[s.g0]} → ${G[s.g1]}` : G[s.g0]) : '';
-    return `<li class="svsess"><div class="when"><b>${fmtDay(s.start)}</b><small>${s.legacy ? 'finished session' : `${fmtTime(s.start)} · ${fmtDur(s.end - s.start)}`}</small></div>`
+    return `<li class="svsess"><div class="when"><b>${fmtDay(s.start)}</b><small>${s.legacy ? 'finished session' : fmtTime(s.start)}</small></div>`
       + `<div class="what"><span class="svbt" aria-hidden="true"><i style="width:${p}%"></i></span><small>${plural(s.n, 'shot')}${s.best ? ` · best streak ${s.best}` : ''}${g ? ` · ${g}` : ''}</small></div><b class="pct">${p}%</b></li>`;
   }).join('');
   grid.push(card('All sessions', `Newest first${list.length > 60 ? ' (the last 60)' : ''}`, `<ul class="svsessl" role="list">${rows}</ul>`, 'wide'));
