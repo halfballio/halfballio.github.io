@@ -1070,7 +1070,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 473;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 474;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1241,7 +1241,7 @@ function generate(bucket){   // bucket: which fraction to deal (picked once per 
   const lenCls = tut.on && GEN.g == null ? 'short' : Math.random() < longShare() ? 'long' : 'short';   // the grade sets the mix of short and long shots
   const k = H/100;
   const RANGE = lenCls==='long' ? {p:[28*k,80*k], d:[30*k, IS_PHONE ? PHONE_MAX_D - 2*R - 1 : 70*k]} : {p:[7,34], d:[7,26]};   // phones: never over 3½ ft
-  let fallback = null;
+  let fallback = null, far = null;
   for(let i=0;i<6000;i++){
     const phi = chooseAim(bucket ?? weightedIndex(w));
     const P = pick(POCKETS);
@@ -1275,6 +1275,8 @@ function generate(bucket){   // bucket: which fraction to deal (picked once per 
       color: pick(OB_COLORS), answer: nearestRef(cut), pick:null, spot: spotToward(sub(cb, ob)),
       stroke, spinR: throwOn ? 0 : 1, throwDeg: cut - tp, gbLook: throwOn ? sub(ob, mul(u, 2*R)) : null};   // gbLook: the ghost ball as the shot looks (the pocket line), before throw   // the call is the hit it needs; with throw that can be a thinner fraction than it looks
     if(throwOn && (nearestRef(tp).id !== cand.answer.id) !== wantFlip) continue;   // about one throw shot in three is one where throw changes the fraction
+    const near = inReach(cand);   // a cue ball out of reach from the rail behind it: only if nothing else turns up
+    if(!near && far) continue;
     if(phys){
       // center if the plain fraction pockets at this speed; otherwise which way the hit has to move
       cand.mod = outcome(cand, cand.answer.deg).made ? 'center' : cut > cand.answer.deg ? 'thin' : 'thick';
@@ -1289,12 +1291,13 @@ function generate(bucket){   // bucket: which fraction to deal (picked once per 
     }
     const play = outcome(cand, cut);
     if(!play.made || play.scratch) continue;              // the right call has to drop, without the cue ball following it into a pocket
+    if(!near){ far = cand; continue; }
     if(!fallback) fallback = cand;
     if(cand.any && !phys && level() < BETWEEN_AT && !outcome(cand, cand.answer.deg).made) continue;   // any angle (B): only cuts the plain fraction still pockets; from B+ any cut at all
     if(Math.abs(u[0]) > 0.85 && dist > W*0.55) continue;   // no long runs across the table along an end rail: that layout only ever came up as a thin cut, so it gave the answer away
     if(pocketInView(cand)) return cand;
   }
-  return fallback;
+  return fallback || far;
 }
 
 // ---------- baseline, grades & adaptive dealing ----------
@@ -1683,6 +1686,17 @@ function bridgeLen(s, u){
   const hIn = stanceIn(), L0 = 0.146*hIn - 1.25, need = railBehind(s.cb, u) + PE.C.cushionWidth + PE.C.railWidth - 0.38*hIn;
   return Math.min(L0 + 12, Math.max(L0, need));
 }
+// Reach: you stand at the rail behind the cue ball (no mechanical bridge, no sitting on the rail), so the cue ball can't be
+// further out than your bridge hand reaches plus the bridge. The bridge hand reaches about 0.38 of your height in from the
+// rail's outer edge (as bridgeLen has it: ~20" past the cushion nose at 175 cm), the natural bridge is a forearm less 1¼"
+// (~9"), and a stretch over the rail with the bridge lengthened gives about 7" more: a little over half your height from the
+// cushion nose in all (36" at 175 cm, 31" at 150 cm, 41" at 200 cm). A little reach is fine; further out you'd need a
+// mechanical bridge, and you'd read the shot from 6 ft away. Checked as shots are dealt (not when the library is built),
+// along the aim line from the cue ball back to the cushion behind it.
+const REACH_PER_HEIGHT = 0.52;
+const reachMax = () => REACH_PER_HEIGHT*stanceIn();
+const reachOf = s => railBehind(s.cb, norm(sub(s.gbLook || s.gb, s.cb)));
+const inReach = s => GEN.g != null || reachOf(s) <= reachMax();
 function handRoom(s){ const hIn = (GEN.g != null ? HAND_MAX_CM : stanceIn()*2.54)/2.54; return railBehind(s.cb, norm(sub(s.gbLook || s.gb, s.cb))) >= 0.146*hIn - 1.25 + 4; }
 // Off two cushions: a larger zone (8") that at least two kinds of stroke, top, stun or draw, can each reach, every one
 // at least 1½" inside it. Every speed is tried with a full and half tip of top, centre, and a half and full tip of draw;
@@ -1876,8 +1890,10 @@ function fromLibrary(step, bucket){
   const scaled = mine.length + (sh ? sh.cnt : 0) < 200;   // too few made on this table: use the others, scaled
   if(scaled){ sh = S; mine = mineAll; }
   if(mine.length + (sh ? sh.cnt : 0) < 200) return null;   // too few yet to avoid repeats: deal live
-  const ofFrac = (sh && sh.byFrac[want] || []).map(j=>'s' + j).concat(mine.map((r, j)=>r.frac === want ? 'm' + j : null).filter(Boolean));
-  const all = () => Array.from({length: sh ? sh.cnt : 0}, (_, j)=>'s' + j).concat(mine.map((r, j)=>'m' + j));
+  const near = reachable(step, sh, mine, mineAt);   // only cue balls you can reach from the rail behind them
+  if(near.size < REACH_LIB_MIN) return null;   // too few of those to avoid repeats: deal live
+  const ofFrac = (sh && sh.byFrac[want] || []).map(j=>'s' + j).concat(mine.map((r, j)=>r.frac === want ? 'm' + j : null).filter(Boolean)).filter(id=>near.has(id));
+  const all = () => [...near];
   let list = ofFrac.length >= 8 ? ofFrac : all();
   const recent = RECENT[step] = RECENT[step] || [];
   const recOfId = id => id[0] === 's' ? decodeRec(sh.data, +id.slice(1)*REC) : mine[+id.slice(1)];
@@ -1893,10 +1909,23 @@ function fromLibrary(step, bucket){
     for(let t = 0; t < 40 && (recent.includes(id) || tooLong(id)); t++) id = pick(list);
     const rec = recOfId(id);
     const s = !rec ? null : scaled ? scaledShot(rec, id[0] === 's' ? sh.table : mineAt, step, Math.random() < .5) : shotOf(rec, step, Math.random() < .5);   // mirrored left-right half the time
-    if(s){ recent.push(id); if(recent.length > 60) recent.shift(); return s; }
+    if(s && inReach(s)){ recent.push(id); if(recent.length > 60) recent.shift(); return s; }
     if(performance.now() - t0 > 160) break;   // none fits yet: deal live
   }
   return null;
+}
+// The stored shots of a grade whose cue ball is within your reach on this table (scaled, if they were made on another size),
+// worked out once per grade, table, height and library size. Mirroring doesn't change it. A grade with fewer than
+// REACH_LIB_MIN of them deals live (which keeps to the same rule) rather than repeat the same few shots.
+const REACH_LIB_MIN = 100, REACH_IDS = {};
+function reachable(step, sh, mine, mineAt){
+  const key = [curTable, stanceIn(), sh ? sh.table + sh.cnt : '', mineAt, mine.length].join('|');
+  if(REACH_IDS[step] && REACH_IDS[step].key === key) return REACH_IDS[step].ok;
+  const ok = new Set(), test = (r, from, id) => { if(inReach(shotOf(from === curTable ? r : scaleRec(r, from), step, false))) ok.add(id); };
+  for(let j = 0; j < (sh ? sh.cnt : 0); j++) test(decodeRec(sh.data, j*REC), sh.table, 's' + j);
+  mine.forEach((r, j)=>test(r, mineAt, 'm' + j));
+  REACH_IDS[step] = {key, ok};
+  return ok;
 }
 // a record made on another table, scaled to this one. The cut is kept exactly: the object ball keeps its line to the
 // pocket, at the distance scaled, and the cue ball its line to the ghost ball (the pocket and the balls don't scale)
@@ -2255,9 +2284,13 @@ function shootCam(s, view){
 // in your stance: let go and you're back on it as you were. Only Esc (or the stand-up button) takes you off the shot.
 const look = {k: 0, target: 0, raf: 0};
 function overviewCam(s){
-  const d = norm(sub(s.ob, s.cb)), pts = [[0,0,0],[W,0,0],[W,H,0],[0,H,0], [s.cb[0],s.cb[1],R], [s.ob[0],s.ob[1],R]];
+  // Phones: the whole table on a small screen leaves the balls a few pixels wide, so there you step back over the shot
+  // itself (the cue ball, the object ball, its pocket and the zone) rather than the whole table.
+  const d = norm(sub(s.ob, s.cb)), pts = [[s.cb[0],s.cb[1],R], [s.ob[0],s.ob[1],R]];
   if(s.zone) pts.push([s.zone.c[0], s.zone.c[1], 0]);
-  const T = [W/2, H/2, 0], m = 14;
+  if(IS_PHONE) pts.push([s.P.c[0], s.P.c[1], 0]); else pts.push([0,0,0],[W,0,0],[W,H,0],[0,H,0]);
+  const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]), m = 14;
+  const T = IS_PHONE ? [(Math.min(...xs) + Math.max(...xs))/2, (Math.min(...ys) + Math.max(...ys))/2, 0] : [W/2, H/2, 0];
   let cam = null;
   for(let dist = 40; dist <= 260; dist += 8){
     const E = [T[0] - d[0]*dist*.55, T[1] - d[1]*dist*.55, 18 + dist*.85];
@@ -2320,11 +2353,24 @@ function camAlong(s, dir, c){
   const eye = sub(s.cb, mul(dir, back)), E = [eye[0], eye[1], c.h];
   const hd = P=>Math.max(0.1, (P[0]-E[0])*dir[0] + (P[1]-E[1])*dir[1]);
   const aCB = Math.atan2(R - c.h, hd(s.cb)), aP = Math.atan2(1.6 - c.h, hd(s.P.c));
-  const vHalf = Math.atan((VH/2)/((VW/2)/Math.tan(c.hfov/2*RAD))), mg = 5*RAD;
-  let pr = c.pitch*RAD;
-  if(c === VIEWS.stand && aP > pr + vHalf - mg) pr = aP - vHalf + mg;
-  if(aCB < pr - vHalf + mg) pr = aCB + vHalf - mg;
-  return camFrom(E, norm3([dir[0]*Math.cos(pr), dir[1]*Math.cos(pr), Math.sin(pr)]), c.hfov);
+  const at = hfov => {
+    const vHalf = Math.atan((VH/2)/((VW/2)/Math.tan(hfov/2*RAD))), mg = 5*RAD;
+    let pr = c.pitch*RAD;
+    if(c === VIEWS.stand && aP > pr + vHalf - mg) pr = aP - vHalf + mg;
+    if(aCB < pr - vHalf + mg) pr = aCB + vHalf - mg;
+    return camFrom(E, norm3([dir[0]*Math.cos(pr), dir[1]*Math.cos(pr), Math.sin(pr)]), hfov);
+  };
+  if(c === VIEWS.stand && IS_PHONE) for(const hf of PHONE_STAND_FOVS){ const cam = at(hf); if(shotInFrame(cam, s)) return cam; }
+  return at(c.hfov);
+}
+// Phones: the screen is small, so standing you look through a narrower lens when the shot still fits (the cue ball, the
+// ghost ball, the object ball and its pocket in frame): the balls are drawn up to 1.6× as wide. Otherwise the usual 72°.
+const PHONE_STAND_FOVS = [48, 54, 60, 66];
+function shotInFrame(cam, s, m = 24){
+  return [[s.cb[0], s.cb[1], R], [s.gb[0], s.gb[1], R], [s.ob[0], s.ob[1], R], [s.P.c[0], s.P.c[1], 0]].every(P=>{
+    const q = cam.toCam(P); if(q[2] <= NEAR) return false;
+    const [x, y] = cam.proj(q); return x >= m && x <= VW - m && y >= m && y <= VH - m;
+  });
 }
 
 // ---------- controls: speed bar and tip pad ----------
@@ -2853,24 +2899,15 @@ function makeCamBase(s, view){
   // Tilt just enough to keep both the cue ball and the target pocket in frame (like lifting your eyes).
   const hd = P=>Math.max(0.1, (P[0]-E[0])*look[0] + (P[1]-E[1])*look[1]);
   const aCB = Math.atan2(R - c.h, hd(s.cb)), aP = Math.atan2(1.6 - c.h, hd(s.P.c));
-  const vHalf = Math.atan((VH/2)/((VW/2)/Math.tan(c.hfov/2*RAD))), mg = 5*RAD;
-  let pr = c.pitch*RAD;
-  if(aP > pr + vHalf - mg) pr = aP - vHalf + mg;
-  if(aCB < pr - vHalf + mg) pr = aCB + vHalf - mg;
-  const f = norm3([look[0]*Math.cos(pr), look[1]*Math.cos(pr), Math.sin(pr)]);
-  const right = norm3(cross3([0,0,1], f));
-  const up = cross3(f, right);
-  const focal = (VW/2)/Math.tan(c.hfov/2*RAD);
-  const toCam = P=>{const q=[P[0]-E[0],P[1]-E[1],P[2]-E[2]];return [dot3(q,right),dot3(q,up),dot3(q,f)];};
-  const proj = c=>[VW/2 + focal*c[0]/c[2], VH/2 - focal*c[1]/c[2]];
-  const unproject = (px, py, z)=>{
-    const x=(px-VW/2)/focal, y=-(py-VH/2)/focal;
-    const dir=[right[0]*x+up[0]*y+f[0], right[1]*x+up[1]*y+f[1], right[2]*x+up[2]*y+f[2]];
-    if(Math.abs(dir[2])<1e-6) return null;
-    const t=(z-E[2])/dir[2];
-    return t>0 ? [E[0]+dir[0]*t, E[1]+dir[1]*t] : null;
+  const at = hfov => {
+    const vHalf = Math.atan((VH/2)/((VW/2)/Math.tan(hfov/2*RAD))), mg = 5*RAD;
+    let pr = c.pitch*RAD;
+    if(aP > pr + vHalf - mg) pr = aP - vHalf + mg;
+    if(aCB < pr - vHalf + mg) pr = aCB + vHalf - mg;
+    return camFrom(E, norm3([look[0]*Math.cos(pr), look[1]*Math.cos(pr), Math.sin(pr)]), hfov);
   };
-  return {E, f, hfov:c.hfov, toCam, proj, focal, unproject};
+  if(view === 'stand' && IS_PHONE) for(const hf of PHONE_STAND_FOVS){ const cam = at(hf); if(shotInFrame(cam, s)) return cam; }   // phones: as camAlong
+  return at(c.hfov);
 }
 function clipNear(pts){
   const out=[];
@@ -5722,7 +5759,11 @@ saveSettings();
 syncPressed();
 renderStats();
 sizeTable();
-if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_STEPS, tableFor, libVer, parseShipped, fromLibrary, shippedOk, dealtOk: (s, k)=>{ if(!s.zone){ const q = strikeOf(s), st = +k === SH.throw ? throwStroke(s) : {V: q.V, tip: [0, q.b]}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch; } const st = {V: STROKE_MPH[s.zone.lvl]*MPH, tip: s.zone.tip}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch && r.inZone; }, setShipped: x=>{ SHIPPED = x; }, isZoneStep, shotOf, zoneSpotOk, handRoomMax: s=>{ const g0 = GEN.g; GEN.g = 0; try{ return handRoom(s); } finally { GEN.g = g0; } }, makeRec, encodeRec, decodeRec, recOk, REC, setTable: (t)=>{ setTable(t, settings.pockets); }, curTable: ()=>curTable};
+if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_STEPS, tableFor, libVer, parseShipped, fromLibrary, shippedOk, dealtOk: (s, k)=>{ if(!s.zone){ const q = strikeOf(s), st = +k === SH.throw ? throwStroke(s) : {V: q.V, tip: [0, q.b]}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch; } const st = {V: STROKE_MPH[s.zone.lvl]*MPH, tip: s.zone.tip}, r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch && r.inZone; }, setShipped: x=>{ SHIPPED = x; }, isZoneStep, shotOf, zoneSpotOk, handRoomMax: s=>{ const g0 = GEN.g; GEN.g = 0; try{ return handRoom(s); } finally { GEN.g = g0; } }, makeRec, encodeRec, decodeRec, recOk, REC, setTable: (t)=>{ setTable(t, settings.pockets); }, curTable: ()=>curTable, reachOf, reachMax, scaleRec, setHeight: cm=>{ settings.heightCm = cm; },
+  // deal as the game would at a grade and table (task 'shoot' or 'flash'), with the reach it gives
+  testDeal: (task, g, t)=>{ const sh = ensureShootLevel(), g0 = sh.g, t0 = settings.task; sh.g = g; settings.task = task; try{ setTable(t, settings.pockets); const s = task === 'flash' ? dealShot() : addExtras(shootDeal()); return {s, reach: reachOf(s), max: reachMax(), tb: curTable}; } finally { sh.g = g0; settings.task = t0; } },
+  // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
+  camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }};
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
 deal();
 syncStreakPill();
