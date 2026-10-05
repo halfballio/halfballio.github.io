@@ -526,6 +526,43 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .opt{flex-wrap:wrap}
 }
 @media (max-width:420px){.answers button{font-size:24px}.lean,.legend{grid-template-columns:96px 1fr 64px}}
+/* Phones, portrait: the header on one row (the mark alone when there's no room for the wordmark), so the table and the answers fit one screen */
+@media (max-width:760px){
+  header{flex-wrap:nowrap;align-items:center;gap:8px}
+  header > div:first-child{flex:none}
+  .hright{gap:6px;min-width:0}
+  .plwrap{min-width:0}
+  .plchip{max-width:9em;padding:0 10px 0 12px}
+  .gradebadge{min-width:52px}
+  .menu{padding:calc(60px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
+  .menucard{padding-inline:16px}.menuhead{margin-inline:-16px;padding-inline:16px}
+  .sesslive #sessend{min-height:44px;padding:0 4px}
+  .stat span,.insights dt{font-size:12px}
+  .wrap{gap:8px}.buildtag{margin-top:4px}.main,.main.persp{gap:10px}   /* the mode switch a little higher */
+  /* a lesson: the table and the fraction buttons stay together, the coach card under them, compact,
+     its text scrolling inside so the whole card (and its Next) fits the screen with the toolbars showing */
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}
+  .coach{padding:10px 12px;gap:6px}
+  .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - (100vw - 32px)*2/3 - 332px));max-height:max(60px, calc(100dvh - (100vw - 32px)*2/3 - 332px))}
+}
+@media (max-width:439px){header h1{font-size:0;gap:0}header h1::before{width:38px;height:38px}}   /* the wordmark's text stays for screen readers */
+/* Menus and covers: the close button stays in reach while a long menu scrolls, and nothing sits under the notch or the home bar */
+@media (max-width:760px), (max-height:500px){
+  .menuhead{position:sticky;top:-12px;z-index:2;background:var(--surface);margin-top:-12px;padding-top:12px}
+  #playercover,#sesscover{padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))}
+}
+/* Touch screens: tap targets of 44px in the header, panels and menus */
+@media (hover:none) and (pointer:coarse){
+  .plchip,.gradebadge{height:44px}
+  .cog,.menuclose{width:44px;height:44px;flex:none}
+  .tab,.modes button,.coachbtns .link,.coachbtns .startbtn,.coachback,.endkeep,.librebuild{min-height:44px}
+  .seg button,.fpseg button{min-height:40px}.seg.modes button{min-height:44px}
+  .menucard .seg button{min-height:44px}
+  .next{min-height:52px}
+  .menucard .optrange input,.stancecard input[type=range]{min-height:44px}
+  .optcolor input,.stancecard .stcolor input{width:56px;height:44px}
+  .buildtag a{display:inline-block;padding:12px 0;margin:-12px 0}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.gradebadge.pop,.lvlcard.show b{animation:none}}
 
 /* Desktop: one screen, two columns on a shared grid.
@@ -546,6 +583,29 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .q small{line-height:1.35}
   .tabs{margin-top:0}
   .tabpanel{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+}
+/* Phones on their side: the desktop one-screen layout, table left and panel right, fitted to the short screen */
+@media (min-width:600px) and (max-height:500px) and (orientation:landscape){
+  body{padding-block:8px}
+  .wrap{height:calc(100vh - 16px);height:calc(100dvh - 16px);min-height:0;gap:8px}
+  header{flex:none;align-items:center;flex-wrap:nowrap}
+  header h1{font-size:24px;gap:10px}header h1::before{width:32px;height:32px}
+  .sub{display:none}
+  .main,.main.persp{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) clamp(300px,42vw,400px);gap:16px;align-items:stretch}
+  .tablecol{display:flex;flex-direction:column;gap:4px;min-height:0}
+  .table-box,.table-box.persp{flex:1;min-height:0;width:100%;height:auto;aspect-ratio:auto;margin:0}
+  .buildtag{margin-top:2px}
+  .flashtrack{flex:none;margin-top:0}
+  .panel{min-height:0;overflow-y:auto;overscroll-behavior:contain;gap:8px;padding-bottom:max(8px, env(safe-area-inset-bottom))}
+  .q{font-size:17px}.q small{display:none}
+  .quick{min-height:44px}
+  .answers{gap:6px}.answers button{padding:7px 0 5px;font-size:24px;min-height:52px}
+  .tabpanel{flex:none;min-height:0;overflow-y:visible;overflow-x:clip}
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}   /* a lesson: the coach card under the fraction buttons */
+  .coach{padding:10px 12px;gap:6px}
+  .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - 290px));max-height:max(60px, calc(100dvh - 290px))}
+  .menu{padding:calc(56px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
+  .plmark{width:64px;height:64px;margin-bottom:10px}.plword{font-size:44px}.pltag{margin-top:8px;font-size:15px}.plpills{margin-top:10px}   /* the title screen: a smaller hero, so the players come sooner */
 }
 @media (hover:none) and (pointer:coarse){   /* phones and tablets: smaller controls, the eye and stand-up on the left, tip and speed on the right */
   .ctlrow{left:8px;right:8px;bottom:8px;gap:10px}
@@ -1070,9 +1130,9 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 473;   // one per commit to main (shown on the title screen and under the table)
-const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';
-const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from   // shown as 1.<build>, with the contact address
+const BUILD = 474;   // one per commit to main (shown on the title screen and under the table)
+const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
+const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
 const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
