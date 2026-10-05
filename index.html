@@ -573,6 +573,26 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .tabs{margin-top:0}
   .tabpanel{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 }
+/* Phones on their side: the desktop one-screen layout, table left and panel right, fitted to the short screen */
+@media (min-width:600px) and (max-height:500px) and (orientation:landscape){
+  body{padding-block:8px}
+  .wrap{height:calc(100vh - 16px);height:calc(100dvh - 16px);min-height:0;gap:8px}
+  header{flex:none;align-items:center;flex-wrap:nowrap}
+  header h1{font-size:24px;gap:10px}header h1::before{width:32px;height:32px}
+  .sub{display:none}
+  .main,.main.persp{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) clamp(300px,42vw,400px);gap:16px;align-items:stretch}
+  .tablecol{display:flex;flex-direction:column;gap:4px;min-height:0}
+  .table-box,.table-box.persp{flex:1;min-height:0;width:100%;height:auto;aspect-ratio:auto;margin:0}
+  .buildtag{margin-top:2px}
+  .flashtrack{flex:none;margin-top:0}
+  .panel{min-height:0;overflow-y:auto;overscroll-behavior:contain;gap:8px;padding-bottom:max(8px, env(safe-area-inset-bottom))}
+  .q{font-size:17px}.q small{display:none}
+  .quick{min-height:44px}
+  .answers{gap:6px}.answers button{padding:7px 0 5px;font-size:24px;min-height:52px}
+  .tabpanel{flex:none;min-height:0;overflow-y:visible;overflow-x:clip}
+  .menu{padding:calc(56px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
+  .plmark{width:64px;height:64px;margin-bottom:10px}.plword{font-size:44px}.pltag{margin-top:8px;font-size:15px}.plpills{margin-top:10px}   /* the title screen: a smaller hero, so the players come sooner */
+}
 @media (hover:none) and (pointer:coarse){   /* phones and tablets: smaller controls, the eye and stand-up on the left, tip and speed on the right */
   .ctlrow{left:8px;right:8px;bottom:8px;gap:10px}
   #lookwrap{margin-right:auto}
@@ -1021,7 +1041,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 469;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 470;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
 const plKey = (k, id) => id === 'p0' ? k : k + '@' + id;
