@@ -12,9 +12,9 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Billiards cut-shot aim trainer: read the shot, call the fraction.">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="favicon-32.png" sizes="32x32">
-<link rel="icon" href="icon-192.png" sizes="192x192">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
 <meta name="apple-mobile-web-app-title" content="Halfball">
 <title>Halfball</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1155,7 +1155,7 @@ function f2(n){return n.toFixed(2);}
 // The list is in 'halfball-profiles'. A player's keys end '@id', except p0: whoever played before players came in keeps the old keys.
 // Picking a player reloads the page; the pick lasts the browser session, so coming back with 2+ players asks again.
 const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+','S-','S'];   // S+ (full-table position) was dropped: S is the top
-const BUILD = 482;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 483;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
