@@ -2106,13 +2106,14 @@ function renderProgress(){
     const cls = (i===g ? 'here' : i <= best ? 'done' : '') + (i < g ? ' pick' : '') + (pr ? ' practice' : '');
     const bar = i===g ? (i < GR.length-1
       ? `<span class="here-bar"><i style="width:${Math.min(100, Math.max(0, pts)/PTS_UP*100)}%"></i></span><small>${Math.max(0, pts)} of ${PTS_UP} to ${GR[i+1]}</small>`
-      : '<small>You made it.</small>') : pr ? '<small>Practising: not scored</small>' : '';
+      : '<span class="sr">You made it.</span>') : pr ? '<span class="sr">Practising, not scored.</span>' : '';   // no small print on the ladder: the outline on the node shows the grade you're practising
     const u = i > 0 ? unlocksBetween(GRADE_STEP[i - 1], GRADE_STEP[i]) : [], soon = i > best;   // what this grade gives you (UNLOCKS_AT): yours, or still to come
     const f = FOCUS_AT[GRADE_STEP[i]];   // what this grade trains (FOCUS_AT): its title
     const title = `<h3 class="gfocus"${f ? ` aria-description="${ea(f.what + ' ' + f.where)}"` : ''}><span class="sr">Focus: </span>${f ? unlIcon(f.icon) + f.name : TX[i]}</h3>`;
     const unl = u.length ? `<span class="unl${soon ? ' soon' : ''}"><span class="sr">${soon ? 'Unlocks at this grade:' : 'Unlocks:'} </span>${u.map(r=>`<span class="unlchip" aria-description="${ea(r.what + ' ' + r.where)}">${unlIcon(r.icon)}${r.name}</span>`).join('<span class="sr">, </span>')}</span>` : '';
-    return `<li class="${cls}${DEV ? ' dev' : ''}" data-g="${i}"><span class="node">${G}</span><div class="what">${title}${unl}${bar}</div></li>`;   // the focus as the title, the unlocks as chips under it
-  }).reverse().join('') + `<li class="devnote"><span></span><small>${DEV ? 'Testing: tap a grade to jump there.' : 'Tap a grade you\'ve passed to practise it, as long as you like. Practice shots don\'t count.'}</small></li>`;
+    return `<li class="${cls}${DEV ? ' dev' : ''}" data-g="${i}"${pr ? ' aria-current="true"' : ''}><span class="node">${G}</span><div class="what">${title}${unl}${bar}</div></li>`;   // the focus as the title, the unlocks as chips under it
+  }).reverse().join('') + (DEV ? '<li class="devnote"><span></span><small>Testing: tap a grade to jump there.</small></li>' : '');
+  $('ladder').setAttribute('aria-description', DEV ? 'Testing: tap a grade to jump there.' : 'Tap a grade you\'ve passed to practise it, as long as you like. Practice shots don\'t count.');   // the hint, for screen readers only
 }
 const LADDER_DOWN = {8:'Cuts back on the fractions', 9:'Back to cuts the plain fraction pots', 10:'No more 0.75 s Flash'};
 // ==================== the Shoot half ====================
