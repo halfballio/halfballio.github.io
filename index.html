@@ -480,6 +480,11 @@ header{position:relative}
 .answers button.aimed{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .answers button.right{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good);background:color-mix(in srgb,var(--good) 15%,var(--surface))}
 .answers button.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
+/* a call marked by shape as well as colour, as on the result card: a tick right, a ring for a call that drops but isn't the ideal, a cross wrong */
+.answers button.right::before,.answers button.also::before,.answers button.wrong::before{content:'';position:absolute;top:6px;right:6px;width:12px;height:12px;-webkit-mask:var(--mk) center/contain no-repeat;mask:var(--mk) center/contain no-repeat;pointer-events:none}
+.answers button.right::before{--mk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.4 4.8 9.2 10 3.2' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background:var(--good)}
+.answers button.also::before{--mk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='3.6' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E");background:var(--accent)}
+.answers button.wrong::before{--mk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 3l6 6M9 3 3 9' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background:var(--bad)}
 button:focus-visible,[role="button"]:focus-visible,a:focus-visible,input:focus-visible,.aidname:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 .sumcover :focus-visible,.coach :focus-visible,.stancecard :focus-visible,.table-box :focus-visible,.gradebadge:focus-visible{outline-color:var(--gold)}   /* on navy, the ring is gold */
 .result{display:block;padding-top:4px}
@@ -1399,7 +1404,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 512;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 513;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -4263,7 +4268,7 @@ function endFlash(){ clearTimeout(flashTimer); $('cover').hidden = true; $('flas
 const RICON = {
   ok: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="right"><path d="M2 6.4 4.8 9.2 10 3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   no: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="wrong"><path d="M3 3l6 6M9 3 3 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-  also: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="drops, not the ideal call"><circle cx="6" cy="6" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'};
+  also: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="drops, not ideal"><circle cx="6" cy="6" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'};
 const rcls = g => g === 'also' ? 'also' : g === true ? 'ok' : g === false ? 'no' : '';
 function rcardHTML(head, cls, rows, aside, cap){
   const pend = head == null;
@@ -6076,7 +6081,7 @@ function tutAnswer(id){
   shot.pick = {...oc, id, far: !right};
   const lab = shot.answer.id==='full' ? 'full' : shot.answer.label;
   const fix = !right && st.ask !== 'any';   // a step with a shot to call right: a wrong call shows you the right one, then it's yours again
-  $('coachtext').innerHTML = right ? `Right: a <b>${lab}</b>-ball hit. Watch it go.` : fix ? st.text + `<br><span class="coachnote">That was <b>${tutLab(picked)}</b>; this one is <b>${lab}</b>: the ghost ball covers ${lab==='full' ? 'all' : lab} of it. Watch it played right.</span>`
+  $('coachtext').innerHTML = right ? `Right: a <b>${lab}</b>-ball hit. Watch it go.` : fix ? st.text + `<br><span class="coachnote">${RICON.no}That was <b>${tutLab(picked)}</b>; this one is <b>${lab}</b>: the ghost ball covers ${lab==='full' ? 'all' : lab} of it. Watch it played right.</span>`
     : `It was a <b>${lab}</b>-ball hit: the ghost ball covered ${lab==='full' ? 'all' : lab} of it.`;
   if(!fix || tut.seen){ $('coachnext').hidden = false; $('coachnext').textContent = 'Next'; } else $('coachnext').hidden = true;
   const after = () => { draw(true); if(fix) tutShowRight(st, shot.answer); };
