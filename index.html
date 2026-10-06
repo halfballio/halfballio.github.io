@@ -191,7 +191,8 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .stancecard[hidden]{display:none}
 .stancecard b{font:700 22px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase}.stancecard small{color:var(--cream-2);line-height:1.45}
 .stancecard label{display:flex;flex-wrap:wrap;gap:4px 6px;font-weight:600}.stancecard label span{color:var(--gold);font-weight:500}
-.stancecard input{width:100%;accent-color:var(--gold)}.stancecard .startbtn{align-self:center}
+.stancecard input{width:100%;accent-color:var(--gold)}
+.backticks{display:flex;justify-content:space-between;width:100%;margin-top:-2px}.backticks span,.stancecard label .backticks span{color:var(--muted);font-weight:500;font-size:12px;margin:0}.stancecard label .backticks span{color:var(--cream-2)}.stancecard .startbtn{align-self:center}
 /* the app tour: a spotlight on one control at a time, and a coach card beside it */
 .tour{position:fixed;inset:0;z-index:300;touch-action:none}
 .tourlist{margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.5}.tourlist li::marker{color:var(--gold)}
@@ -1184,8 +1185,9 @@ html.svopen,html.svopen body{overflow:hidden}
       <div class="opt optrange">Your height <span id="heightval"></span>
         <input type="range" id="heightrange" min="150" max="200" step="1" aria-label="Your height, cm">
       </div>
-      <div class="opt optrange" title="How far behind the rail you stand to read a shot. 0 is at the rail, leaning in a little over it; more steps you back for a wider look. With the cue ball near the rail you stand back enough to see it.">Back from the rail <span id="backval"></span>
-        <input type="range" id="backrange" min="0" max="24" step="1" aria-label="How far back from the rail you stand, inches: 0 is at the rail, leaning in a little; more steps you back for a wider look">
+      <div class="opt optrange" title="How far back from the table you stand to read a shot. Close puts you right at the rail; Far steps you well back for a wider look. With the cue ball near the rail, you stand back enough to see it.">Back from the rail <span id="backval"></span>
+        <input type="range" id="backrange" min="0" max="24" step="1" aria-label="How far back from the table you stand to read a shot, from close to far.">
+        <div class="backticks" aria-hidden="true"><span>Close</span><span>Medium</span><span>Far</span></div>
       </div>
       <div class="opt">Shooting hand
         <div class="seg" role="group" aria-label="Shooting hand"><button data-set="hand" data-val="L">Left</button><button data-set="hand" data-val="R">Right</button></div>
@@ -1361,9 +1363,9 @@ html.svopen,html.svopen body{overflow:hidden}
         </div>
         <div class="stancecard" id="stancecover" hidden>
           <b>Where do you stand?</b>
-          <small>Set your height, how far behind the rail you stand to read a shot (0 is at the rail, leaning in a little), and your player and glove colours. The table view follows.</small>
+          <small>Set your height, how far back from the table you stand to read a shot, and your player and glove colours. The table view follows.</small>
           <label>Your height <span id="st-heightval"></span><input type="range" id="st-height" min="150" max="200" step="1" aria-label="Your height, cm"></label>
-          <label title="How far behind the rail you stand to read a shot. 0 is at the rail, leaning in a little over it; more steps you back for a wider look.">Back from the rail <span id="st-backval"></span><input type="range" id="st-back" min="0" max="24" step="1" aria-label="How far back from the rail you stand, inches: 0 is at the rail, leaning in a little; more steps you back for a wider look"></label>
+          <label title="How far back from the table you stand to read a shot. Close puts you right at the rail; Far steps you well back for a wider look.">Back from the rail <span id="st-backval"></span><input type="range" id="st-back" min="0" max="24" step="1" aria-label="How far back from the table you stand to read a shot, from close to far."><div class="backticks" aria-hidden="true"><span>Close</span><span>Medium</span><span>Far</span></div></label>
           <div class="stcolors"><label class="stcolor">Player colour <input type="color" id="st-skin" aria-label="Player colour"></label><label class="stcolor">Glove colour <input type="color" id="st-glove" aria-label="Glove colour"></label></div>
           <small>You can change these any time in Settings.</small>
           <button class="startbtn" id="stancedone">Done</button>
@@ -7321,7 +7323,8 @@ function applyStance(){
   VIEWS.down.h = CUE_Z + CHIN_GAP + 0.065*H;          // chin to eyes is about 6.5% of your height: ~9" up at 175 cm
   VIEWS.down.back = (0.146*H - 1.25) + 0.2*H;          // ~23" back at 175 cm
   const ft = Math.floor(hc/2.54/12), inch = Math.round(hc/2.54 - ft*12);
-  $('heightval').textContent = $('st-heightval').textContent = `${ft}′${inch}″ · ${hc} cm`; $('backval').textContent = $('st-backval').textContent = `${back}″`;
+  $('heightval').textContent = $('st-heightval').textContent = `${ft}′${inch}″ · ${hc} cm`; const bw = back <= 7 ? 'Close' : back <= 16 ? 'Medium' : 'Far'; $('backval').textContent = $('st-backval').textContent = bw;
+  ['backrange', 'st-back'].forEach(id=>$(id).setAttribute('aria-valuetext', bw));
   $('heightrange').value = $('st-height').value = hc; $('backrange').value = $('st-back').value = back;
 }
 applyStance();
