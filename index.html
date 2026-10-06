@@ -1628,7 +1628,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 514;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 515;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1753,6 +1753,15 @@ function saveSettings(){ if(restoring) return; try{ localStorage.setItem(lsKey(K
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 515, date: '2026-10-06', title: 'Practice, Run-outs and more', items: [
+    'Practice opens at B-. Choose the fractions, angle, side and distance you want to work on, or let the game pick your weakest shots. Practice shots are not scored.',
+    'Run-outs opens at S. Plan a rack of three to nine balls by choosing each ball and its pocket, then run it from wherever the cue ball stops. Racks can be open, 8-ball last or rotation.',
+    'The Look button on the table changes the table style and the balls.',
+    'Levelling up now shows what the new grade focuses on and what it unlocks.',
+    'You can back up your progress to a file and restore it in any browser, and Stats now count every shot you have played.',
+    'The English lesson now explains deflection and lets you try allowing for it.',
+    'Bug fixes and small improvements.',
+  ]},
   {build: 508, date: '2026-10-06', title: 'Lessons show you the right shot', items: [
     'Call a lesson shot wrong and you see it played right, then it’s yours to call again.',
     'A lesson step with nothing to call leaves the table as it is, and its fractions stand back: Enter, or Done, moves you on.',
