@@ -5,6 +5,7 @@
 'use strict';
 let ctx = null, out = null, mix = null, send = null, noise = null, metal = null, metalIn = null, metalOsc = null, crackle = null;
 let timer = 0, track = null, nextT = 0, step = 0, vol = 0.5, tok = 0, sleepTimer = 0, away = false;
+let style = 'normal', wantStyle = 'normal';   // 'disco': the same tunes on a four-on-the-floor groove
 const KS = {};
 const LEVEL = 0.3;
 const mtof = m => 440*Math.pow(2, (m - 69)/12);
@@ -160,6 +161,50 @@ function pad(t, notes, dur, v){   // a warm detuned pad
   }));
   lp.connect(g); route(g, 0.5);
 }
+// disco kit: a punchier kick, an open hat, a hand clap, and a light string pad
+function dkick(t, v){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(46, t + 0.09);
+  env(g, t, 0.36*v, 0.003, 0.26); o.connect(g); route(g, 0);
+  o.start(t); o.stop(t + 0.28);
+  hiss(t, 0.01, 'lowpass', 2500, 0.7, 0.06*v, 0.001);
+}
+function ohat(t, v){ hiss(t, 0.2, 'highpass', 7500, 0.7, 0.032*v, 0.004, 0.15); }
+function chat(t, v){ hiss(t, 0.03, 'highpass', 8500, 0.7, 0.012*v, 0.001, 0.05); }
+function clap(t, v){   // three quick slaps and a short tail
+  [0, 0.011, 0.023].forEach(o=>hiss(t + o, 0.02, 'bandpass', 1300, 1.1, 0.06*v, 0.001, 0.2));
+  hiss(t + 0.03, 0.16, 'bandpass', 1500, 0.9, 0.05*v, 0.003, 0.35);
+}
+function strings(t, notes, dur, v){   // a light string section: detuned saws, a slow bow, a gentle swell
+  const lp = ctx.createBiquadFilter(), g = ctx.createGain(), end = t + dur + 0.5;
+  lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.setValueAtTime(1400, t); lp.frequency.linearRampToValueAtTime(2600, t + dur*0.6);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.011*v, t + 0.25); g.gain.setValueAtTime(0.011*v, t + dur); g.gain.linearRampToValueAtTime(0, end);
+  notes.forEach(m=>[-9, 9].forEach(c=>{
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m + 12); o.detune.value = c;
+    o.connect(lp); o.start(t); o.stop(end + 0.05);
+  }));
+  lp.connect(g); route(g, 0.5);
+}
+const DISCO_BPM = 118;
+function disco(T, t, bar, e, d8, s){   // the same chords, a disco groove: kick on every beat, open hat on the off-beats, clap on 2 and 4
+  const pick = x => Array.isArray(x) ? x[e < 4 ? 0 : 1] : x;
+  const c = pick(T.chords ? T.chords[bar] : bar), v = T.chords ? T.voice[c] : T.voice[bar];
+  let r = pick(T.roots[bar]); while(r > 47) r -= 12; while(r < 36) r += 12;
+  if(e === 0 || (T.chords && Array.isArray(T.chords[bar]) && e === 4)) strings(t, v, d8*(Array.isArray(T.roots[bar]) ? 4 : 8), 1);
+  bass(t, e % 2 ? r + 12 : r, d8*0.8, (e % 2 ? 0.62 : 0.8)*hv(s));   // the octave bounce
+  if(e % 2 === 0) dkick(t, 0.85); else ohat(t, hv(s));
+  if(e % 2 === 0) chat(t, 0.8*hv(s));
+  if(e === 2 || e === 6) clap(t, 0.9*hv(s));
+  if(e === 3 || e === 7){   // a short chord stab on the and of 2 and 4
+    if(track === 'felt') v.forEach((m, i)=>guitar(t + i*0.008, m, d8*0.7, 0.3*hv(s + i), 0.25));
+    else v.forEach((m, i)=>epiano(t + i*0.008, m, d8*0.7, 0.4*hv(s + i), 0.25));
+  }
+}
+function setStyle(st){
+  wantStyle = st === 'disco' ? 'disco' : 'normal';
+  if(!timer){ style = wantStyle; if(ctx) metalFor(); }   // not playing: take it now; playing: at the next bar
+}
+function metalFor(){ if(track === 'parlor' && style !== 'disco') metalOn(); else metalOff(); }   // only Parlor's swing has a ride cymbal
 function startCrackle(){   // very faint vinyl: sparse pops on a hush of noise, looped
   stopCrackle();
   const sr = ctx.sampleRate, len = sr*5, b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0);
@@ -176,7 +221,7 @@ function stopCrackle(){ if(crackle){ try{ crackle.stop(); }catch(e){} crackle = 
 // 8-bar heads written out by hand, eighth-note steps (e 0..7 per bar). The loop is 16 bars: the head, then the head again
 // with the tune resting for its first four bars. Notes: [eighth, MIDI, length in eighths].
 const TRACKS = {
-  parlor: {name: 'Parlor', bpm: 100, swing: 0.64,
+  parlor: {name: 'Parlor', bpm: 100, swing: 0.64, roots: [38,43,36,45,38,43,36,[38,43]],
     // Dm7 | G7 | Cmaj7 | A7b9 | Dm7 | G7 | Cmaj7 | Dm7 G7
     voice: {Dm7: [53,57,60,64], G7: [53,57,59,64], C: [52,55,59,62], A7: [55,58,61,64]},
     chords: ['Dm7','G7','C','A7','Dm7','G7','C',['Dm7','G7']],
@@ -263,12 +308,13 @@ function warm(id){ if(id === 'felt'){ const T = TRACKS.felt; T.voice.flat().conc
 
 function schedule(){
   const T = TRACKS[track]; if(!T) return;
-  const beat = 60/T.bpm, d8 = beat/2;
   if(nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05;   // fell behind (a throttled timer): pick up from now, never a burst of missed notes
   while(nextT < ctx.currentTime + 0.3){
     const s = step % 128, pass = s >> 6, bar = (s >> 3) & 7, e = s & 7;
-    const t = nextT + (e % 2 ? (T.swing - 0.5)*beat : 0);
-    T.play(t, bar, e, d8, s);
+    if(e === 0 && style !== wantStyle){ style = wantStyle; metalFor(); }   // switch styles on the bar line
+    const dd = style === 'disco', beat = 60/(dd ? DISCO_BPM : T.bpm), d8 = beat/2;
+    const t = nextT + (e % 2 && !dd ? (T.swing - 0.5)*beat : 0);
+    if(dd) disco(T, t, bar, e, d8, s); else T.play(t, bar, e, d8, s);
     if(!(pass === 1 && bar < 4)) for(const [me, m, len] of T.mel[bar]) if(me === e) T.lead(t, m, d8*len, (pass ? 0.85 : 1)*hv(s + 50));
     nextT += d8; step++;
   }
@@ -285,8 +331,7 @@ function play(id){
   setTimeout(()=>{
     if(my !== tok) return;
     stopCrackle(); warm(id);
-    if(id === 'parlor') metalOn(); else metalOff();   // only Parlor has a ride cymbal
-    track = id; step = 0; nextT = ctx.currentTime + 0.1;
+    track = id; style = wantStyle; metalFor(); step = 0; nextT = ctx.currentTime + 0.1;
     out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(vol*LEVEL, ctx.currentTime, 0.5);
     if(TRACKS[id].crackle) startCrackle();
     if(!away){ timer = setInterval(schedule, 50); schedule(); }
@@ -316,5 +361,5 @@ if(root.document) root.document.addEventListener('visibilitychange', ()=>{
   if(away){ clearInterval(timer); timer = 0; try{ ctx.suspend(); }catch(e){} }
   else resume();
 });
-root.Music = {play, stop, setVolume, resume, unlock, tracks: Object.fromEntries(Object.entries(TRACKS).map(([k, T])=>[k, T.name])), playing: ()=>track};
+root.Music = {play, stop, setVolume, setStyle, style: ()=>style, resume, unlock, tracks: Object.fromEntries(Object.entries(TRACKS).map(([k, T])=>[k, T.name])), playing: ()=>track};
 })(typeof window !== 'undefined' ? window : this);
