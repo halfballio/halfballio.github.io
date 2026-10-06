@@ -1212,7 +1212,7 @@ html.svopen,html.svopen body{overflow:hidden}
       </div>
       <small class="setnote" id="laddertablenote">Until S, the Ladder plays on your grade's table.</small>
       <div class="opt">Balls
-        <div class="seg" role="group" aria-label="Ball set"><button data-set="ballSet" data-val="standard">Standard<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="retro">Retro<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="tv">TV<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="blackout">Blackout<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div>
+        <div class="seg" role="group" aria-label="Ball set"><button data-set="ballSet" data-val="standard">Standard<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="retro">Retro<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="tv">TV<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="blackout">Blackout<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="disco" id="set-disco" hidden>Disco<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div>
       </div>
       <div class="opt">Table style
         <div class="seg" role="group" aria-label="Table style"><button data-set="tstyle" data-val="bar">Bar<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="tstyle" data-val="club">Club<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="tstyle" data-val="pro">Pro<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div>
@@ -4051,18 +4051,22 @@ const BALL_SETS = {
              rough:.07, clear:1, shine:[34, 29, 34, .9, .3], numFont:NUM_SANS, numWeight:600, numScale:1.08, spot:1.1, ring:0, stripeW:.38},   // clear-coated: a small, bright highlight and bigger numbers
   retro:    {white:'#ece0c4', c:{1:'#d9a92a', 2:'#2b4a8a', 3:'#b03a2e', 4:'#5a3a7a', 5:'#cf6f2a', 6:'#2f6b45', 7:'#6e2a24'},   // older, softer colours on ivory
              rough:.46, clear:0, shine:[38, 36, 66, .3, 0], numFont:'Georgia, "Times New Roman", serif', numWeight:700, numScale:.9, spot:1, ring:1, stripeW:.44},   // satin: a soft, broad sheen; serif numbers in a thin ring; wider stripes
+  disco:    {white:'#f4efe0', rough:.06, clear:1, holo:1, shine:[34, 29, 34, .9, .3], numFont:NUM_SANS, numWeight:600, numScale:1, spot:1.06, ring:0, stripeW:.38},   // hidden (the disco cheat): the Standard colours under a rainbow sheen that shifts as you move
   blackout: {white:'#24262a', rough:.18, clear:0, shine:[35, 32, 45, .55, 0], numFont:NUM_COND, numWeight:700, numScale:1, spot:1, ring:0, stripeW:.38},   // a very dark grey, not pure black, so the shading still reads as a ball; stripes on black instead of white
 };
 for(const k in BALL_SETS) BALL_SETS[k].key = k;
 // the 2D balls' highlight, in this set's finish
 const SHINE = () => { const [cx, cy, r, op, core] = ballSet().shine;
-  return `<radialGradient id="shine" cx="${cx}%" cy="${cy}%" r="${r}%"><stop offset="0" stop-color="#fff" stop-opacity="${op}"/>${core ? `<stop offset="${core}" stop-color="#fff" stop-opacity="${op*.7}"/>` : ''}<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`; };
+  return `<radialGradient id="shine" cx="${cx}%" cy="${cy}%" r="${r}%"><stop offset="0" stop-color="#fff" stop-opacity="${op}"/>${core ? `<stop offset="${core}" stop-color="#fff" stop-opacity="${op*.7}"/>` : ''}<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>` + (ballSet().holo ? HOLO('holo') : ''); };
+// Disco's rainbow sheen in 2D: a soft band of hues across the ball
+const HOLO = id => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">${['#ff4fd8', '#ffd84f', '#4fffb0', '#4fb8ff', '#b04fff'].map((c, i)=>`<stop offset="${i/4}" stop-color="${c}" stop-opacity=".42"/>`).join('')}</linearGradient>`;
+const SHEEN = (cx, cy, r) => (ballSet().holo ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#holo)" style="mix-blend-mode:screen"/>` : '') + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#shine)"/>`;
 const ballSet = () => BALL_SETS[settings.ballSet] || BALL_SETS.standard;
 // table styles and ball sets open up as you climb: Bar and Standard to start, Pro and Blackout at the top (S)
-const LOOK_AT = {tstyle: {bar: 0, club: SH.throw, pro: SH.all}, ballSet: {standard: 0, retro: SH.any, tv: SH.draw, blackout: SH.all}};
+const LOOK_AT = {tstyle: {bar: 0, club: SH.throw, pro: SH.all}, ballSet: {standard: 0, retro: SH.any, tv: SH.draw, blackout: SH.all, disco: 0}};
 const LOOK_NAME = {club: 'Club table', pro: 'Pro table', retro: 'Retro balls', tv: 'TV balls', blackout: 'Blackout balls'};
-const lookOpen = (key, val) => DEV || ladderBest() >= (LOOK_AT[key][val] ?? 99);
-const bestLook = key => Object.keys(LOOK_AT[key]).filter(v=>lookOpen(key, v)).pop();   // the last one you've opened
+const lookOpen = (key, val) => key === 'ballSet' && val === 'disco' ? !!settings.discoGot : DEV || ladderBest() >= (LOOK_AT[key][val] ?? 99);
+const bestLook = key => Object.keys(LOOK_AT[key]).filter(v=>v !== 'disco' && lookOpen(key, v)).pop();   // the last one you've opened
 // ---------- what each grade brings ----------
 // Two kinds, both keyed by the skill step (SH, as every unlock goes by step):
 // FOCUS_AT: what each grade trains or changes in play, exactly one per step. It is the grade's title on the Progress ladder
@@ -4192,7 +4196,7 @@ function tableSVG(s, reveal){
     if(num){ const B = ballSet(), rs = .5*B.spot;
       b += `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="${f2(rs)}" fill="#fff"/>` + (B.ring ? `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="${f2(rs*.86)}" fill="none" stroke="#111" stroke-width=".035"/>` : '')
         + `<text x="${f2(p[0])}" y="${f2(p[1]+.04)}" font-size="${f2(.65*B.numScale)}" font-family='${B.numFont}' font-weight="${B.numWeight}" text-anchor="middle" dominant-baseline="middle" fill="#111">${num}</text>`; }
-    b += `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="${R}" fill="url(#shine)"/>`;
+    b += SHEEN(f2(p[0]), f2(p[1]), R);
     return b;
   };
   for(const x of s.extra || []) o += ball(x.p, ballCol(x), x.color[1]);   // S: the other balls on the table
@@ -4611,7 +4615,7 @@ function perspDyn(cam, s, reveal){
         }
       }
     }
-    o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="url(#shine)"/>`;
+    o += SHEEN(x.toFixed(1), y.toFixed(1), r.toFixed(1));
     if((it.z ?? R) < R - 0.01){
       // dropping into the pocket: only what's inside the hole's opening shows, and it darkens as it goes down
       const P = it.pocket || s.P, rr = pocketR(P), ring = z => Array.from({length:28}, (_, k)=>{ const a = k/28*2*Math.PI; return [P.c[0]+rr*Math.cos(a), P.c[1]+rr*Math.sin(a), z]; });
@@ -6285,6 +6289,7 @@ function syncPressed(){
   { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open;   // before S: the grade's table, shown as the pick; the others lock
     document.querySelectorAll('[data-set="tablePick"]').forEach(b=>{ const lk = !open && b.dataset.val !== lt; lockBtn(b, lk, `Unlocks at ${stepGrade(LADDER_PICK_AT)}`); b.querySelector('.lock').hidden = !lk; }); }
   { const lk = !carbonUnlocked(), b = document.querySelector('[data-set="shaft"][data-val="carbon"]'); lockBtn(b, lk, `Unlocks at ${stepGrade(CARBON_AT)}`); $('shaftlock').hidden = !lk; }
+  $('set-disco').hidden = !settings.discoGot;   // hidden until the disco cheat
   for(const k of ['tstyle', 'ballSet']) document.querySelectorAll(`[data-set="${k}"]`).forEach(b=>{ const lk = !lookOpen(k, b.dataset.val); lockBtn(b, lk, `Unlocks at ${stepGrade(LOOK_AT[k][b.dataset.val])}`); const s = b.querySelector('.lock'); if(s) s.hidden = !lk; });
   const lockFlash = !flashUnlocked();
   lockBtn($('task-flash'), lockFlash, `Unlocks at ${stepGrade(FLASH_AT)}`); $('flashlock').hidden = !lockFlash;
@@ -7106,6 +7111,11 @@ function revealAnswer(){
     const now = performance.now(); typed = (now - at < 500 ? typed : '') + e.key.toLowerCase(); at = now;
     if(e.key.toLowerCase() === 'b') tipBeforeCheat = settings.shotTip && settings.shotTip.slice();
     if(typed.endsWith('bsw')){ typed = ''; const t0 = tipBeforeCheat; setTimeout(()=>{ if(t0){ settings.shotTip = t0; saveSettings(); renderShootControls(); } revealAnswer(); }, 0); return; }   // S and W moved the tip: put it back
+    if(typed.endsWith('disco')){   // another: d-i-s-c-o opens the hidden Disco balls, and puts them on the table
+      typed = ''; settings.discoGot = 1; settings.ballSet = 'disco'; saveSettings();
+      applyStyle(); syncPressed(); if(shot && !anim) draw(answered);
+      notice('Disco balls unlocked.'); return;
+    }
     if(!typed.endsWith('tincl')) return;
     typed = '';
     openEveryGrade();
@@ -7159,7 +7169,7 @@ $('radio').addEventListener('click', e=>{ e.stopPropagation(); applySetting('mus
 // ---------- the Look picker: the Look disc under the radio opens it. Table style and ball set (and from S the Ladder's table),
 // each choice with a little preview; locked ones show the grade that opens them. A choice goes through applySetting, as the
 // buttons in Settings > Table do, so the two stay in step. A gold dot on the disc marks a look you've opened but not seen here yet.
-const LOOK_OPTS = {tstyle: [['bar', 'Bar'], ['club', 'Club'], ['pro', 'Pro']], ballSet: [['standard', 'Standard'], ['retro', 'Retro'], ['tv', 'TV'], ['blackout', 'Blackout']]};
+const LOOK_OPTS = {tstyle: [['bar', 'Bar'], ['club', 'Club'], ['pro', 'Pro']], ballSet: [['standard', 'Standard'], ['retro', 'Retro'], ['tv', 'TV'], ['blackout', 'Blackout'], ['disco', 'Disco']]};
 const lookNew = () => Object.keys(LOOK_OPTS).flatMap(k=>LOOK_OPTS[k].filter(([v])=>LOOK_AT[k][v] > 0 && lookOpen(k, v) && !(settings.lookSeen || []).includes(k + ':' + v)).map(([v])=>k + ':' + v));
 const LOOK_LOCK = '<span class="lock" aria-hidden="true"><svg viewBox="0 0 12 12"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>';
 var lookPick = {open: false, fresh: [], back: null};   // var: syncPressed may run before this line does
@@ -7170,11 +7180,11 @@ function lookSwatch(k, v){
   }
   const B = BALL_SETS[v], col = n => (B.c && B.c[n]) || OB_COLORS[n - 1][0], cl = ST().cloth;   // three balls on today's cloth: two solids and a stripe
   const hh = 4*B.stripeW/.38, hw = Math.sqrt(64 - hh*hh).toFixed(2), [cx, cy, sr, op, core] = B.shine, gid = 'swsh-' + v;   // the set's stripe height and highlight
-  const shine = x => `<circle cx="${x}" cy="12" r="8" fill="url(#${gid})"/>`;
+  const shine = x => (B.holo ? `<circle cx="${x}" cy="12" r="8" fill="url(#${gid}h)" style="mix-blend-mode:screen"/>` : '') + `<circle cx="${x}" cy="12" r="8" fill="url(#${gid})"/>`;
   const ball = (x, n, stripe) => (stripe
     ? `<circle cx="${x}" cy="12" r="8" fill="${B.white}" stroke="rgba(0,0,0,.35)" stroke-width=".6"/><path d="M${x} ${12 - hh}m-${hw} 0A8 8 0 0 0 ${x - hw} ${12 + hh}L${x + +hw} ${12 + hh}A8 8 0 0 0 ${x + +hw} ${12 - hh}Z" fill="${col(n)}"/>`
     : `<circle cx="${x}" cy="12" r="8" fill="${col(n)}" stroke="rgba(0,0,0,.35)" stroke-width=".6"/>`) + shine(x);
-  return `<svg viewBox="0 0 64 24" aria-hidden="true"><defs><radialGradient id="${gid}" cx="${cx}%" cy="${cy}%" r="${sr}%"><stop offset="0" stop-color="#fff" stop-opacity="${op}"/>${core ? `<stop offset="${core}" stop-color="#fff" stop-opacity="${op*.7}"/>` : ''}<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect x="0" y="0" width="64" height="24" rx="5" fill="${cl}"/>${ball(13, 1)}${ball(32, 3)}${ball(51, 2, true)}</svg>`;
+  return `<svg viewBox="0 0 64 24" aria-hidden="true"><defs><radialGradient id="${gid}" cx="${cx}%" cy="${cy}%" r="${sr}%"><stop offset="0" stop-color="#fff" stop-opacity="${op}"/>${core ? `<stop offset="${core}" stop-color="#fff" stop-opacity="${op*.7}"/>` : ''}<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>${B.holo ? HOLO(gid + 'h') : ''}</defs><rect x="0" y="0" width="64" height="24" rx="5" fill="${cl}"/>${ball(13, 1)}${ball(32, 3)}${ball(51, 2, true)}</svg>`;
 }
 function lookGroup(k, label, opts, cur, open, at){
   const id = 'stylegrp-' + k;
@@ -7193,7 +7203,7 @@ function renderLookPicker(){
   if(!lookPick.open) return;
   const a = document.activeElement, had = a && a.closest ? a.closest('#stylebody .styleopt') : null, hk = had && had.parentNode.dataset.look, hv = had && had.dataset.val;
   let h = lookGroup('tstyle', 'Table', LOOK_OPTS.tstyle, settings.tstyle, v=>lookOpen('tstyle', v), v=>LOOK_AT.tstyle[v])
-    + lookGroup('ballSet', 'Balls', LOOK_OPTS.ballSet, settings.ballSet, v=>lookOpen('ballSet', v), v=>LOOK_AT.ballSet[v]);
+    + lookGroup('ballSet', 'Balls', LOOK_OPTS.ballSet.filter(([v])=>v !== 'disco' || settings.discoGot), settings.ballSet, v=>lookOpen('ballSet', v), v=>LOOK_AT.ballSet[v]);
   if(ladderPickOpen()) h += lookGroup('tablePick', 'Ladder table', [['7', '7 ft'], ['8', '8 ft'], ['9', '9 ft']], ladderTable(), ()=>true, ()=>0);
   $('stylebody').innerHTML = h;
   if(hk){ const f = $('stylebody').querySelector(`[data-look="${hk}"] [data-val="${hv}"]`); if(f) f.focus({preventScroll: true}); }   // a redraw keeps your place

@@ -198,9 +198,18 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
   const sphere = opts.lite ? new T3.SphereGeometry(1, 32, 24) : new T3.SphereGeometry(1, 48, 32);   // 32 round: under half a pixel off round even down on the shot
   // the ball set's finish: its roughness, and a clear coat on top for the glossiest set (a phone gets the plain glossy surface)
   function ballMat(L){
-    const r = L && L.rough != null ? L.rough : .18, m = L && L.clear && !opts.lite
+    const r = L && L.rough != null ? L.rough : .18, m = L && L.clear && (!opts.lite || L.holo)
       ? new T3.MeshPhysicalMaterial({roughness:r, metalness:0, clearcoat:L.clear, clearcoatRoughness:.03})
       : new T3.MeshStandardMaterial({roughness:r, metalness:0});
+    if(L && L.holo){   // Disco: a rainbow sheen over the ball's colour, strongest at the edge, shifting as the view moves
+      m.customProgramCacheKey = () => 'holo';
+      m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', `{
+        vec3 vd = normalize(vViewPosition); float f = 1.0 - abs(dot(normal, vd));
+        float h = f*1.4 + normal.x*.45 + normal.y*.3 + vd.x*.6;
+        gl_FragColor.rgb += (.5 + .5*cos(6.2832*(h + vec3(0., .33, .67))))*(.1 + .45*f*f);
+      }
+      #include <dithering_fragment>`); };
+    }
     m.userData.fk = L ? L.key : '';
     return m;
   }
