@@ -572,9 +572,7 @@ header{position:relative}
 .answers button:hover:not(:disabled){border-color:var(--accent);background:var(--surface-2)}
 .answers button:disabled{cursor:default}
 .answers.locked button,.mods.locked button{opacity:.45;pointer-events:none;box-shadow:none}   /* a new player's first visit: nothing to call until the first lesson */
-.answers.tutoff button{opacity:.35;box-shadow:none;cursor:default}   /* a lesson step with nothing to call: a tap or a key nudges Next / Done instead */
-.coachbtns .startbtn.nudge{animation:coachnudge .45s ease-in-out 2}
-@keyframes coachnudge{0%,100%{transform:scale(1)}50%{transform:scale(1.09);box-shadow:0 0 0 3px rgba(240,191,52,.5)}}
+.answers.tutoff button{opacity:.35;box-shadow:none;cursor:default}   /* a lesson step with nothing to call: a tap or a key does nothing */
 .answers button.aimed{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .answers button.right{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good);background:color-mix(in srgb,var(--good) 15%,var(--surface))}
 .answers button.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
@@ -5633,7 +5631,7 @@ function markPend(){
   document.querySelectorAll('#mods button').forEach(b=>b.classList.toggle('sel', b.dataset.mod===pend.m));
 }
 function pickFrac(id){
-  if(tut.on && !tstep().ask) return tutNudge();   // a lesson step with nothing to call: point at Next / Done
+  if(tut.on && !tstep().ask) return;   // a lesson step with nothing to call: a call does nothing
   if(!canCall()) return;
   if(tut.on) return tutAnswer(id);   // in a lesson a call is the lesson's, not a scored shot
   const c = shot.cam;
@@ -6756,10 +6754,6 @@ function tutShowRight(st, right){   // after your wrong shot has played out
       if(settings.animate !== '0') animateShot(oc, ()=>{ draw(true); again(); }, '#ffd34d'); else { draw(true); again(); }
     }); }, 900);
 }
-function tutNudge(){   // a call on a step with nothing to call: point at Next / Done
-  const b = $('coachnext'); if(b.hidden) return;
-  b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge');
-}
 function tutSettle(){ const c = shot && shot.cam; if(!c) return; featherStart(c); featherLoop(shot); }
 // the coach's routine: step behind the line, bend over onto it, and come back up after the shot
 function tutBend(to, ms, done){
@@ -6899,7 +6893,7 @@ function tutTry(id){
 }
 function tutAnswer(id){
   const st = tstep();
-  if(!st.ask) return tutNudge();
+  if(!st.ask) return;   // nothing to call on this step
   if(tut.fix) return;   // the right shot is being shown
   if(st.try) return tutTry(id);
   if(answered) return;
@@ -7210,7 +7204,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Shift' && !e.repeat && !$('showright').hidden && !anim){ replayRightNow(); e.preventDefault(); return; }   // or the right shot after a miss
   if(callLock) return;   // a new player before the first lesson: keys 1–5 and Enter have nothing to call
   const k = parseInt(e.key,10);
-  if(tut.on && !tstep().ask){ if(k>=1 && k<=REFS.length) tutNudge(); return; }   // nothing to call: point at Next / Done
+  if(tut.on && !tstep().ask) return;   // nothing to call on this step: the fraction keys do nothing
   if(!isPlace() && k>=1 && k<=REFS.length && !answered){ pickFrac(REFS[k-1].id); e.preventDefault(); }
   else if(isPlace() && !answered && (e.key==='ArrowLeft' || e.key==='ArrowRight')){ nudge(e.key==='ArrowLeft'?-1:1, e.shiftKey ? 6 : 1); e.preventDefault(); }
   else if(isShooting() && !answered && ctrl().speed && (e.key==='ArrowUp' || e.key==='ArrowDown')){ setSpeedLevel(speedLevel() + (e.key==='ArrowUp' ? 1 : -1)); e.preventDefault(); }
