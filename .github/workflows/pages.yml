@@ -1,0 +1,82 @@
+# Publishes the site with GitHub Pages:
+#   /      the main branch, always (whichever branch triggered the run)
+#   /dev/  the preview branch, when it exists (no preview branch: no /dev/)
+# Only the files the site serves are published; the raw files go up as they are (no Jekyll step).
+name: Pages
+
+on:
+  push:
+    branches: [main, preview]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: src
+
+      - name: Look for the preview branch
+        id: preview
+        run: |
+          if git -C src ls-remote --exit-code --heads origin preview >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No preview branch: /dev/ is not published."
+          fi
+
+      - name: Check out preview
+        if: steps.preview.outputs.exists == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: preview
+          path: devsrc
+          persist-credentials: false
+
+      - name: Assemble the site
+        env:
+          HAS_DEV: ${{ steps.preview.outputs.exists }}
+        run: |
+          set -euo pipefail
+          EXCLUDES=(--exclude=.git --exclude=.github --exclude=.claude --exclude=.githooks --exclude=/tools/ --exclude=node_modules)
+          mkdir -p site
+          rsync -a "${EXCLUDES[@]}" src/ site/
+          if [ "$HAS_DEV" = "true" ]; then
+            mkdir -p site/dev
+            rsync -a "${EXCLUDES[@]}" --exclude=/CNAME --exclude=/robots.txt --exclude=/dev/ devsrc/ site/dev/
+            # the test copy stays out of search results and is not offered as an install of the app
+            for f in site/dev/*.html; do
+              grep -q '<head>' "$f" || { echo "no <head> in $f"; exit 1; }
+              sed -i '0,/<head>/s//<head>\n<meta name="robots" content="noindex">/' "$f"
+              sed -i '/<link rel="manifest"/d' "$f"
+            done
+          fi
+          find site -type f | sort
+
+      - name: Set up Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
