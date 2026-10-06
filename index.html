@@ -991,7 +991,7 @@ html.svopen,html.svopen body{overflow:hidden}
         <div class="plmenu" id="plmenu" role="menu" hidden></div></div>
       <div class="badgewrap"><div class="gradebadge" id="badge" hidden role="button" tabindex="0" aria-label="Your grade: open progress"><small id="badgetrack">Read</small><b id="badgeg"></b><span class="bbar"><i id="badgefill"></i></span></div></div>
       <button class="statsbtn" id="statsbtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="statsview" title="Stats"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Stats</span></button>
-      <button class="cog helpbtn" id="help" aria-label="Tutorial" title="Tutorial">?</button>
+      <button class="cog helpbtn" id="help" aria-label="Help: lessons and what’s new" aria-haspopup="dialog" title="Help">?</button>
       <button class="cog" id="cog" aria-label="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M10.3 2.8h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9-2.6-.5v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
     </div>
     <div class="hdtoast" id="hdtoast" hidden aria-hidden="true"><span></span></div>
@@ -1000,8 +1000,8 @@ html.svopen,html.svopen body{overflow:hidden}
 
 
   <div class="menu" id="tutmenu" hidden>
-    <div class="menucard" role="dialog" aria-label="Tutorials">
-      <div class="menuhead"><span>Tutorials</span><button class="menuclose" id="tutmenuclose" aria-label="Close">✕</button></div>
+    <div class="menucard" role="dialog" aria-label="Help">
+      <div class="menuhead"><span>Help</span><button class="menuclose" id="tutmenuclose" aria-label="Close">✕</button></div>
       <div class="tutlist"><button id="tourreplay">App tour<small>How Halfball works</small></button></div>
       <div class="tutlist" id="tutlist"></div>
     </div>
@@ -1153,7 +1153,7 @@ html.svopen,html.svopen body{overflow:hidden}
         </div>
         <div class="cover sumcover" id="sessidlecover" hidden>
           <div class="sumcard">
-            <div class="idlehead" id="sessidlehead">Freeplay</div>
+            <div class="idlehead" id="sessidlehead">New session</div>
             <div class="sumbtns" id="sessbtns"><button class="startbtn" data-sess="50">50 shots</button><button class="startbtn" data-sess="100">100 shots</button></div>
             <div class="sumbtns" id="basebtns" hidden><button class="startbtn" id="basestart">Baseline · 100 shots</button></div>
           </div>
@@ -1373,7 +1373,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 510;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 511;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -6455,7 +6455,7 @@ function wnEntry(e, isNew){
 function wnSync(){   // the dot on ? and the menu item follow what's unseen
   const n = wnUnseen().length, h = $('help');
   let dot = h.querySelector('.wndot'); if(n && !dot) h.insertAdjacentHTML('beforeend', '<span class="wndot" aria-hidden="true"></span>'); else if(!n && dot) dot.remove();
-  h.setAttribute('aria-label', n ? 'Tutorials and what’s new: new updates' : 'Tutorial');
+  h.setAttribute('aria-label', n ? 'Help: lessons and what’s new, with new notes' : 'Help: lessons and what’s new');
   let b = $('wnopen');
   if(!b){ $('tourreplay').insertAdjacentHTML('beforebegin', '<button id="wnopen"></button>'); b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
   b.innerHTML = 'What’s new' + (n ? '<span class="wnpill">New</span>' : WHATS_NEW[0] ? `<small>${wnVer(WHATS_NEW[0])}</small>` : '');
