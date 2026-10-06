@@ -240,7 +240,7 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .radio .radiodisc svg{width:20px;height:20px}
 .radio:hover .radiodisc{background:rgba(30,58,84,.9)}
 .radio:focus-visible{outline:none}.radio:focus-visible .radiodisc{box-shadow:0 0 0 2px var(--navy),0 0 0 4px var(--gold)}
-#radiolbl{font:600 9.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(15,34,51,.78);padding:3px 6px;border-radius:999px;white-space:nowrap}
+#radiolbl,.stylelbl{font:600 9.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(15,34,51,.78);padding:3px 6px;border-radius:999px;white-space:nowrap}
 .radio .eq rect{transform-box:fill-box;transform-origin:50% 100%;animation:radioeq 1.1s var(--ease) infinite alternate}
 .radio .eq rect:nth-child(1){animation-delay:-.2s}.radio .eq rect:nth-child(2){animation-delay:-.75s;animation-duration:.9s}.radio .eq rect:nth-child(3){animation-delay:-.4s;animation-duration:1.25s}.radio .eq rect:nth-child(4){animation-delay:-.95s;animation-duration:.8s}
 @keyframes radioeq{0%{transform:scaleY(.3)}50%{transform:scaleY(.85)}100%{transform:scaleY(.5)}}
@@ -249,6 +249,29 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .radio.off .eq{display:none}.radio.off .mute{display:inline}
 .radio.off #radiolbl{color:rgba(242,234,216,.72)}
 @media (prefers-reduced-motion:reduce){.radio .eq rect{animation:none;transform:none}.radio .eq rect:nth-child(odd){transform:scaleY(.55)}}
+/* the Look button: a second disc under the radio; it opens the Look picker (table style, ball set, and the Ladder's table from S) */
+.radio.stylebtn{top:78px}
+.stylebtn .radiodisc{position:relative}
+.stylebtn .wndot{top:-2px;right:-2px;box-shadow:0 0 0 2px var(--navy)}
+.stylemenu{z-index:75;background:rgba(8,18,28,.22)}
+.stylecard{gap:12px;width:min(100%,400px)}
+#stylebody{display:flex;flex-direction:column;gap:14px}
+.stylegrp{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;border:0}
+.stylegrp > b{font:600 12px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.styleopts{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:8px}
+.styleopt{position:relative;min-height:44px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px 7px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink);font:600 13px/1.2 var(--body);text-align:center;cursor:pointer;transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
+.styleopt:hover{border-color:var(--muted)}
+.styleopt[aria-checked="true"]{border-color:var(--accent);background:var(--chip);box-shadow:inset 0 0 0 1px var(--accent)}
+.styleopt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.styleopt svg{display:block;width:100%;max-width:64px;height:auto}
+.styleopt small{font:500 11px/1.2 var(--body);color:var(--muted)}
+.styleopt[aria-disabled="true"]{cursor:not-allowed}
+.styleopt[aria-disabled="true"] svg,.styleopt[aria-disabled="true"] .stylename{opacity:.45}
+.styleopt .wnpill{position:absolute;top:-7px;right:-4px;font:600 9px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:3px 6px}
+.styleopt .lock{display:inline-flex;vertical-align:-1px;margin:0 3px 0 0}.styleopt .lock svg{width:10px;height:10px}
+.stylesize .styleopt{flex-direction:row;justify-content:center}
+@media (min-width:761px){.stylemenu{justify-content:flex-end;align-items:flex-start}}
+@media (max-width:760px){.stylemenu{justify-content:center;align-items:flex-end}.stylecard{max-height:62vh;max-height:62dvh}}   /* phones: a sheet along the bottom, so the table above shows each choice */
 .practicechip{position:absolute;left:12px;bottom:12px;z-index:5;background:rgba(15,34,51,.9);color:var(--cream);font:600 12px var(--body);min-height:32px;padding:6px 14px;border-radius:999px;border:1px solid var(--gold);box-shadow:var(--shadow-2);cursor:pointer}
 .practicechip b{color:var(--gold);margin-left:8px}
 .ladder li.pick{cursor:pointer}.ladder li.practice .node{outline:2px dashed var(--gold);outline-offset:2px}
@@ -726,7 +749,8 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .ctlrow .speedbar .ckeys kbd{position:relative;height:32px;min-width:36px;font-size:16px}
   .ctlrow .speedbar .ckeys kbd::after{content:'';position:absolute;inset:-6px -4px}
   .ctlrow .speedbar .ckeys kbd:active{background:var(--gold);color:var(--gold-ink)}
-  .radio{left:0;top:2px;width:60px;min-width:48px;min-height:48px;justify-content:center}   /* its disc centred over the eye below it (8px in, 44px wide) */
+  .radio{left:0;top:2px;width:60px;min-width:48px;min-height:48px;justify-content:center}
+  .radio.stylebtn{top:62px}   /* its disc centred over the eye below it (8px in, 44px wide) */
   .radio:active .radiodisc{transform:scale(.92);background:rgba(30,58,84,.96)}
   .practicechip{bottom:68px;min-height:36px}
   .practicechip::after,.routinechip::after{content:'';position:absolute;inset:-5px -2px}
@@ -1006,6 +1030,12 @@ html.svopen,html.svopen body{overflow:hidden}
       <div class="coachbtns"><button class="link" id="tourskip">Skip tour</button><span class="coachnav"><button class="coachback" id="tourback">Back</button><button class="startbtn" id="tournext">Next</button></span></div>
     </div>
   </div>
+  <div class="menu stylemenu" id="stylemenu" hidden>
+    <div class="menucard stylecard" role="dialog" aria-modal="true" aria-labelledby="stylehead">
+      <div class="menuhead"><span id="stylehead">Look</span><button class="menuclose" id="styleclose" aria-label="Close">✕</button></div>
+      <div id="stylebody"></div>
+    </div>
+  </div>
   <div class="menu" id="menu" hidden>
     <div class="menucard" role="dialog" aria-label="Settings">
       <div class="menuhead"><span>Settings</span><button class="menuclose" id="menuclose" aria-label="Close">✕</button></div>
@@ -1165,6 +1195,10 @@ html.svopen,html.svopen body{overflow:hidden}
             <g class="eq" fill="currentColor"><rect x="4.5" y="6" width="2.6" height="12" rx="1.3"/><rect x="9" y="6" width="2.6" height="12" rx="1.3"/><rect x="13.4" y="6" width="2.6" height="12" rx="1.3"/><rect x="17.8" y="6" width="2.6" height="12" rx="1.3"/></g>
             <g class="mute" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5h3.2L11 6v12l-4.3-3.5H3.5z"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></g></svg></span>
           <span id="radiolbl"></span>
+        </button>
+        <button class="radio stylebtn" id="stylebtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="stylemenu" aria-label="Look: table style and balls" title="Look">
+          <span class="radiodisc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.3 0 1.9-.8 1.9-1.7 0-1.2-1-1.6-1-2.6 0-.9.7-1.5 1.7-1.5h2.1a3.8 3.8 0 0 0 3.8-3.9C20.5 6.6 16.7 3.5 12 3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.6" cy="11.2" r="1.4" fill="currentColor"/><circle cx="10.4" cy="7.4" r="1.4" fill="currentColor"/><circle cx="15" cy="7.6" r="1.4" fill="currentColor"/></svg></span>
+          <span class="stylelbl">Look</span>
         </button>
         <div class="ctlrow" id="ctlrow">   <!-- bottom right, left to right: step back, tip, speed; bottoms and keycaps in line -->
           <div class="lookwrap" id="upwrap" hidden><button class="lookbtn upbtn" id="upbtn" aria-label="Stand up off the shot" title="Stand up (Esc)" data-title-kbd="Stand up (Esc)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14M12 20V9M7 13.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="ckeys"><kbd>Esc</kbd></span></div>
@@ -1355,7 +1389,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 508;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 509;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -4600,7 +4634,7 @@ function uiSound(kind, pitch){   // pitch: 0..1, for ticks (a slider's position)
 // one listener for every button press (capture, so a handler that stops the click can't hide it). It plays after the
 // click's own work, so it hears the new state: a menu now open or shut, the Sound setting just switched.
 const UI_SILENT = '#answers, #mods, #lookbtn, #speedbar, #tippad';   // the answers have their own sounds; the pad, bar and eye sound on press
-const UI_OPEN = {cog: 1, help: 1, badge: 1}, UI_CLOSE = {menuclose: 1, tutmenuclose: 1, progclose: 1, coachskip: 1};
+const UI_OPEN = {cog: 1, help: 1, badge: 1}, UI_CLOSE = {menuclose: 1, tutmenuclose: 1, progclose: 1, coachskip: 1, styleclose: 1};
 document.addEventListener('click', e=>{
   const t = e.target instanceof Element ? e.target : null; if(!t) return;
   if(t.matches('input[type=color]')){ uiSound('open'); return; }
@@ -4612,6 +4646,8 @@ document.addEventListener('click', e=>{
     if(UI_OPEN[id]) uiSound('open');
     else if(UI_CLOSE[id]) uiSound('close');
     else if(id === 'plchip') uiSound($('plmenu').hidden ? 'close' : 'open');
+    else if(id === 'stylebtn') uiSound($('stylemenu').hidden ? 'close' : 'open');
+    else if(b.classList.contains('styleopt')) uiSound('toggle');
     else if(id === 'coachback') uiSound('back');
     else if(set) uiSound(['0', 'off'].includes(b.dataset.val) ? 'toggleOff' : 'toggle');
     else if(b.dataset.stab || b.dataset.sub || b.dataset.tab || b.dataset.fv || /^task-|^track-/.test(id)) uiSound('toggle');
@@ -5342,6 +5378,7 @@ function hideLockTip(){ clearTimeout(lockTip.timer); lockTip.timer = 0; lockTip.
   document.addEventListener('scroll', ()=>{ if(lockTip.at) hideLockTip(); }, true);
 }
 function syncPressed(){
+  if(typeof lookPick === 'object' && lookPick) renderLookPicker();   // the Look picker and its dot follow every change (Settings, a new grade)
   $('flashtime').hidden = settings.task !== 'flash';   // Flash's display time sits with Flash itself (0.75 s opens at S)
   tableBox.classList.toggle('walkable', walkOn());
   for(const sz of ['8', '9']){ const lk = !tableUnlocked(sz), b = document.querySelector(`[data-set="flashTable"][data-val="${sz}"]`); lockBtn(b, lk, `Unlocks at ${stepGrade(TABLE_AT[sz])}`); b.querySelector('.lock').hidden = !lk; }
@@ -5500,7 +5537,7 @@ showTab('stats');   // the Shot tab is gone: its result line sits under the tabl
 $('reset').addEventListener('click', ()=>{   // all or nothing: your whole progression, Ladder and Flash together
   const warn = `Reset your progress?\n\nYou'll start again at ${SHOOT_GRADES[0]} with no record: every shot and session, Ladder and Flash, is cleared. Flash and the bigger tables lock until you earn them back, and the lessons play again as you reach them. This can't be undone.`;
   if(!confirm(warn)) return;
-  stats.log = []; stats.sessions = []; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; applyStyle();
+  stats.log = []; stats.sessions = []; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; delete settings.lookSeen; applyStyle();
   if(settings.tutSeen) for(const k in LESSONS) if(LESSONS[k].at > 0) delete settings.tutSeen[k];
   saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderPracticeChip();
   if(!flashUnlocked() && settings.task==='flash' || !freeUnlocked() && settings.task==='free') applySetting('task','shoot');
@@ -6114,6 +6151,93 @@ function revealAnswer(){
 }
 $('radio').addEventListener('click', e=>{ e.stopPropagation(); applySetting('music', STATIONS[(STATIONS.indexOf(settings.music) + 1) % STATIONS.length]); });
 ['pointerdown'].forEach(t=>$('radio').addEventListener(t, e=>e.stopPropagation()));
+// ---------- the Look picker: the Look disc under the radio opens it. Table style and ball set (and from S the Ladder's table),
+// each choice with a little preview; locked ones show the grade that opens them. A choice goes through applySetting, as the
+// buttons in Settings > Table do, so the two stay in step. A gold dot on the disc marks a look you've opened but not seen here yet.
+const LOOK_OPTS = {tstyle: [['bar', 'Bar'], ['club', 'Club'], ['pro', 'Pro']], ballSet: [['standard', 'Standard'], ['retro', 'Retro'], ['tv', 'TV'], ['blackout', 'Blackout']]};
+const lookNew = () => Object.keys(LOOK_OPTS).flatMap(k=>LOOK_OPTS[k].filter(([v])=>LOOK_AT[k][v] > 0 && lookOpen(k, v) && !(settings.lookSeen || []).includes(k + ':' + v)).map(([v])=>k + ':' + v));
+const LOOK_LOCK = '<span class="lock" aria-hidden="true"><svg viewBox="0 0 12 12"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>';
+var lookPick = {open: false, fresh: [], back: null};   // var: syncPressed may run before this line does
+function lookSwatch(k, v){
+  if(k === 'tstyle'){   // a little table: rails, cloth, diamonds
+    const S = STYLES[v], dm = [16, 32, 48].map(x=>`<circle cx="${x}" cy="3" r=".9" fill="${S.diamond}"/><circle cx="${x}" cy="33" r=".9" fill="${S.diamond}"/>`).join('');
+    return `<svg viewBox="0 0 64 36" aria-hidden="true"><rect x=".5" y=".5" width="63" height="35" rx="4" fill="${S.rail}" stroke="${S.edge}"/><rect x="6" y="6" width="52" height="24" rx="1" fill="${S.cloth}"/><rect x="6" y="6" width="52" height="24" rx="1" fill="none" stroke="${S.hi}" stroke-width=".8"/>${dm}</svg>`;
+  }
+  const B = BALL_SETS[v], col = n => (B.c && B.c[n]) || OB_COLORS[n - 1][0], cl = ST().cloth;   // three balls on today's cloth: two solids and a stripe
+  const ball = (x, n, stripe) => stripe
+    ? `<circle cx="${x}" cy="12" r="8" fill="${B.white}" stroke="rgba(0,0,0,.35)" stroke-width=".6"/><path d="M${x - 6.93} 8A8 8 0 0 0 ${x - 6.93} 16L${x + 6.93} 16A8 8 0 0 0 ${x + 6.93} 8Z" fill="${col(n)}"/>`
+    : `<circle cx="${x}" cy="12" r="8" fill="${col(n)}" stroke="rgba(0,0,0,.35)" stroke-width=".6"/>`;
+  return `<svg viewBox="0 0 64 24" aria-hidden="true"><rect x="0" y="0" width="64" height="24" rx="5" fill="${cl}"/>${ball(13, 1)}${ball(32, 3)}${ball(51, 2, true)}</svg>`;
+}
+function lookGroup(k, label, opts, cur, open, at){
+  const id = 'stylegrp-' + k;
+  return `<div class="stylegrp${k === 'tablePick' ? ' stylesize' : ''}"><b id="${id}">${label}</b><div class="styleopts" role="radiogroup" aria-labelledby="${id}" data-look="${k}" style="--n:${opts.length}">`
+    + opts.map(([v, name])=>{
+      const on = v === cur, ok = open(v), nw = ok && lookPick.fresh.includes(k + ':' + v);
+      return `<button type="button" class="styleopt" role="radio" data-val="${v}" aria-checked="${on}" aria-disabled="${!ok}" tabindex="${on ? 0 : -1}"${ok ? '' : ` aria-description="Opens at ${stepGrade(at(v))}"`}>`
+        + (nw ? '<span class="wnpill" aria-hidden="true">New</span>' : '') + (k === 'tablePick' ? '' : lookSwatch(k, v))
+        + `<span class="stylename">${name}${nw ? '<span class="srsay">, new</span>' : ''}</span>` + (ok ? '' : `<small aria-hidden="true">${LOOK_LOCK}Opens at ${stepGrade(at(v))}</small>`) + '</button>';
+    }).join('') + '</div></div>';
+}
+function renderLookPicker(){
+  const fresh = lookNew().length > 0, b = $('stylebtn'); let dot = b.querySelector('.wndot');
+  if(fresh && !dot) b.querySelector('.radiodisc').insertAdjacentHTML('beforeend', '<span class="wndot" aria-hidden="true"></span>'); else if(!fresh && dot) dot.remove();
+  b.setAttribute('aria-label', 'Look: table style and balls' + (fresh ? ', something new to try' : ''));
+  if(!lookPick.open) return;
+  const a = document.activeElement, had = a && a.closest ? a.closest('#stylebody .styleopt') : null, hk = had && had.parentNode.dataset.look, hv = had && had.dataset.val;
+  let h = lookGroup('tstyle', 'Table', LOOK_OPTS.tstyle, settings.tstyle, v=>lookOpen('tstyle', v), v=>LOOK_AT.tstyle[v])
+    + lookGroup('ballSet', 'Balls', LOOK_OPTS.ballSet, settings.ballSet, v=>lookOpen('ballSet', v), v=>LOOK_AT.ballSet[v]);
+  if(ladderPickOpen()) h += lookGroup('tablePick', 'Ladder table', [['7', '7 ft'], ['8', '8 ft'], ['9', '9 ft']], ladderTable(), ()=>true, ()=>0);
+  $('stylebody').innerHTML = h;
+  if(hk){ const f = $('stylebody').querySelector(`[data-look="${hk}"] [data-val="${hv}"]`); if(f) f.focus({preventScroll: true}); }   // a redraw keeps your place
+}
+// open the picker (focus: 'tstyle' or 'ballSet' puts you on that row)
+function openLookPicker(focus){
+  if(lookPick.open){ lookFocus(focus); return; }
+  lookPick.fresh = lookNew(); lookPick.back = document.activeElement; lookPick.open = true;
+  settings.lookSeen = [...new Set([...(settings.lookSeen || []), ...lookPick.fresh])]; saveSettings();   // seen now: the dot goes
+  $('stylemenu').hidden = false; $('stylebtn').setAttribute('aria-expanded', 'true');
+  renderLookPicker(); lookFocus(focus);
+}
+function lookFocus(focus){
+  const g = $('stylebody').querySelector(`[data-look="${focus === 'ballSet' ? 'ballSet' : 'tstyle'}"]`), b = g && (g.querySelector('[aria-checked="true"]') || g.querySelector('[role=radio]'));
+  if(b){ b.focus({preventScroll: true}); if(focus && b.scrollIntoView) b.scrollIntoView({block: 'nearest'}); }
+}
+function closeLookPicker(){
+  if(!lookPick.open) return;
+  lookPick.open = false; lookPick.fresh = []; $('stylemenu').hidden = true; $('stylebtn').setAttribute('aria-expanded', 'false');
+  const r = lookPick.back && lookPick.back.isConnected && lookPick.back !== document.body ? lookPick.back : $('stylebtn'); lookPick.back = null; if(r && r.focus) r.focus({preventScroll: true});
+}
+function lookChoose(b){
+  if(!b || b.getAttribute('aria-disabled') === 'true') return;
+  applySetting(b.parentNode.dataset.look, b.dataset.val);   // the same path as Settings > Table
+}
+$('stylebtn').addEventListener('click', e=>{ e.stopPropagation(); lookPick.open ? closeLookPicker() : openLookPicker(); });
+$('stylebtn').addEventListener('pointerdown', e=>e.stopPropagation());
+$('styleclose').addEventListener('click', closeLookPicker);
+$('stylemenu').addEventListener('click', e=>{ if(e.target === $('stylemenu')) closeLookPicker(); else lookChoose(e.target.closest('.styleopt')); });
+// while it's open the game behind takes no keys: Esc closes it, Tab stays inside, the arrows move along a row and choose
+window.addEventListener('keydown', e=>{
+  if(!lookPick.open) return;
+  e.stopPropagation();
+  if(e.key === 'Escape'){ e.preventDefault(); closeLookPicker(); return; }
+  if(e.key === 'Tab'){
+    const f = [...$('stylemenu').querySelectorAll('button')].filter(x=>x.tabIndex >= 0), i = f.indexOf(document.activeElement);
+    if(f.length){ e.preventDefault(); f[(i < 0 ? 0 : i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus(); }
+    return;
+  }
+  const a = document.activeElement, cur = a && a.closest ? a.closest('.styleopt') : null;
+  const d = {ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1}[e.key];
+  if(cur && d){
+    e.preventDefault();
+    const ok = [...cur.parentNode.querySelectorAll('.styleopt')].filter(x=>x.getAttribute('aria-disabled') !== 'true');
+    if(!ok.length) return;
+    const nx = ok[(ok.indexOf(cur) + d + ok.length) % ok.length] || ok[0];
+    nx.focus(); lookChoose(nx);
+  } else if(cur && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); lookChoose(cur); }
+}, true);
+window.addEventListener('keyup', e=>{ if(lookPick.open) e.stopPropagation(); }, true);
+window.openLookPicker = openLookPicker;   // reachable from anywhere (the level-up card's Try it)
 renderRadio();
 $('ladder').addEventListener('click', e=>{
   const li = e.target.closest('li[data-g]'); if(!li) return;
@@ -6447,7 +6571,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 ['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
-  && ['playercover', 'stancecover', 'menu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover'].every(id=>!$(id) || $(id).hidden);
+  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover'].every(id=>!$(id) || $(id).hidden);
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
