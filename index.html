@@ -1983,7 +1983,7 @@ function generate(bucket){   // bucket: which fraction to deal (picked once per 
     const n = rot(v, -sign*cut*RAD);                    // line of centres at contact
     const gb = sub(ob, mul(n, 2*R));
     if(gb[0]<R||gb[0]>W-R||gb[1]<R||gb[1]>H-R) continue;
-    const d = rnd(RANGE.d[0], RANGE.d[1]);
+    const d = tutDist ? rnd(tutDist[0], tutDist[1]) : rnd(RANGE.d[0], RANGE.d[1]);   // a lesson can ask how far the cue ball travels
     const cb = sub(gb, mul(v, d));
     if(cb[0]<2||cb[0]>W-2||cb[1]<2||cb[1]>H-2) continue;
     if(segDist(cb, ob, T) < 2*R+0.4) continue;
@@ -4426,7 +4426,8 @@ function perspDyn(cam, s, reveal){
   }
   // trails: where the balls have travelled (during the animation, and the cue ball's path afterwards)
   const trail = s.anim ? s.anim.trail : (reveal && s.final ? s.final.trail : null);
-  if(trail && refOn('refTrail')){
+  const aimSeen = tut.on && !!tstep().aimLine && !!s.aimDir;   // a lesson that shows where the cue pointed (English: the cue ball's trail leaves it)
+  if(trail && (refOn('refTrail') || aimSeen)){
     o += dashedLine(cam, trail.cb, '#f4efe0', .6, '2 4');
     if(trail.ob && trail.obCol !== '#ffd34d') o += dashedLine(cam, trail.ob, trail.obCol, .9, '3 4');   // on a right call the yellow line already grows along it
   }
@@ -4434,6 +4435,9 @@ function perspDyn(cam, s, reveal){
   // the aim-line aid: a line on the cloth from the cue ball along the shot line to the ghost ball (may be fading away)
   const lA = reveal || s.anim || replayBare(s) ? 0 : aidAlpha('line');
   if(lA > 0){ const a3 = [s.cb[0], s.cb[1], .03], b3 = [(s.gbLook || s.gb)[0], (s.gbLook || s.gb)[1], .03]; o += `<path d="${segD(cam, a3, b3)}" stroke="#fff" stroke-opacity="${(.9*lA).toFixed(3)}" stroke-width="${DASH_W}" stroke-linecap="round" stroke-dasharray="3 4"/>`; }
+  // the aim line in an English lesson: solid blue from the cue ball, as far as the object ball and a little past, before,
+  // during and after the shot, so you can see the cue ball's path leave it
+  if(aimSeen){ const e = add(s.cb, mul(s.aimDir, len(sub(s.ob, s.cb)) + 3*R)); o += `<path d="${segD(cam, [s.cb[0], s.cb[1], .03], [e[0], e[1], .03])}" stroke="#7cc4ff" stroke-opacity=".9" stroke-width="${DASH_W}" stroke-linecap="round"/>`; }
   // balls, far to near
   const A = s.anim, F = reveal && !A ? s.final : null;
   const cbP = A ? A.cb : F ? F.cb : s.cb;   // null once the cue ball has dropped into a pocket
@@ -4625,7 +4629,7 @@ function cueRig(cam, s){
   if(a < .01) return '';
   const u = s.aimDir || norm(sub(s.gbLook || s.gb, s.cb)), n = [-u[1], u[0]];   // forward along the aim line you called
   const sd = settings.hand === 'L' ? n : mul(n, -1);                        // the bridge hand's side: on screen left of the cue for a right-handed player (n points to screen right)
-  const tip = (s.replay ? s.replay.tip : shotStroke(s).tip) || [0, 0], tx = tip[0], ty = tip[1], dz = Math.sqrt(Math.max(0, 1 - tx*tx - ty*ty));
+  const tip = (s.replay ? s.replay.tip : tut.on && tut.plan ? tut.plan.tip : shotStroke(s).tip) || [0, 0], tx = tip[0], ty = tip[1], dz = Math.sqrt(Math.max(0, 1 - tx*tx - ty*ty));   // a lesson: the coach's (or the try's) tip
   const Cp = [s.cb[0] - u[0]*dz*R + n[0]*tx*R, s.cb[1] - u[1]*dz*R + n[1]*tx*R, R + ty*R];   // where the tip meets the cue ball (side: n is screen right, as in the engine)
   const C0 = [s.cb[0] - u[0]*R, s.cb[1] - u[1]*R];   // the back of the ball, straight on: the bridge lines up behind it whatever the side
   // How steep the cue is: a touch more with top, a touch less with draw (you keep it level to hit low), and as steep as it
@@ -6483,12 +6487,32 @@ const SL_CUSHION = [
   {aids:{}, play:{k:2.6, tip:[0,.2]}, shows:'rail', ui:['tip','speed'], next:true, text:'Watch it come off the cushion.'},
   {finish:true, aids:{}, text:'These zones need the cue ball to use <b>two cushions</b>. Each can be reached more than one way, with top, stun or draw: pick one, and the speed that goes with it.'},
 ];
+// English: side pushes the cue ball off the aim line (squirt: the engine's, for a maple shaft, the same at any pace, in a
+// straight line), so a call has to allow for it. Every shot is a ½-ball cut as it looks, dealt so that the plain ½ misses
+// and the aim that pots it with the step's stroke is nearest the fraction the step names (need).
+const EN = {shaft:'maple', noZone:true, mid:true}, EN_R = [TIP_STEP, 0], EN_L = [-TIP_STEP, 0], EN_2FT = [22, 26], EN_1FT = [12.5, 14];
 const SL_ENGLISH = [
-  {deg:35, aids:{}, check:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true,
-   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: ' + kt('<b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right.', 'tap or drag to the one you want.') + ' 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle.'},
-  {aids:{}, play:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true, text:'Watch how it comes off the cushion with right english.'},
-  {aids:{}, play:{k:2.6, tip:[-.45,0]}, shows:'rail', ui:['tip'], next:true, text:'The other side, the other way.'},
-  {finish:true, aids:{}, text:'Side also pushes the cue ball slightly off line (<b>deflection</b>) and throws the object ball a little, so on some shots it changes which fraction to call.'},
+  {...EN, deg:30, dist:EN_2FT, group:true, need:'34', aids:{}, check:{k:1.6, tip:EN_R}, ui:['tip'], next:true,
+   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: ' + kt('<b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right.', 'tap or drag to the one you want.') + ' 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle. It also pushes the cue ball <b>off your aim line</b>, away from the side you hit: right english sends it left, left english right. So with side you aim <b>fuller or thinner</b> to make up for it.'},
+  {...EN, aids:{}, ui:['tip'], next:true,
+   text:'How far off grows with <b>how much side</b> and <b>how far the cue ball travels</b>: it still runs straight, just at a slight angle to your line. With a maple shaft (this lesson always uses one), ½ tip of side puts it about a quarter of a ball off after 2 ft, a full tip about half a ball. The carbon shaft that opens at S pushes it off about half as much.'},
+  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_R, aim:'plain'}, expect:'miss', need:'34', ui:['tip'], next:true,
+   text:'A ½-ball cut, about 2 ft, with <b>½ tip of right english</b>. Aimed as a plain ½ (the blue line), the cue ball drifts left of it and hits thinner. Watch it miss.'},
+  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_R}, need:'34', ui:['tip'], next:true,
+   text:'Aim fuller, at <b>¾</b>: the drift carries the cue ball back to the contact the cut needs, and it drops.'},
+  {...EN, deg:30, dist:EN_2FT, group:true, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_L, aim:'plain'}, expect:'miss', need:'14', ui:['tip'], next:true,
+   text:'Now <b>½ tip of left english</b>: the cue ball drifts right, and on this cut that makes it hit fuller. Aimed as a plain ½, it misses.'},
+  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_L}, need:'14', ui:['tip'], next:true,
+   text:'Aim thinner, at <b>¼</b>, and it drops. If the drift takes the cue ball toward the middle of the object ball, aim thinner; away from it, aim fuller.'},
+  {...EN, deg:30, dist:EN_1FT, aids:{}, try:{k:1.6, tip:[-2*TIP_STEP, 0]}, need:'34', ui:['tip'], ask:'try',
+   text:'Your turn. It looks ½, about 1 ft, with a <b>full tip of left english</b> set on the tip pad. Call the fraction that allows for the drift to get down on its line, then call it again to shoot.'},
+  {...EN, deg:30, dist:EN_2FT, aids:{}, try:{k:1.6, tip:EN_R}, need:'14', ui:['tip'], ask:'try',
+   text:'One more: it looks ½, about 2 ft, with <b>½ tip of right english</b>.'},
+  {...EN, deg:30, dist:EN_2FT, group:true, aids:{ghost:1, line:1}, aimLine:true, play:{k:3.2, tip:EN_L}, need:'14', ui:['tip', 'speed'], next:true,
+   text:'<b>Speed</b> doesn\'t change the drift: soft or firm, the cue ball leaves your line at the same angle. Here it\'s firm, with ½ tip of left english, aimed ¼ for the drift. It drops.'},
+  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1, tip:EN_L, aimK:3.2}, expect:'miss', ui:['tip', 'speed'], next:true,
+   text:'Same aim, same side, soft. The cue ball takes the same line, but slower, the balls grip more and <b>throw</b> the object ball further off line, and it misses. The softer the shot, the more throw matters.'},
+  {finish:true, aids:{}, text:'Hit the side you need, then aim fuller or thinner by how far the cue ball travels.'},
 ];
 const SL_ALL = [
   {deg:30, aids:{}, finish:true, text:'Everything is yours: speed, top, back and side. Each zone can be reached more than one way: pick the stroke, then aim for what it does.'},
@@ -6524,7 +6548,7 @@ function tutAid(key){
   return 0;
 }
 const fadeDelay = k => tut.on ? ((tstep().aids || {})[k] === 'fade' ? 1500 : 0) : (aidMode(k)==='fade' ? AIDS[k].fade[level()] : 0);
-let forceFrac = null, forceDeg = null;
+let forceFrac = null, forceDeg = null, tutDist = null;   // tutDist: [min, max] inches from the cue ball to the contact
 function tutShot(id){
   if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
   forceFrac = id;
@@ -6534,12 +6558,12 @@ function tutShot(id){
   shot = s1; shot.t0 = performance.now();
   shot.color = pick([OB_COLORS[1], OB_COLORS[2], OB_COLORS[3], OB_COLORS[5]]);   // never yellow: the lit-up overlap is yellow
 }
-function tutShotDeg(deg, mustMiss){   // a shot at an exact cut; mustMiss: a plain hit at that cut has to miss
+function tutShotDeg(deg, mustMiss, dist){   // a shot at an exact cut; mustMiss: a plain hit at that cut has to miss; dist: how far the cue ball travels
   if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
-  forceDeg = deg;
+  forceDeg = deg; tutDist = dist || null;
   let s1 = null;
   for(let k=0; k<400; k++){ const c = generate(); s1 = s1 || c; if(mustMiss != null && outcome(c, mustMiss === 'look' ? c.pathDeg : mustMiss).made) continue; s1 = c; if(c.L >= 16 && len(sub(c.ob, c.cb)) >= 14) break; }
-  forceDeg = null;
+  forceDeg = null; tutDist = null;
   shot = s1; shot.t0 = performance.now();
   shot.color = pick([OB_COLORS[1], OB_COLORS[2], OB_COLORS[3], OB_COLORS[5]]);   // never yellow: the lit-up overlap is yellow
 }
@@ -6597,26 +6621,73 @@ function glideGhost(s, to){
   };
   tut.gRaf = requestAnimationFrame(step);
 }
-// a lesson step the coach plays: the stroke (aimed at the right contact, at a share of pocket speed), worked out up front so the
-// tip pad and speed bar can show it and, from Follow on, the zone can sit where it lands
-function tutPlan(st){
-  const p = st.play || st.try || st.check, ideal = strikeOf(shot), d1 = len(sub(shot.gb, shot.cb));
+// the aim the right call plays on a lesson step marked mid: the middle of the aims that pot it with this stroke (aimFor finds
+// the edge nearest the plain line, and with side that edge often rattles in off a jaw), so the coach's shot and your right
+// call drop clean. Other steps play aimFor's, as the game does.
+function tutAim(st, s, stroke, sq){
+  const a = aimFor(s, stroke, sq), ok = t => playAim(s, rot(a, t*RAD), stroke, false, sq).made;
+  if(!st.mid || !ok(0)) return a;
+  let lo = 0, hi = 0;
+  while(hi < 3 && ok(hi + .1)) hi += .1;
+  while(lo > -3 && ok(lo - .1)) lo -= .1;
+  return rot(a, (lo + hi)/2*RAD);
+}
+// the cue a lesson step plays with: a step can name its shaft (English always shows the maple one), else your own
+const tutSq = st => st.shaft ? PE.SHAFTS[st.shaft] : shaftSq();
+// a lesson step's stroke on this shot, worked out without touching the table: the speed and tip, the aim that pots it with
+// them (need), and the aim the step plays (dir): that one, or (aim: 'plain') the plain hit at the cut as it looks, with no
+// allowance for the side; aimK: aimed as for another pace (the same side), to show what speed changes
+function tutPlanOf(st){
+  const p = st.play || st.try || st.check, ideal = strikeOf(shot), d1 = len(sub(shot.gb, shot.cb)), sq = tutSq(st);
   let V = ideal.V*p.k;
   if(p.stun){ const ug = PE.C.muSlide*PE.G; V = Math.max(V, Math.sqrt(d1*49*ug/12)*1.15); }
   const tip = p.stun ? [0, Math.min(0, PE.strikeFor(Math.sqrt(Math.max(1, V*V - 2*PE.C.muSlide*PE.G*d1)), 0, d1).b)] : p.tip;
-  const dir = aimFor(shot, {V, tip}, shaftSq()), run = playAim(shot, dir, {V, tip}, true, shaftSq());
+  const need = tutAim(st, shot, {V: p.aimK ? ideal.V*p.aimK : V, tip}, sq);
+  const dir = p.aim === 'plain' ? dirForCut(shot, shot.theta) : need, run = playAim(shot, dir, {V, tip}, true, sq);
+  return {V, tip, dir, run, sq, need};
+}
+// a lesson step the coach plays: the stroke (aimed at the right contact, at a share of pocket speed), worked out up front so the
+// tip pad and speed bar can show it and, from Follow on, the zone can sit where it lands
+function tutPlan(st){
+  const pl = tutPlanOf(st), {V, tip, dir, run} = pl;
   const lvl = COARSE.reduce((b, l)=>Math.abs(Math.log(STROKE_MPH[l]*MPH/V)) < Math.abs(Math.log(STROKE_MPH[b]*MPH/V)) ? l : b, COARSE[0]);
-  tut.plan = {V, tip, dir, run}; tut.ctl = {tip, lvl};
+  tut.plan = pl; tut.ctl = {tip, lvl};
   if(st.play){ shot.aimDir = dir; shot.aimId = shot.answer && shot.answer.id; }   // a try: you pick the line
-  if((LESSONS[tut.lesson].at || 0) >= SH.follow && !run.cbIn) shot.zone = {c: run.cueEnd, r: 6, tip};   // where this stroke lands
+  if((LESSONS[tut.lesson].at || 0) >= SH.follow && !st.noZone && !run.cbIn) shot.zone = {c: run.cueEnd, r: 6, tip};   // where this stroke lands
+}
+// where the cue ball really was when it met the object ball (the ghost ball a miss leaves behind)
+function tutContactAt(run){ const e = obHit(run.sim.events); return e && e.pa ? (e.ids[0] === 'c' ? e.pa : e.pb) : null; }
+// the cut the cue ball really made contact at (side spin pushes it off the aim line), from the engine's hit
+function tutContactCut(run){
+  const e = obHit(run.sim.events); if(!e || !e.pa || !e.pb) return null;
+  const [pc, po] = e.ids[0] === 'c' ? [e.pa, e.pb] : [e.pb, e.pa], path = run.sim.paths && run.sim.paths.c;
+  const p0 = path && path.length > 1 ? path[0].p : shot.cb, dv = norm(sub(pc, p0));   // the line it really travelled (straight: no swerve)
+  return Math.acos(Math.max(-1, Math.min(1, dot(dv, norm(sub(po, pc))))))/RAD;
 }
 // does this stroke show the lesson? Nothing off a pocket's jaw (it doesn't come off the way a cushion sends it), no scratch,
-// the object ball in (or, for a too-soft demo, stopping short of the pocket), and whatever the step is about
-function tutShows(st, run){
-  const ev = run.sim.events, hitT = (obHit(ev) || {}).t ?? Infinity, d = norm(sub(shot.gb, shot.cb));
+// the object ball in (or, for a too-soft demo, stopping short of the pocket; for a miss, reaching a cushion or a jaw), and
+// whatever the step is about. need: the aim that pots it with this stroke is nearest that fraction, and the plain call at the
+// cut as it looks misses (English: the side pushes the cue ball a fraction off).
+function tutShows(st, pl){
+  const run = pl.run, ev = run.sim.events, hitT = (obHit(ev) || {}).t ?? Infinity, d = norm(sub(shot.gb, shot.cb));
   const cbAfter = ev.filter(e=>e.ids[0] === 'c' && e.t > hitT && (e.type === 'cushion' || e.type === 'jaw' || e.type === 'pocket'));
-  if(!run.hit || run.scratch || cbAfter.some(e=>e.type === 'jaw') || ev.some(e=>e.ids[0] === 'o' && e.type === 'jaw')) return false;
-  if(st.expect === 'short' ? run.obIn || run.made : !run.made) return false;
+  if(!run.hit || run.scratch || cbAfter.some(e=>e.type === 'jaw')) return false;
+  if(st.expect === 'miss'){ if(run.made || !ev.some(e=>e.ids[0] === 'o' && e.type !== 'ball')) return false; }   // a real miss, not one that dies short
+  else {
+    if(ev.some(e=>e.ids[0] === 'o' && e.type === 'jaw')) return false;
+    if(st.expect === 'short' ? run.obIn || run.made : !run.made) return false;
+  }
+  if(st.need){
+    const p = st.play || st.try || st.check, stroke = {V: pl.V, tip: pl.tip};
+    if(nearestRef(cutForDir(shot, pl.need)).id !== st.need || shot.answer.id === st.need) return false;
+    const right = pl.dir === pl.need ? run : playAim(shot, pl.need, stroke, false, pl.sq);
+    if(!right.made || right.scratch) return false;
+    const plain = p.aim === 'plain' ? run : playAim(shot, dirForCut(shot, shot.theta), stroke, true, pl.sq);
+    if(plain.made) return false;
+    // and it misses the way the side pushes it: thinner than it looks when the fix is fuller, fuller when it's thinner
+    const c = tutContactCut(plain), fuller = ALL.find(r=>r.id === st.need).deg < shot.theta;
+    if(c == null || (fuller ? c <= shot.theta : c >= shot.theta)) return false;
+  }
   const end = sub(run.cueEnd, shot.gb);
   switch(st.shows){
     case 'rail': return cbAfter.length > 0 && cbAfter[0].type === 'cushion';                // off a cushion, cleanly
@@ -6626,15 +6697,23 @@ function tutShows(st, run){
     default: return true;
   }
 }
+// the steps after this one that keep its shot (until one deals a new one): with group, the shot dealt here has to work for them too
+function tutGroup(st){
+  const all = tsteps(), i = all.indexOf(st), out = [st];
+  if(!st.group || i < 0) return out;
+  for(let j = i + 1; j < all.length && !(all[j].shot || all[j].rail || all[j].deg != null); j++) if(all[j].play || all[j].try || all[j].check) out.push(all[j]);
+  return out;
+}
 // The coach's stroke has to show what the step teaches, and on a try your right call with the lesson's stroke has to work:
-// pocketed, no scratch, in the zone. Until this layout does, deal another at the same cut (then a degree or two either side).
+// pocketed, no scratch, in the zone. Until this layout does, deal another at the same cut (then a degree or two either side;
+// a step that asks for a fraction (need) or keeps its shot for the steps after it stays at its exact cut).
 // Returns how many layouts it took (0: none worked).
 function tutDealFor(st){
-  const deg = st.deg ?? Math.round(shot.theta);
+  const deg = st.deg ?? Math.round(shot.theta), steps = tutGroup(st), exact = st.group || st.need;
   for(let k = 0; k < 400; k++){
-    tutPlan(st); if(tutShows(st, tut.plan.run)) return k + 1;
-    const off = k < 60 ? 0 : (1 + (k >> 1) % 5)*(k % 2 ? 1 : -1);
-    tutShotDeg(Math.max(0, deg + off));
+    if(steps.every(x=>tutShows(x, tutPlanOf(x)))) return k + 1;   // (the step's plan is made as it starts)
+    const off = k < 60 || exact ? 0 : (1 + (k >> 1) % 5)*(k % 2 ? 1 : -1);
+    tutShotDeg(Math.max(0, deg + off), undefined, st.dist);
   }
   return 0;
 }
@@ -6647,7 +6726,7 @@ function tutCoachPlay(live, done){
     if(!live() || shot !== s) return;
     const x0 = rigAlpha(s).push || 0;
     s.tip = pl.tip; cancelAnimationFrame(featherRaf);
-    answered = true; s.pick = {made: pl.run.made, far: !pl.run.made, g2: s.gb};
+    answered = true; s.pick = {made: pl.run.made, far: !pl.run.made, g2: tutContactAt(pl.run) || s.gb};
     strokeThen(s, x0, ()=>{ if(shot !== s || !tut.on) return;
       animateShot({made: pl.run.made}, ()=>{ draw(true); tutBend('up', 600); if(done) done(); }, pl.run.made ? '#ffd34d' : MISS, pl.run);
       const up = rigHitMs(s, pl.run, pl.dir); if(isFinite(up)) setTimeout(()=>{ if(shot === s && s.cam && s.cam.k > 0) tutBend('up', 450); }, up);
@@ -6718,7 +6797,7 @@ function runStepNow(back){
   else {
     if(st.shot) tutShot(st.shot);
     if(st.rail) tutRailShot();
-    if(st.deg != null) tutShotDeg(st.deg, st.mustMiss);
+    if(st.deg != null) tutShotDeg(st.deg, st.mustMiss, st.dist);
     if(st.play || st.try || st.check) tutDealFor(st);
   }
   // a step with nothing new for the table (just words, or the lesson's last) leaves it as it is: the balls where they
@@ -6812,11 +6891,11 @@ function tutTry(id){
     if(c && c.phase === 'down' && c.k > 0){ c.moving = true; tutBend('up', 400, go); } else go();
     return;
   }
-  const stroke = {V: pl.V, tip: pl.tip}, needDir = aimFor(s, stroke, shaftSq()), right = nearestRef(cutForDir(s, needDir));
+  const stroke = {V: pl.V, tip: pl.tip}, sq = tutSq(tstep()), needDir = tutAim(tstep(), s, stroke, sq), right = nearestRef(cutForDir(s, needDir));
   const picked = ALL.find(r=>r.id === id) || right, ok = picked.id === right.id, dir = ok ? needDir : dirForCut(s, picked.deg);
-  const run = playAim(s, dir, stroke, true, shaftSq()), x0 = rigAlpha(s).push || 0;
+  const run = playAim(s, dir, stroke, true, sq), x0 = rigAlpha(s).push || 0;
   answered = true; s.tip = pl.tip; cancelAnimationFrame(featherRaf);
-  s.pick = {made: run.made, far: !ok, g2: s.gb, id};
+  s.pick = {made: run.made, far: !ok, g2: (!ok && tutContactAt(run)) || s.gb, id};
   document.querySelectorAll('#answers button').forEach(x=>{ x.disabled = true; x.className = x.dataset.id === id ? (ok && run.made ? 'right' : run.made ? 'also' : 'wrong') : x.dataset.id === right.id ? 'right' : ''; });
   const good = ok && run.made && !run.scratch, st = tstep();   // the stroke and spin are the lesson's: only the call can be wrong
   const note = good ? (!s.zone ? 'Pocketed.' : run.inZone ? 'Pocketed, and <b>in the zone</b>.' : `Pocketed, ${run.zoneMiss.toFixed(1)}″ off the zone.`)
