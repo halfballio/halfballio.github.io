@@ -1130,7 +1130,7 @@ html.svopen,html.svopen body{overflow:hidden}
   <div class="menu" id="tutmenu" hidden>
     <div class="menucard" role="dialog" aria-label="Help">
       <div class="menuhead"><span>Help</span><button class="menuclose" id="tutmenuclose" aria-label="Close">✕</button></div>
-      <div class="tutlist"><button id="tourreplay">App tour<small>How Halfball works</small></button><button id="keysopen" class="kbd-only">Keyboard shortcuts<small>?</small></button></div>
+      <div class="tutlist"><button id="keysopen" class="kbd-only">Keyboard shortcuts<small>?</small></button><button id="tourreplay">App tour<small>How Halfball works</small></button></div>
       <div class="tutlist" id="tutlist"></div>
     </div>
   </div>
@@ -7440,7 +7440,7 @@ function wnSync(){   // the dot on ? and the menu item follow what's unseen
   let dot = h.querySelector('.wndot'); if(n && !dot) h.insertAdjacentHTML('beforeend', '<span class="wndot" aria-hidden="true"></span>'); else if(!n && dot) dot.remove();
   h.setAttribute('aria-label', n ? 'Help: lessons and what’s new, with new notes' : 'Help: lessons and what’s new');
   let b = $('wnopen');
-  if(!b){ $('tourreplay').insertAdjacentHTML('beforebegin', '<button id="wnopen"></button>'); b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
+  if(!b){ $('keysopen').insertAdjacentHTML('beforebegin', '<button id="wnopen"></button>'); b = $('wnopen'); b.addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openWhatsNew(false); }); }
   b.innerHTML = 'What’s new' + (n ? '<span class="wnpill">New</span>' : WHATS_NEW[0] ? `<small>${wnVer(WHATS_NEW[0])}</small>` : '');
 }
 // sinceSeen: the one-time card, only the builds since you last looked (the three newest, the rest a tap away); otherwise all of it
