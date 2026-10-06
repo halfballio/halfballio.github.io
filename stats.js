@@ -12,19 +12,12 @@ const pct = (a, b) => b ? Math.round(100*a/b) : 0;
 const num = n => Number(n).toLocaleString();
 const plural = (n, one, many) => `${num(n)} ${n === 1 ? one : (many || one + 's')}`;
 
-// ---------- the digest: everything the tabs show, from one pass ----------
-let memo = {key: null, d: null};
-function digest(ctx){
-  const log = ctx.log || [], last = log[log.length - 1];
-  const key = [ctx.task, log.length, last && (last.ts || ''), last && last.p, (ctx.sessions || []).length, ctx.shoot && ctx.shoot.g].join('|');
-  if(memo.key === key && memo.ctx === ctx.log) return memo.d;
-  const shoot = ctx.task === 'shoot', idx = {}, refs = ctx.refs;
-  refs.forEach((r, i)=>{ idx[r.id] = i; });
-  const L = [];
-  for(const e of log) if((e.t || 'call') === ctx.task && !e.gh) L.push(e);
+// ---------- the rules: what was real, what was called, which way a miss leans (the same for the log and the archive) ----------
+function rulesFor(ctx, task){
+  const shoot = task === 'shoot', idx = {};
+  ctx.refs.forEach((r, i)=>{ idx[r.id] = i; });
   const real = e => shoot ? (e.ra || e.a) : e.a;
   const called = e => shoot ? e.p : (e.aa && e.p === e.aa && e.pm === e.aam ? e.a : e.p);
-  const ok = e => ctx.success(e);
   const callOk = e => called(e) === real(e);
   // which way a miss leans: +1 too thin, -1 too full, 0 right (the game's own rule, except on the Ladder, where the right call is the one this stroke needs)
   const leanOf = e => {
@@ -32,6 +25,47 @@ function digest(ctx){
     if(callOk(e)) return 0;
     const d = (idx[e.p] ?? 0) - (idx[real(e)] ?? 0); return d > 0 ? 1 : d < 0 ? -1 : 0;
   };
+  return {shoot, idx, real, called, callOk, leanOf, ok: e => !!ctx.success(e)};
+}
+
+// ---------- the archive: shots past the log's limit become running totals per mode, so lifetime numbers stay whole ----------
+// archive = {v: 1, modes: {mode: totals}, done: {mode: {n, shots, ok, made}}}; nothing in it is per shot
+const ARCH_V = 1;
+function blankTotals(){ return {n: 0, right: 0, calls: 0, made: 0, scr: 0, thin: 0, full: 0, best: 0, hots: 0, run: 0, sid: null, ref: {}, mix: {}, sess: {n: 0, shots: 0, ok: 0, last: null}}; }
+// fold shots (oldest first) into the archive's totals; ghost-aided shots aren't scored, as everywhere else
+function fold(arch, entries, ctx){
+  arch.v = arch.v || ARCH_V; arch.modes = arch.modes || {};
+  const hot = ctx.hot || 6, R = {};
+  for(const e of entries){
+    if(!e || typeof e !== 'object' || e.gh) continue;
+    const t = e.t || 'call', A = arch.modes[t] || (arch.modes[t] = blankTotals()), r = R[t] || (R[t] = rulesFor(ctx, t));
+    const ok = r.ok(e) ? 1 : 0, rl = r.real(e), cl = r.called(e);
+    A.n++; A.right += ok; if(r.callOk(e)) A.calls++; if(e.m) A.made++; if(e.sc) A.scr++;
+    const ln = ok && !r.shoot ? 0 : r.leanOf(e); if(ln > 0) A.thin++; else if(ln < 0) A.full++;
+    if(rl != null){ const q = A.ref[rl] || (A.ref[rl] = {n: 0, ok: 0, call: 0}); q.n++; q.ok += ok; if(cl === rl) q.call++; if(cl != null){ const k = rl + '>' + cl; A.mix[k] = (A.mix[k] || 0) + 1; } }
+    if(e.sid !== A.sid){ if(A.run >= hot) A.hots++; A.run = 0; A.sid = e.sid ?? null; }
+    if(ok){ A.run++; A.best = Math.max(A.best, A.run); } else { if(A.run >= hot) A.hots++; A.run = 0; }
+    if(e.ts){ const S = A.sess; if(S.last == null || e.ts - S.last > SESSION_GAP) S.n++; S.shots++; S.ok += ok; S.last = e.ts; }
+  }
+  return arch;
+}
+// finished-session records past their limit: counted, not kept
+function foldSessions(arch, recs){
+  arch.v = arch.v || ARCH_V; arch.done = arch.done || {};
+  for(const x of recs){ if(!x || typeof x !== 'object' || x.dev) continue; const D = arch.done[x.task] || (arch.done[x.task] = {n: 0, shots: 0, ok: 0, made: 0}); D.n++; D.shots += x.n | 0; D.ok += x.right | 0; D.made += x.made | 0; }
+  return arch;
+}
+const archOf = (ctx, task) => { const a = ctx.archive && ctx.archive.modes && ctx.archive.modes[task]; return a && a.n > 0 ? a : null; };
+
+// ---------- the digest: everything the tabs show, from one pass ----------
+let memo = {key: null, d: null};
+function digest(ctx){
+  const log = ctx.log || [], last = log[log.length - 1], A = archOf(ctx, ctx.task);
+  const key = [ctx.task, log.length, last && (last.ts || ''), last && last.p, (ctx.sessions || []).length, ctx.shoot && ctx.shoot.g, A ? A.n : 0].join('|');
+  if(memo.key === key && memo.ctx === ctx.log) return memo.d;
+  const refs = ctx.refs, {shoot, idx, real, called, callOk, leanOf, ok} = rulesFor(ctx, ctx.task);
+  const L = [];
+  for(const e of log) if((e.t || 'call') === ctx.task && !e.gh) L.push(e);
   const n = L.length;
   let right = 0, calls = 0, made = 0, scr = 0;
   const okA = new Uint8Array(n), leanA = new Int8Array(n);
@@ -55,8 +89,9 @@ function digest(ctx){
   // the best 25-shot stretch
   let win = 0, bestWin = -1, bestWinAt = 0;
   for(let i = 0; i < n; i++){ win += okA[i]; if(i >= 25) win -= okA[i - 25]; if(i >= 24 && win > bestWin){ bestWin = win; bestWinAt = i - 24; } }
-  // fractions: by the real one, and the confusion matrix
-  const shown = refs.filter(r=>r.core || L.some(e=>real(e) === r.id || called(e) === r.id));
+  // fractions: by the real one, and the confusion matrix; shots in the archive count here too
+  const inArch = id => !!A && (A.ref[id] || Object.keys(A.mix).some(k=>k.split('>')[1] === id));
+  const shown = refs.filter(r=>r.core || L.some(e=>real(e) === r.id || called(e) === r.id) || inArch(r.id));
   const si = {}; shown.forEach((r, i)=>{ si[r.id] = i; });
   const M = shown.map(()=>shown.map(()=>0)), byRef = shown.map(()=>({n: 0, ok: 0, call: 0}));
   for(let i = 0; i < n; i++){
@@ -65,7 +100,14 @@ function digest(ctx){
     byRef[a].n++; byRef[a].ok += okA[i]; if(b === a) byRef[a].call++;
     if(b != null) M[a][b]++;
   }
-  const d = {ctx, shoot, L, n, right, calls, made, scr, okA, leanA, streaks, best, curStreak, bestWin, bestWinAt, shown, M, byRef, idx, real, called, callOk};
+  if(A){
+    for(const id in A.ref){ const a = si[id], q = A.ref[id]; if(a == null || !q) continue; byRef[a].n += q.n | 0; byRef[a].ok += q.ok | 0; byRef[a].call += q.call | 0; }
+    for(const k in A.mix){ const [x, y] = k.split('>'), a = si[x], b = si[y]; if(a != null && b != null) M[a][b] += A.mix[k] | 0; }
+  }
+  // lifetime: the log plus the archive. off: how many shots came before the first one in the log (shot numbers stay true)
+  const off = A ? A.n : 0;
+  const life = {n: n + off, right: right + (A ? A.right : 0), calls: calls + (A ? A.calls : 0), made: made + (A ? A.made : 0), scr: scr + (A ? A.scr : 0), best: Math.max(best, A ? A.best : 0), hots: A ? A.hots : 0};
+  const d = {ctx, shoot, L, n, right, calls, made, scr, okA, leanA, streaks, best, curStreak, bestWin, bestWinAt, shown, M, byRef, idx, real, called, callOk, off, life, arch: A};
   memo = {key, ctx: ctx.log, d};
   return d;
 }
@@ -164,7 +206,7 @@ function blocks(d){
   for(let i = 0; i < d.n; i += B){
     const m = Math.min(B, d.n - i); if(m < B/2 && out.length) break;
     let ok = 0, g = null; for(let j = i; j < i + m; j++){ ok += d.okA[j]; if(d.L[j].sg != null) g = d.L[j].sg; }
-    out.push({from: i + 1, to: i + m, y: pct(ok, m), g});
+    out.push({from: d.off + i + 1, to: d.off + i + m, y: pct(ok, m), g});
   }
   return {B, out};
 }
@@ -189,31 +231,33 @@ const fmtTime = m => when(m).toLocaleTimeString(undefined, {hour: 'numeric', min
 // ---------- the tabs ----------
 function modeName(d){ return d.shoot ? 'Ladder' : 'Flash'; }
 
+// charts and patterns read the log; when older shots are only in the totals, say which shots a chart covers
+const recentNote = d => d.off ? ` · your last ${num(d.n)} shots` : '';
 function tabOverview(d, w){
-  const c = d.ctx, G = c.grades, out = [];
+  const c = d.ctx, G = c.grades, out = [], F = d.life;
   const last20 = (()=>{ const k = Math.min(20, d.n); let ok = 0; for(let i = d.n - k; i < d.n; i++) ok += d.okA[i]; return k ? `${pct(ok, k)}%` : '–'; })();
   const k = [];
   if(d.shoot){
     const g = c.shoot ? c.shoot.g : 0, best = c.shoot ? Math.max(c.shoot.g, c.shoot.best ?? 0) : 0;
     k.push(kpi(G[g] || '–', 'Grade', best > g ? `best ${G[best]}` : 'Ladder', 'grade lead'));
-    k.push(kpi(d.n ? `${pct(d.right, d.n)}%` : '–', 'Full marks', d.n ? `${num(d.right)} of ${num(d.n)}` : ''));
-    k.push(kpi(d.n ? `${pct(d.calls, d.n)}%` : '–', 'Right call', 'the fraction'));
-    k.push(kpi(d.n ? `${pct(d.made, d.n)}%` : '–', 'Pocketed', d.scr ? `${pct(d.scr, d.n)}% scratched` : ''));
+    k.push(kpi(F.n ? `${pct(F.right, F.n)}%` : '–', 'Full marks', F.n ? `${num(F.right)} of ${num(F.n)}` : ''));
+    k.push(kpi(F.n ? `${pct(F.calls, F.n)}%` : '–', 'Right call', 'the fraction'));
+    k.push(kpi(F.n ? `${pct(F.made, F.n)}%` : '–', 'Pocketed', F.scr ? `${pct(F.scr, F.n)}% scratched` : ''));
   } else {
-    k.push(kpi(d.n ? `${pct(d.right, d.n)}%` : '–', 'Called right', d.n ? `${num(d.right)} of ${num(d.n)}` : '', 'lead'));
+    k.push(kpi(F.n ? `${pct(F.right, F.n)}%` : '–', 'Called right', F.n ? `${num(F.right)} of ${num(F.n)}` : '', 'lead'));
   }
   k.push(kpi(last20, 'Last 20', ''));
-  k.push(kpi(num(d.curStreak), 'Streak', d.shoot ? `best ${num(d.best)}` : '', d.shoot ? 'lead' : ''));
-  if(!d.shoot) k.push(kpi(num(d.best), 'Best streak', ''));
-  k.push(kpi(num(d.n), 'Shots', ''));
+  k.push(kpi(num(d.curStreak), 'Streak', d.shoot ? `best ${num(F.best)}` : '', d.shoot ? 'lead' : ''));
+  if(!d.shoot) k.push(kpi(num(F.best), 'Best streak', ''));
+  k.push(kpi(num(F.n), 'Shots', d.off ? 'all time' : ''));
   out.push(`<div class="svkpis" role="list" aria-label="Key numbers">${k.map(x=>x.replace('<div class="svkpi', '<div role="listitem" class="svkpi')).join('')}</div>`);
   const grid = [], bl = blocks(d);
-  grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots · History has the grade and streaks`, bl.out.length >= 2
+  grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots${recentNote(d)} · History has the grade and streaks`, bl.out.length >= 2
     ? lineChart(bl.out.map(b=>({...b, x: `shot ${num(b.from)}`})), {w: w.full, h: 190, unit: `Each point: ${bl.B} shots`, mean: pct(d.right, d.n), aria: `Accuracy per ${bl.B} shots, ${bl.out.length} blocks, last ${bl.out[bl.out.length - 1].y} percent`,
         read: i=>{ const b = bl.out[i]; return `Shots ${num(b.from)}–${num(b.to)}: ${b.y}%${b.g != null ? ` · grade ${G[b.g]}` : ''}`; }})
     : empty(`Play ${bl.B*2} shots to see your trend`, `${plural(d.n, 'shot')} so far.`), 'wide'));
   grid.push(card('Recent form', `Last ${Math.min(50, d.n) || 50} shots, oldest first`, d.n ? formStrip(d, 50) : empty(`No ${modeName(d)} shots yet`, 'Each shot shows here as right or a miss.')));
-  grid.push(card('Patterns', 'What the numbers say so far', d.n >= 10 ? patterns(d) : empty('Play 10 shots to see your patterns', `${plural(d.n, 'shot')} so far.`)));
+  grid.push(card('Patterns', d.off ? `What your last ${num(d.n)} shots say` : 'What the numbers say so far', d.n >= 10 ? patterns(d) : empty('Play 10 shots to see your patterns', `${plural(d.n, 'shot')} so far.`)));
   out.push(`<div class="svgrid">${grid.join('')}</div>`);
   return out.join('');
 }
@@ -245,12 +289,12 @@ function patterns(d){
 }
 
 function tabFractions(d, w){
-  const grid = [], word = d.shoot ? 'Full marks' : 'Called right';
-  grid.push(card('By real fraction', `${word}, fullest to thinnest`, d.n < 10 ? empty('Play 10 shots to see accuracy by fraction', `${plural(d.n, 'shot')} so far.`)
+  const grid = [], word = d.shoot ? 'Full marks' : 'Called right', N = d.life.n, all = d.off ? ` · all ${num(N)} shots` : '';
+  grid.push(card('By real fraction', `${word}, fullest to thinnest${all}`, N < 10 ? empty('Play 10 shots to see accuracy by fraction', `${plural(N, 'shot')} so far.`)
     : bars(d.shown.map((r, i)=>({label: r.label, n: d.byRef[i].n, ok: d.byRef[i].ok})), {big: true})));
-  grid.push(card('Real fraction vs. your call', 'Each row is the real fraction; shade is the share of that row’s shots you called each way', d.n < 20 ? empty('Play 20 shots to see which fractions you mix up', `${plural(d.n, 'shot')} so far.`) : heatmap(d)));
-  grid.push(card('Where your misses lean', 'Of the misses in each group: called too full (left) or too thin (right)', leans(d)));
-  grid.push(card('By shot', `${word} by side, distance, pocket and view`, d.n >= 10 ? wheres(d) : empty('Play 10 shots to see where you do best', `${plural(d.n, 'shot')} so far.`)));
+  grid.push(card('Real fraction vs. your call', `Each row is the real fraction; shade is the share of that row’s shots you called each way${all}`, N < 20 ? empty('Play 20 shots to see which fractions you mix up', `${plural(N, 'shot')} so far.`) : heatmap(d)));
+  grid.push(card('Where your misses lean', `Of the misses in each group: called too full (left) or too thin (right)${recentNote(d)}`, leans(d)));
+  grid.push(card('By shot', `${word} by side, distance, pocket and view${recentNote(d)}`, d.n >= 10 ? wheres(d) : empty('Play 10 shots to see where you do best', `${plural(d.n, 'shot')} so far.`)));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 function heatmap(d){
@@ -296,6 +340,7 @@ function wheres(d){
 function tabShots(d){
   const G = d.ctx.grades;
   if(!d.shoot) return empty('Zone, speed and spin results come from the Ladder', 'Switch to Ladder at the top to see them.');
+  const note = d.off ? `<p class="svnote">From your last ${num(d.n)} Ladder shots.</p>` : '';
   const GS = d.ctx.gradeStep || [], st = e => GS[e.sg];   // a grade's step (zone steps are 9 to 13)
   const zk = e => e.zk || (st(e) >= 9 && st(e) <= 13 ? st(e) : e.z != null ? 0 : null);
   const Z = d.L.filter(e=>e.z != null), grid = [];
@@ -334,7 +379,7 @@ function tabShots(d){
     const R = ['Top (follow)', 'Centre', 'Bottom (draw)', 'Left english', 'Right english'].map(label=>{ const x = TP.filter(e=>where(e) === label), zz = x.filter(e=>e.z != null); return {label, n: x.length, made: x.filter(e=>e.m).length, zn: zz.length, zok: zz.filter(e=>e.z === 1).length}; }).filter(r=>r.n);
     grid.push(card('Spin', 'Where you struck the cue ball, and what happened', tipMap(TP) + table(['Tip', 'Shots', 'Pocketed', 'In zone'], R.map(r=>[r.label, num(r.n), pc(r.made, r.n), r.zn ? pc(r.zok, r.zn) : '–']), 'Tip position against outcome')));
   } else grid.push(card('Spin', 'Where you struck the cue ball', empty('No spin results yet', `You set the spin from grade ${G[d.ctx.spinAt ?? 8]} on.`)));
-  return `<div class="svgrid">${grid.join('')}</div>`;
+  return note + `<div class="svgrid">${grid.join('')}</div>`;
 }
 // the cue ball face with a dot per tip position used: size by how often, fill by the zone rate there
 function tipMap(TP){
@@ -360,26 +405,29 @@ function tabHistory(d, w){
     }
     trend += `<details class="svdet"><summary>Show as a table</summary>` + table(['Shots', d.shoot ? 'Full marks' : 'Called right', ...(d.shoot ? ['Grade'] : [])], bl.out.slice().reverse().map(b=>[`${num(b.from)}–${num(b.to)}`, `${b.y}%`, ...(d.shoot ? [b.g != null ? G[b.g] : '–'] : [])]), 'Accuracy per block') + `</details>`;
   } else trend = empty(`Play ${bl.B*2} shots to see your trend`, `${plural(d.n, 'shot')} so far.`);
-  grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots; tap or use the arrow keys for each block`, trend, 'wide'));
+  grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots${recentNote(d)}; tap or use the arrow keys for each block`, trend, 'wide'));
   // streaks
-  const hots = d.streaks.filter(s=>s.len >= hot).length, last100 = (()=>{ let b = 0, c = 0; for(let i = Math.max(0, d.n - 100); i < d.n; i++){ c = d.okA[i] ? c + 1 : 0; b = Math.max(b, c); } return b; })();
-  let sb = `<div class="svkpis mini">${kpi(num(d.best), 'Best streak', '')}${kpi(num(d.curStreak), 'Current', '')}${kpi(num(last100), 'Best, last 100', '')}${kpi(num(hots), `Streaks of ${hot}+`, '')}`
-    + `${d.bestWin >= 0 ? kpi(`${pct(d.bestWin, 25)}%`, 'Best 25 shots', `from shot ${num(d.bestWinAt + 1)}`) : ''}</div>`;
+  const hots = d.streaks.filter(s=>s.len >= hot).length + d.life.hots, last100 = (()=>{ let b = 0, c = 0; for(let i = Math.max(0, d.n - 100); i < d.n; i++){ c = d.okA[i] ? c + 1 : 0; b = Math.max(b, c); } return b; })();
+  let sb = `<div class="svkpis mini">${kpi(num(d.life.best), 'Best streak', d.off ? 'all time' : '')}${kpi(num(d.curStreak), 'Current', '')}${kpi(num(last100), 'Best, last 100', '')}${kpi(num(hots), `Streaks of ${hot}+`, '')}`
+    + `${d.bestWin >= 0 ? kpi(`${pct(d.bestWin, 25)}%`, d.off ? 'Best 25, recent' : 'Best 25 shots', `from shot ${num(d.off + d.bestWinAt + 1)}`) : ''}</div>`;
   const S3 = d.streaks.filter(s=>s.len >= 3), list = S3.slice(-60);
-  sb += list.length ? streakChart(list, {w: w.full, hot, best: d.best, aria: `${S3.length} streaks of 3 or more; best ${d.best}`, from: `shot ${num(list[0].at + 1)}`, to: list[list.length - 1].open ? 'now' : `shot ${num(list[list.length - 1].at + 1)}`})
+  sb += list.length ? streakChart(list, {w: w.full, hot, best: d.best, aria: `${S3.length} streaks of 3 or more${d.off ? ' in your last ' + num(d.n) + ' shots' : ''}; best ${d.best}`, from: `shot ${num(d.off + list[0].at + 1)}`, to: list[list.length - 1].open ? 'now' : `shot ${num(d.off + list[list.length - 1].at + 1)}`})
     + `<div class="svlegend" aria-hidden="true"><span><i class="sw hotb"></i>${hot} or more</span><span><i class="sw cold"></i>3 to ${hot - 1}</span><span><i class="sw hotl"></i>Hot line</span></div>`
     : empty('No streaks of 3 or more yet', '');
-  grid.push(card('Streaks', `Each streak of 3 or more, oldest left${S3.length > 60 ? ' (the last 60)' : ''}; the longest shown is labelled`, sb, 'wide'));
+  grid.push(card('Streaks', `Each streak of 3 or more, oldest left${S3.length > 60 ? ' (the last 60)' : ''}${recentNote(d)}; the longest shown is labelled`, sb, 'wide'));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 
 function tabSessions(d, w){
-  const G = d.ctx.grades, S = sessions(d), list = S.list, grid = [];
-  if(!list.length){
+  const G = d.ctx.grades, S = sessions(d), list = S.list, grid = [], A = d.arch, D = d.ctx.archive && d.ctx.archive.done && d.ctx.archive.done[d.ctx.task];
+  if(!list.length && !A){
     return empty('No sessions yet', `Each time you play shows up here as a session. A break of ${SESSION_GAP} minutes or more starts a new one.`);
   }
-  const shots = list.reduce((a, s)=>a + s.n, 0);
-  grid.push(`<div class="svkpis mini wide">${kpi(num(list.length), 'Sessions', '')}${kpi(num(Math.round(shots/list.length)), 'Shots a session', 'average')}${kpi(`${pct(list.reduce((a, s)=>a + s.ok, 0), shots)}%`, d.shoot ? 'Full marks' : 'Called right', 'across sessions')}</div>`);
+  // the totals count every session, older ones from the archive too (one that spans the cut counts once)
+  const firstTs = (d.L.find(e=>e.ts) || {}).ts, joined = A && A.sess.last != null && firstTs != null && firstTs - A.sess.last <= SESSION_GAP ? 1 : 0;
+  const nS = list.length + (A ? A.sess.n - joined : 0) + (D ? D.n : 0);
+  const shots = list.reduce((a, s)=>a + s.n, 0) + (A ? A.sess.shots : 0) + (D ? D.shots : 0), oks = list.reduce((a, s)=>a + s.ok, 0) + (A ? A.sess.ok : 0) + (D ? D.ok : 0);
+  grid.push(`<div class="svkpis mini wide">${kpi(num(nS), 'Sessions', A || D ? 'all time' : '')}${kpi(num(Math.round(shots/Math.max(1, nS))), 'Shots a session', 'average')}${kpi(`${pct(oks, shots)}%`, d.shoot ? 'Full marks' : 'Called right', 'across sessions')}</div>`);
   const pts = list.filter(s=>s.n >= 5).map(s=>({x: fmtDay(s.start).replace(/^\w+,? /, ''), y: pct(s.ok, s.n), s}));
   grid.push(card('By session', `${d.shoot ? 'Full marks' : 'Called right'} per session of 5 shots or more`, pts.length >= 2
     ? lineChart(pts, {w: w.full, h: 190, unit: 'Each point: a session', aria: `Accuracy over ${pts.length} sessions`, read: i=>{ const s = pts[i].s; return `${fmtDay(s.start)}, ${fmtTime(s.start)}: ${pct(s.ok, s.n)}% of ${plural(s.n, 'shot')}${s.g0 != null ? ` · ${G[s.g0]}${s.g1 !== s.g0 ? ' → ' + G[s.g1] : ''}` : ''}`; }})
@@ -389,7 +437,7 @@ function tabSessions(d, w){
     return `<li class="svsess"><div class="when"><b>${fmtDay(s.start)}</b><small>${s.legacy ? 'finished session' : fmtTime(s.start)}</small></div>`
       + `<div class="what"><span class="svbt" aria-hidden="true"><i style="width:${p}%"></i></span><small>${plural(s.n, 'shot')}${s.best ? ` · best streak ${s.best}` : ''}${g ? ` · ${g}` : ''}</small></div><b class="pct">${p}%</b></li>`;
   }).join('');
-  grid.push(card('All sessions', `Newest first${list.length > 60 ? ' (the last 60)' : ''}`, `<ul class="svsessl" role="list">${rows}</ul>`, 'wide'));
+  grid.push(card(A || D ? 'Recent sessions' : 'All sessions', `Newest first${list.length > 60 ? ' (the last 60)' : ''}`, `<ul class="svsessl" role="list">${rows}</ul>`, 'wide'));
   return `<div class="svgrid">${grid.join('')}</div>`;
 }
 
@@ -428,5 +476,5 @@ function wire(body){
     svg.addEventListener('focus', ()=>show(at));
   });
 }
-return {render, TABS, digest};
+return {render, TABS, digest, fold, foldSessions};
 })();
