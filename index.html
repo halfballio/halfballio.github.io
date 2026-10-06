@@ -96,24 +96,23 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .lvuphead b{font:700 88px/1 var(--display);color:var(--gold);text-shadow:0 2px 24px rgba(0,0,0,.45);animation:lvlpop .5s cubic-bezier(.2,1.3,.4,1)}
 .lvuphead span{font-size:14.5px;color:var(--cream-2)}
 .lvuplist{list-style:none;margin:0;padding:4px 20px;flex:1 1 auto!important;min-height:0;overflow-y:auto;overscroll-behavior:contain}
-.lvuplist li{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--navy-line)}
+.lvuplist li{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;min-height:44px;padding:10px 0;border-bottom:1px solid var(--navy-line)}
 .lvuplist li:last-child{border-bottom:0}
 .unlico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(240,191,52,.14);color:var(--gold)}
 .unlico svg{width:22px;height:22px}
 .lvuplist h3{margin:0;font:600 16px/1.25 var(--body);color:var(--cream)}
-.lvuplist p{margin:2px 0 0;font-size:14px;line-height:1.4;color:var(--cream)}
-.lvuplist p.where{font-size:13px;color:var(--cream-2)}
 .lvuptry{font:600 14px var(--body);min-height:44px;padding:0 14px;border-radius:var(--r);border:1px solid rgba(242,234,216,.3);background:transparent;color:var(--cream);cursor:pointer;white-space:nowrap;transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
 .lvuptry:hover{background:rgba(242,234,216,.07);border-color:rgba(242,234,216,.5)}
 .lvupfoot{display:flex;justify-content:center;padding:12px 20px 16px;border-top:1px solid var(--navy-line)}
 .lvupfoot .startbtn{min-width:180px}
 .lvupcard :focus-visible{outline-color:var(--gold)}
-@media (max-width:480px){.lvuphead{padding:14px 16px 10px}.lvuphead b{font-size:64px}.lvuplist{padding:2px 16px}.lvuplist li{grid-template-columns:36px 1fr;gap:10px}.unlico{width:36px;height:36px}.lvuptry{grid-column:2;justify-self:start}.lvupfoot{padding:10px 16px 12px}.lvupfoot .startbtn{flex:1}}
+@media (max-width:480px){.lvuphead{padding:14px 16px 10px}.lvuphead b{font-size:64px}.lvuplist{padding:2px 16px}.lvuplist li{grid-template-columns:36px 1fr auto;gap:10px;padding:8px 0}.unlico{width:36px;height:36px}.lvupfoot{padding:10px 16px 12px}.lvupfoot .startbtn{flex:1}}
 @media (prefers-reduced-motion:reduce){.lvupcard,.lvuphead b{animation:none}}
-/* the same unlocks, small, under each grade of the ladder: upcoming ones dashed and muted */
-.unl{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:5px}
-.unlchip{display:inline-flex;align-items:center;gap:4px;font:500 12px/1 var(--body);padding:4px 7px 4px 5px;border-radius:999px;background:var(--chip);color:var(--ink);border:1px solid transparent}
-.unlchip svg{width:13px;height:13px;flex:none;color:var(--gold-text)}
+/* the same unlocks, small, under each grade of the ladder (they name the grade): upcoming ones dashed and muted */
+.unl{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.unl:first-child{margin-top:0}
+.unlchip{display:inline-flex;align-items:center;gap:5px;font:500 13px/1 var(--body);padding:5px 9px 5px 6px;border-radius:999px;background:var(--chip);color:var(--ink);border:1px solid transparent}
+.unlchip svg{width:14px;height:14px;flex:none;color:var(--gold-text)}
 .unl.soon .unlchip{background:transparent;border:1px dashed var(--line-strong);color:var(--muted)}
 .unl.soon .unlchip svg{color:var(--muted)}
 .gradebadge{cursor:pointer}
@@ -2084,6 +2083,7 @@ function setGradeForTesting(i){
 }
 function renderProgress(){
   const sh = true, L = ensureShootLevel(), GR = SHOOT_GRADES, TX = SHOOT_TEXT;
+  const ea = t => String(t).replace(/<[^>]*>/g, '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));   // an unlock's what/where, for its chip's description
   const g = L ? L.g : 0, best = L ? Math.max(L.best ?? 0, L.g) : 0, pts = L ? L.pts : 0;
   $('proghead').textContent = 'Progress';
   $('ladder').innerHTML = GR.map((G, i)=>{
@@ -2093,8 +2093,8 @@ function renderProgress(){
       ? `<span class="here-bar"><i style="width:${Math.min(100, Math.max(0, pts)/PTS_UP*100)}%"></i></span><small>${Math.max(0, pts)} of ${PTS_UP} to ${GR[i+1]}</small>`
       : '<small>You made it.</small>') : pr ? '<small>Practising: not scored</small>' : '';
     const u = i > 0 ? unlocksBetween(GRADE_STEP[i - 1], GRADE_STEP[i]) : [], soon = i > best;   // what this grade brings (UNLOCKS_AT): yours, or still to come
-    const unl = u.length ? `<span class="unl${soon ? ' soon' : ''}"><span class="sr">${soon ? 'Coming at this grade:' : 'This grade brought:'} </span>${u.map(r=>`<span class="unlchip">${unlIcon(r.icon)}${r.name}</span>`).join('<span class="sr">, </span>')}</span>` : '';
-    return `<li class="${cls}${DEV ? ' dev' : ''}" data-g="${i}"><span class="node">${G}</span><span class="what">${TX[i]}${bar}${unl}</span></li>`;
+    const unl = u.length ? `<span class="unl${soon ? ' soon' : ''}"><span class="sr">${soon ? 'Coming at this grade:' : 'This grade brought:'} </span>${u.map(r=>`<span class="unlchip" aria-description="${ea(r.what + ' ' + r.where)}">${unlIcon(r.icon)}${r.name}</span>`).join('<span class="sr">, </span>')}</span>` : '';
+    return `<li class="${cls}${DEV ? ' dev' : ''}" data-g="${i}"><span class="node">${G}</span><span class="what">${unl || TX[i]}${bar}</span></li>`;   // the chips name a grade that brings something; no text beside them
   }).reverse().join('') + `<li class="devnote"><span></span><small>${DEV ? 'Testing: tap a grade to jump there.' : 'Tap a grade you\'ve passed to practise it, as long as you like. Practice shots don\'t count.'}</small></li>`;
 }
 const LADDER_DOWN = {8:'Cuts back on the fractions', 9:'Back to cuts the plain fraction pots', 10:'No more 0.75 s Flash'};
@@ -3563,7 +3563,7 @@ function openLevelUp(grade, rows){
   lvup.rows = rows;
   $('lvupgrade').textContent = grade;
   $('lvupsub').textContent = rows.length === 1 ? `You've reached ${grade}. Here's what's new.` : `You've reached ${grade}. ${rows.length} things are new.`;
-  $('lvuplist').innerHTML = rows.map((r, i)=>`<li><span class="unlico">${unlIcon(r.icon)}</span><div><h3>${esc(r.name)}</h3><p>${r.what}</p><p class="where">${r.where}</p></div>`
+  $('lvuplist').innerHTML = rows.map((r, i)=>`<li aria-description="${esc((r.what + ' ' + r.where).replace(/<[^>]*>/g, ''))}"><span class="unlico">${unlIcon(r.icon)}</span><h3>${esc(r.name)}</h3>`
     + (r.tryIt ? `<button class="lvuptry" data-try="${i}" aria-label="Try ${esc(r.name)}">Try it</button>` : '') + '</li>').join('');
   if(lvupOpen()) return;   // already up (two grades at once): just the new list
   lvup.from = document.activeElement; lvup.at = performance.now();
