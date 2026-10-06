@@ -147,8 +147,10 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
 
 
   // ---------- balls ----------
-  function ballTexture(kind, color, number, dots, white = '#f4efe0'){   // white: the stripes' ground (a ball set can make it black or ivory)
-    const key = kind + color + number + white;
+  // the ball set's markings: the number's font, weight and size, the spot's size, a thin ring, and the stripe's height
+  const LOOK0 = {key:'', numFont:'"Barlow Condensed", "Arial Narrow", sans-serif', numWeight:700, numScale:1, spot:1, ring:0, stripeW:.38};
+  function ballTexture(kind, color, number, dots, white = '#f4efe0', L = LOOK0){   // white: the stripes' ground (a ball set can make it black or ivory)
+    const key = kind + color + number + white + (kind === 'cb' ? '' : L.key);
     if(texCache[key]) return texCache[key];
     const w = 512, h = 256, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const x = cv.getContext('2d');
@@ -164,15 +166,17 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     } else {
       if(+number >= 9){   // a stripe: white, with a coloured band round the middle that the number sits on
         x.fillStyle = white; x.fillRect(0, 0, w, h);
-        x.fillStyle = color; x.fillRect(0, h*0.31, w, h*0.38);
+        x.fillStyle = color; x.fillRect(0, h*(.5 - L.stripeW/2), w, h*L.stripeW);
       } else { x.fillStyle = color; x.fillRect(0, 0, w, h); }
       // the number spot sits at the texture's centre: local +x
-      x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(w/2, h/2, w*0.072, h*0.145, 0, 0, Math.PI*2); x.fill();
-      x.fillStyle = '#111'; x.font = `700 ${Math.round(h*0.17)}px Barlow Condensed, Arial Narrow, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+      const sp = L.spot, fs = h*0.17*L.numScale;
+      x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(w/2, h/2, w*0.072*sp, h*0.145*sp, 0, 0, Math.PI*2); x.fill();
+      if(L.ring){ x.strokeStyle = '#111'; x.lineWidth = h*0.008; x.beginPath(); x.ellipse(w/2, h/2, w*0.072*sp*.86, h*0.145*sp*.86, 0, 0, Math.PI*2); x.stroke(); }
+      x.fillStyle = '#111'; x.font = `${L.numWeight} ${Math.round(fs)}px ${L.numFont}`; x.textAlign = 'center'; x.textBaseline = 'middle';
       // the sphere's texture is as many pixels per degree across as up, so the number is drawn at its true shape (it was
       // squeezed to half width), and flipped left to right because the whole table is drawn mirrored (world scale.x = -1)
       x.save(); x.translate(w/2, h/2); x.scale(-1, 1); x.fillText(String(number), 0, h*0.01);
-      if(+number === 6 || +number === 9){ const tw = x.measureText(String(number)).width; x.fillRect(-tw/2, h*0.085, tw, h*0.018); }   // 6 and 9 are underlined, as on real balls
+      if(+number === 6 || +number === 9){ const tw = x.measureText(String(number)).width; x.fillRect(-tw/2, fs*0.5, tw, h*0.018); }   // 6 and 9 are underlined, as on real balls
       x.restore();
     }
     const t = new T3.CanvasTexture(cv); t.anisotropy = 4;
@@ -181,8 +185,9 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
   // the numbers are drawn in the page's condensed font: on a first visit (or a slow phone) it can still be on its way when the
   // balls are first drawn, and they'd keep the fallback's numbers. When it arrives, the numbered balls are drawn again.
   try{
-    const NUMF = '700 20px "Barlow Condensed"', fonts = root.document && root.document.fonts;
-    if(fonts && fonts.check && !fonts.check(NUMF)) fonts.load(NUMF).then(()=>{
+    const NUMF = ['700 20px "Barlow Condensed"', '600 20px "IBM Plex Sans"'], fonts = root.document && root.document.fonts;
+    const due = fonts && fonts.check ? NUMF.filter(f=>!fonts.check(f)) : [];
+    if(due.length) Promise.all(due.map(f=>fonts.load(f))).then(()=>{
       const old = [];
       for(const k in texCache) if(!k.startsWith('cb')){ old.push(texCache[k]); delete texCache[k]; }
       if(!old.length) return;
@@ -191,20 +196,29 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     }, ()=>{});
   }catch(e){}
   const sphere = opts.lite ? new T3.SphereGeometry(1, 32, 24) : new T3.SphereGeometry(1, 48, 32);   // 32 round: under half a pixel off round even down on the shot
+  // the ball set's finish: its roughness, and a clear coat on top for the glossiest set (a phone gets the plain glossy surface)
+  function ballMat(L){
+    const r = L && L.rough != null ? L.rough : .18, m = L && L.clear && !opts.lite
+      ? new T3.MeshPhysicalMaterial({roughness:r, metalness:0, clearcoat:L.clear, clearcoatRoughness:.03})
+      : new T3.MeshStandardMaterial({roughness:r, metalness:0});
+    m.userData.fk = L ? L.key : '';
+    return m;
+  }
   function ball(id, R){
     if(balls[id]) return balls[id];
-    const m = new T3.Mesh(sphere, new T3.MeshStandardMaterial({roughness:.18, metalness:0}));
+    const m = new T3.Mesh(sphere, ballMat());
     m.scale.setScalar(R); m.castShadow = true; m.matrixAutoUpdate = false;
     world.add(m); return balls[id] = m;
   }
   // list: [{id, kind:'cb'|'ob', p, z, M (3x3, ball-local to world), base (3x3, texture frame to ball-local), color, number, dots, opacity}]
   let shadowKey = '';
-  function setBalls(list, R){
+  function setBalls(list, R, L){
     const seen = {}, sk = list.map(b=>b.id + (b.opacity ?? 1) + b.p[0].toFixed(2) + b.p[1].toFixed(2) + (b.z ?? 0).toFixed(2)).join('|');
     if(sk !== shadowKey){ shadowKey = sk; renderer.shadowMap.needsUpdate = true; }
     for(const b of list){
       const m = ball(b.id, R); seen[b.id] = 1;
-      const tex = ballTexture(b.kind, b.color, b.number, b.dots, b.white);
+      if(L && m.material.userData.fk !== L.key){ m.material.dispose(); m.material = ballMat(L); }   // only when the set changes
+      const tex = ballTexture(b.kind, b.color, b.number, b.dots, b.white, L);
       if(m.material.map !== tex){ m.material.map = tex; m.material.needsUpdate = true; }
       const op = b.opacity ?? 1;
       m.material.transparent = op < 1; m.material.opacity = op; m.material.depthWrite = op >= 1; m.castShadow = op >= 1;
