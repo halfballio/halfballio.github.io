@@ -363,27 +363,33 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .rundots{display:inline-flex;gap:5px;align-items:center}
 .rundots i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--line-strong);background:transparent}
 .rundots i.on{background:var(--good);border-color:var(--good)} .rundots i.off{background:var(--bad);border-color:var(--bad)}
-/* Run-outs, the call: a target on every ball (and every pocket once the ball is named) over the table seen from above. Each is a
-   44 px button round a ball drawn far smaller than that on a phone, with a ring that says which is named, which is dim (not next,
-   or out of reach), and a numbered badge once the rack is planned */
-.runpick{position:absolute;inset:0;z-index:5;pointer-events:none}
+/* Run-outs, the plan: targets drawn in an SVG laid over the table that shares the table's own viewBox, so each sits exactly on
+   its ball or pocket at any size. Each is a hit circle (44 px or more, sized at render), a quiet ring on what can be picked
+   now, a gold ring on the one a pocket is being picked for, and a numbered badge: the ball's place in the plan, and the same
+   number at its pocket (a pocket taking several balls lists them) */
+.runpick{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:visible}
 .runpick[hidden]{display:none}
-.runpick button{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer;pointer-events:auto;color:var(--cream)}
-.runpick button::before{content:'';position:absolute;inset:9px;border-radius:50%;border:2px solid rgba(255,255,255,.6);box-shadow:0 0 0 1px rgba(0,0,0,.35);transition:border-color var(--t-fast) var(--ease),inset var(--t-fast) var(--ease)}
-.runpick button:hover::before{border-color:var(--gold)}
-.runpick button[aria-pressed="true"]::before{inset:5px;border:3px solid var(--gold)}
-.runpick button.dim::before{border-color:rgba(255,255,255,.28);border-style:dashed}
-.runpick button.pickpocket::before{inset:6px;border-color:rgba(255,211,77,.55)}
-.runpick button.pickpocket[aria-pressed="true"]::before{inset:3px;border-color:var(--gold)}
-.runpick button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.runpick button:active::before{border-color:var(--gold-hi)}
-.runpick .pn{position:absolute;top:-2px;right:-2px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--gold);color:var(--gold-ink);font:700 12px/20px var(--body);box-shadow:var(--shadow-1)}
-.runcall .runmsg{margin:0 0 10px;font-size:14px;line-height:20px;color:var(--ink)}
+.runpick .pt{pointer-events:auto;cursor:pointer;outline:none}
+.runpick .pt .hit{fill:#fff;fill-opacity:0}
+.runpick .pt .ring{fill:none;stroke:#fff;stroke-opacity:.5;transition:stroke var(--t-fast) var(--ease),stroke-opacity var(--t-fast) var(--ease)}
+.runpick .pt:hover .ring{stroke:var(--gold);stroke-opacity:.95}
+.runpick .pt[aria-pressed="true"] .ring{stroke:var(--gold);stroke-opacity:1}
+.runpick .pt[aria-disabled="true"]{cursor:default}
+.runpick .pt:focus-visible .hit{fill-opacity:.1;stroke:var(--gold);stroke-dasharray:1 .7}
+.runpick .pn rect{fill:var(--gold);stroke:#0b1a26;stroke-opacity:.6}
+.runpick .pn text{fill:var(--gold-ink);font-family:var(--body);font-weight:700;text-anchor:middle;dominant-baseline:central}
+.runcall .runmsg{margin:0 0 10px;font-size:15px;line-height:20px;color:var(--ink)}
 .runcall .runmsg.warn{color:var(--bad);font-weight:600}
+.runcall .planlist{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px 8px;font-size:13px;line-height:18px;color:var(--muted)}
+.runcall .planlist li{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 3px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2)}
+.runcall .planlist li b{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--gold);color:var(--gold-ink);font:700 11px/18px var(--body)}
+.runcall .planlist li.cur{border-color:var(--gold);color:var(--ink)}
 .runcall .runbtns{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 .runcall .runbtns .startbtn{font-size:18px;padding:9px 22px}
+.runcall .runbtns .startbtn:disabled{opacity:.4;cursor:default}
 .runcall .runbtns .runend{margin-left:auto}
-@media (prefers-reduced-motion:reduce){.runpick button::before{transition:none}}
+.runrow .link{font-size:13px;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.runpick .pt .ring{transition:none}}
 @media (max-width:760px){.runrow{padding:6px 10px;font-size:12.5px}.runrow .runverd{font-size:18px;line-height:20px}}
 .sesslive{display:flex;align-items:center;gap:8px;width:100%;font-size:13px;color:var(--muted)}
 .sesschip{font:600 13px var(--body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:999px;min-height:32px;padding:5px 14px;cursor:pointer}
@@ -1323,9 +1329,9 @@ html.svopen,html.svopen body{overflow:hidden}
       <fieldset class="modeopt"><legend>Balls <small>a rack</small></legend>
         <div class="seg modeseg" data-run="n"><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button><button data-v="8">8</button><button data-v="9">9</button></div></fieldset>
       <fieldset class="modeopt"><legend>Pattern <small id="run-pat-hint"></small></legend>
-        <div class="seg modeseg" data-run="pat"><button data-v="auto">Automatic</button><button data-v="call">Call each shot</button><button data-v="plan">Plan the rack</button></div></fieldset>
-      <fieldset class="modeopt"><legend>Order</legend>
-        <div class="seg modeseg" data-run="order"><button data-v="any">Any order</button><button data-v="eight">8-ball last</button><button data-v="rot">Rotation</button></div></fieldset>
+        <div class="seg modeseg" data-run="pat"><button data-v="plan">Planned</button><button data-v="auto">Any order</button></div></fieldset>
+      <fieldset class="modeopt"><legend>Rules</legend>
+        <div class="seg modeseg" data-run="order"><button data-v="any">Open</button><button data-v="eight">8-ball last</button><button data-v="rot">Rotation</button></div></fieldset>
       <fieldset class="modeopt"><legend>Table area <small>where the balls are spread</small></legend>
         <div class="seg modeseg" data-run="area"><button data-v="full">Full table</button><button data-v="half">Half table</button></div></fieldset>
       <fieldset class="modeopt"><legend>Table</legend>
@@ -1342,7 +1348,7 @@ html.svopen,html.svopen body{overflow:hidden}
         <div class="dip" id="dip" aria-hidden="true"></div>
         <svg id="table" viewBox="0 0 40 50" preserveAspectRatio="xMidYMid meet" aria-label="Pool table shot layout"></svg>
         <svg id="tablefx" viewBox="0 0 40 50" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
-        <div class="runpick" id="runpick" role="group" aria-label="Call the shot: the balls and pockets on the table" hidden></div>   <!-- Run-outs: a target on every ball and pocket while you call -->
+        <svg class="runpick" id="runpick" viewBox="0 0 40 50" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Plan the rack: the balls and pockets on the table" hidden></svg>   <!-- Run-outs: a target on every ball and pocket while you plan (the table's own viewBox, so each sits on its ball) -->
         <div class="cover" id="cover" hidden>Call it<button class="replay" id="replay" aria-label="Replay the shot"><svg class="replayicon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3.5 13.5a8.5 8.5 0 1 0 2.4-7.4L3 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="replaytext">Replay</span></button></div>
         <div class="cover sumcover" id="sesscover" hidden>
           <div class="sumcard">
@@ -2977,30 +2983,34 @@ function addExtras(s){
 // A rack of object balls, dealt so the first shot is on, and played on from wherever the cue ball stops: shape is yours to
 // play, by feel, with no zone drawn. The setup (the Run-outs sheet) decides the rack: how many balls, where they're spread
 // (the whole table or the foot half), who picks the shot, and the order rule.
-//   Pattern: Automatic picks the easiest ball that's makeable from where the cue ball lies (a clear path to it and from it to
-//   a pocket, no thin cut, the pocket-speed shot dropping clean, the cue ball within your reach). Call each shot: you tap the
-//   ball, then its pocket. Plan the rack: before the first shot you tap every ball in the order you'll shoot them, and then
-//   you have to follow it (the pocket is still yours to call each shot).
-//   Order: any order; 8-ball last (a black 8 that has to be the last to drop, so the 8 going early ends the run); Rotation
+//   Pattern: Planned: before the first shot you pick every ball and its pocket, in order (a ball, then its pocket, till the
+//   rack is planned), and then shoot the plan: each shot comes up on the next ball of it, aimed at its pocket, nothing to tap.
+//   The pocket can be changed on the way (the plan stands); another ball out of order is allowed but the rack is no longer a
+//   planned run. Any order: the easiest ball that's makeable from where the cue ball lies is picked for you each shot (a clear
+//   path to it and from it to a pocket, no thin cut, the pocket-speed shot dropping clean, the cue ball within your reach).
+//   Rules: open; 8-ball last (a black 8 that has to be the last to drop, so the 8 going early ends the run); Rotation
 //   (balls 1..N, the lowest on the table is always the one to hit).
 // Every shot is called as on the ladder, with every stroke and spin you have. The called ball must be the first the cue ball
 // touches (else a foul) and must drop in the called pocket (else a miss); anything else that drops on a legal shot stays
 // down and counts. A miss, a scratch, a foul or no shot left ends the run; clearing the rack is a full run. Nothing here
 // moves the ladder's grade or points.
-const RUN_DEF = {tb: '9', n: 3, pat: 'auto', area: 'full', order: 'any'};
-const RUN_PAT = {auto: 'Automatic', call: 'Call each shot', plan: 'Plan the rack'}, RUN_ORDER = {any: 'Any order', eight: '8-ball last', rot: 'Rotation'};
+const RUN_DEF = {tb: '9', n: 3, pat: 'plan', area: 'full', order: 'any'};
+const RUN_PAT = {plan: 'Planned', auto: 'Any order'}, RUN_ORDER = {any: 'Open', eight: '8-ball last', rot: 'Rotation'};
 function runPicks(){   // the saved picks, made safe
   const d = {...RUN_DEF, ...(settings.run || {})};
   if(!tableUnlocked(d.tb)) d.tb = gradeTable(ladderBest());
   d.n = Math.max(3, Math.min(9, Math.round(+d.n) || 3));
-  if(!RUN_PAT[d.pat]) d.pat = 'auto'; if(!RUN_ORDER[d.order]) d.order = 'any'; if(d.area !== 'half') d.area = 'full';
-  if(d.order === 'rot' && d.pat === 'plan') d.pat = 'call';   // Rotation sets the order itself: nothing to plan, only pockets to call
+  if(d.pat === 'call') d.pat = 'plan';   // (Call each shot, dropped: those racks are planned now)
+  if(!RUN_PAT[d.pat]) d.pat = 'plan'; if(!RUN_ORDER[d.order]) d.order = 'any'; if(d.area !== 'half') d.area = 'full';
   return d;
 }
-const runSummary = () => { const d = runPicks(); return `${d.n} balls${d.order !== 'any' ? ' · ' + RUN_ORDER[d.order] : ''}${d.pat !== 'auto' ? ' · ' + (d.pat === 'call' ? 'Call' : 'Plan') : ''}${d.area === 'half' ? ' · Half table' : ''}`; };   // for the pill
+const runSummary = () => { const d = runPicks(); return `${d.n} balls · ${RUN_PAT[d.pat]}${d.order !== 'any' ? ' · ' + RUN_ORDER[d.order] : ''}${d.area === 'half' ? ' · Half table' : ''}`; };   // for the pill
 const runKey = () => { const d = runPicks(); return [d.n, d.pat, d.area, d.order].join('|'); };
 const RUN_MAX_CUT = 80, RUN_CALL_CUT = 88, RUN_GAP = 0.4;   // the thinnest cut picked for you (an eighth-ball cut is 82°); the thinnest you can call; cloth between a path and another ball
-let RUN = null;   // the rack: {id, tb, key, set, n0, potted, shots, balls: [{n, p}], cb, pick: {n, Pi} | null, plan: [n] | null, planning: [n], call: {n, Pi, sug, msg} | null, over, why}
+// the rack: {id, tb, key, set, n0, potted, shots, balls: [{n, p}], cb, pick: {n, Pi} | null (the shot up now), plan: [{n, Pi}] | null (the rack as
+// planned), planning: [{n, Pi}] (the plan so far), call: {mode: 'plan' | 'change', n, msg, was} | null (the picker is up), off: the ball
+// at which the plan was left (out of order) | null, over, why}
+let RUN = null;
 // Reach in a run: the ladder stands you at the rail behind the cue ball along the aim; in a game you stand at any rail the shot
 // doesn't fire into, so the cue ball is in reach when it's within reach of that rail too (its distance straight in from it)
 function runReach(s){
@@ -3027,8 +3037,9 @@ function runAllowed(balls, set){
   if(set.order === 'eight' && balls.length > 1) return balls.map(b=>b.n).filter(n=>n !== 8);
   return balls.map(b=>b.n);
 }
+const runPlanNext = () => RUN.plan ? RUN.plan.find(e=>RUN.balls.some(b=>b.n === e.n)) ?? null : null;   // the next of the plan still up
 // the ball the rules name next (Rotation: the lowest; a planned rack: the next of the plan still up), or null: your call
-const runTarget = () => RUN.set.order === 'rot' ? runLowest(RUN.balls) : RUN.set.pat === 'plan' && RUN.plan ? RUN.plan.find(n=>RUN.balls.some(b=>b.n === n)) ?? null : null;
+const runTarget = () => RUN.set.order === 'rot' ? runLowest(RUN.balls) : RUN.set.pat === 'plan' && RUN.plan ? (runPlanNext() || {}).n ?? null : null;
 // The easiest shot on from here among the balls allowed, or null: every ball to every pocket is sized up by geometry first (cut,
 // pocket angle, clear paths, reach), the plainest tried first in the engine at pocket speed, and the first that drops clean is the shot.
 function runPick(cb, balls, allowed){
@@ -3082,29 +3093,38 @@ function newRack(){
   }
   if(!best) return;   // (never: a free table always has a shot on)
   RUN = {id: Date.now().toString(36), tb: curTable, key: runKey(), set, n0: set.n, potted: 0, shots: 0, balls: best.balls, cb: best.cb,
-    pick: set.pat === 'auto' ? {n: best.pick.n, Pi: best.pick.Pi} : null, plan: null, planning: [], call: null, over: false, why: null};
+    pick: set.pat === 'auto' ? {n: best.pick.n, Pi: best.pick.Pi} : null, plan: null, planning: [], call: set.pat === 'plan' ? {mode: 'plan', n: null, msg: ''} : null, off: null, over: false, why: null};
 }
 function runDeal(){   // the shot on now: a fresh rack when there's no run, the last one ended, or the setup or table changed
   if(!RUN || RUN.over || RUN.tb !== curTable || RUN.key !== runKey()) newRack();
   if(!RUN) return finishDeal(generate());
-  if(!RUN.pick) return runCallShot();   // your call: the table from above, the balls and pockets there to tap
+  if(!RUN.pick && !RUN.call) runNextPlanned();   // a planned rack: the next shot of the plan (or the picker, when it isn't on from here)
+  if(!RUN.pick) return runCallShot();   // the picker: the table from above, the balls and pockets there to tap
   const b = RUN.balls.find(x=>x.n === RUN.pick.n);
   return runShot(RUN.cb, b, POCKETS[RUN.pick.Pi], RUN.balls.filter(x=>x !== b));
 }
-// ---- the call: which ball, which pocket ----
-// Where you are in it: planning the rack (every ball, in order), naming the ball, or naming its pocket (the best one is suggested)
-const runStage = () => RUN.set.pat === 'plan' && !RUN.plan ? 'plan' : runTarget() == null && !(RUN.call && RUN.call.n != null) ? 'ball' : 'pocket';
-const runCallBall = () => runTarget() ?? (RUN.call && RUN.call.n) ?? null;
+function runNextPlanned(){   // the plan's next ball to its planned pocket, if that's on from where the cue ball lies; else the picker, with the reason
+  const e = runPlanNext(); if(!e) return;
+  const msg = runCallCheck(e.n, e.Pi);
+  if(!msg){ RUN.pick = {n: e.n, Pi: e.Pi}; return; }
+  RUN.call = {mode: 'change', n: null, msg: `The ${e.n} to the ${POCKET_NAME[e.Pi]} isn’t on: ${msg.charAt(0).toLowerCase() + msg.slice(1)}`, was: null};
+}
+// ---- the picker: the plan before the first shot (a ball, then its pocket, for every ball), or a change on the way ----
+const runStage = () => RUN.call ? RUN.call.mode : null;
 const runPicking = () => isRun() && !!RUN && !RUN.over && !!shot && !!shot.calling && !answered && !tut.on;
-function runCallReset(){ RUN.call = {n: null, Pi: null, sug: null, msg: ''}; const t = runTarget(); if(t != null) runSuggest(t); }
-function runSuggest(n){ const p = runPick(RUN.cb, RUN.balls, [n]); RUN.call.sug = p ? p.Pi : null; RUN.call.Pi = null; }
 const nearestPocket = p => POCKETS.reduce((b, P, i)=>len(sub(P.c, p)) < len(sub(POCKETS[b].c, p)) ? i : b, 0);
-function runCallShot(){   // the shot on the table while you call: the ball named so far (or the first allowed) and the suggested pocket
-  if(!RUN.call) runCallReset();
-  const n = runCallBall() ?? runAllowed(RUN.balls)[0] ?? RUN.balls[0].n, b = RUN.balls.find(x=>x.n === n);
-  const Pi = RUN.call.Pi ?? RUN.call.sug ?? nearestPocket(b.p);
-  const s = runShot(RUN.cb, b, POCKETS[Pi], RUN.balls.filter(x=>x !== b));
-  s.calling = true; s.stage = runStage(); return s;
+// while planning, the ball a pocket is being picked for: the one tapped; in Rotation the lowest not yet planned; the last ball left either way
+function runPlanBallNow(){
+  const c = RUN.call, pl = RUN.planning, left = RUN.balls.map(b=>b.n).filter(n=>!pl.some(e=>e.n === n));
+  if(RUN.set.order === 'rot') return left.length ? Math.min(...left) : null;
+  if(c.n != null) return c.n;
+  return left.length === 1 ? left[0] : null;
+}
+const runPlanDoneOk = () => !!RUN.call && RUN.call.mode === 'plan' && RUN.planning.length === RUN.balls.length;
+function runCallShot(){   // the shot under the picker: the ball in question, the table seen from above (no pocket marked, nothing suggested)
+  const c = RUN.call, n = c.n ?? runTarget() ?? runAllowed(RUN.balls)[0] ?? RUN.balls[0].n, b = RUN.balls.find(x=>x.n === n);
+  const s = runShot(RUN.cb, b, POCKETS[nearestPocket(b.p)], RUN.balls.filter(x=>x !== b));
+  s.calling = true; s.stage = c.mode; return s;
 }
 // a ball into a pocket from here, checked by geometry: the cut it needs, the ghost ball on the table, the cue ball in reach
 function runCallCheck(n, Pi){
@@ -3115,32 +3135,50 @@ function runCallCheck(n, Pi){
   return null;
 }
 const runBallOn = n => POCKETS.some((P, i)=>!runCallCheck(n, i));   // some pocket is callable for it
-function runNotAllowed(n){ const set = RUN.set; return set.order === 'eight' && n === 8 ? 'The 8 goes last.' : set.order === 'rot' ? `Rotation: the ${runLowest(RUN.balls)} is next.` : set.pat === 'plan' && RUN.plan ? `Your plan has the ${runTarget()} next.` : ''; }
+function runNotAllowed(n){ const set = RUN.set; return set.order === 'eight' && n === 8 ? 'The 8 goes last.' : set.order === 'rot' ? `Rotation: the ${runLowest(RUN.balls)} is next.` : ''; }
 function runTapBall(n){
   if(!runPicking()) return;
-  const st = runStage(), c = RUN.call;
-  if(st === 'plan'){
-    const pl = RUN.planning, i = pl.indexOf(n);
-    if(i >= 0) pl.length = i;   // tapped again: the plan goes back to before it
-    else if(RUN.set.order === 'eight' && n === 8 && pl.length < RUN.balls.length - 1){ c.msg = 'The 8 goes last.'; return runRefresh(); }
-    else pl.push(n);
-    c.msg = '';
-    if(pl.length === RUN.balls.length){ RUN.plan = [...pl]; runCallReset(); return deal(); }   // planned: now the first ball's pocket
-    return runRefresh();
+  const c = RUN.call, pl = RUN.planning;
+  if(c.mode === 'plan'){
+    const i = pl.findIndex(e=>e.n === n);
+    if(RUN.set.order === 'rot'){ c.msg = i >= 0 ? '' : `Rotation: the ${runPlanBallNow()} is next. Pick its pocket.`; return runRefresh(); }
+    if(i >= 0){ c.msg = `The ${n} is ${i + 1} in your plan. Undo to change it.`; return runRefresh(); }
+    if(RUN.set.order === 'eight' && n === 8 && pl.length < RUN.balls.length - 1){ c.msg = 'The 8 goes last.'; return runRefresh(); }
+    c.n = n; c.msg = ''; return runRefresh();
   }
   if(!runAllowed(RUN.balls).includes(n)){ c.msg = runNotAllowed(n); return runRefresh(); }
-  if(runTarget() != null){ if(n !== runTarget()){ c.msg = runNotAllowed(n); runRefresh(); } return; }
   if(!runBallOn(n)){ c.msg = `The ${n} is out of reach from here. Pick another ball.`; return runRefresh(); }
-  c.n = n; c.msg = ''; runSuggest(n); deal();
+  c.n = n; c.msg = ''; runRefresh();
 }
 function runTapPocket(Pi){
-  if(!runPicking() || runStage() !== 'pocket' || Pi == null) return;
-  const n = runCallBall(), msg = runCallCheck(n, Pi);
-  if(msg){ RUN.call.msg = msg; RUN.call.Pi = null; return runRefresh(); }   // the reason; the suggested pocket stays marked
+  if(!runPicking() || Pi == null) return;
+  const c = RUN.call, pl = RUN.planning;
+  if(c.mode === 'plan'){
+    const n = runPlanBallNow();
+    if(n == null){ c.msg = 'Pick a ball first.'; return runRefresh(); }
+    if(!pl.length){ const msg = runCallCheck(n, Pi); if(msg){ c.msg = msg; return runRefresh(); } }   // the first shot has to be on from where the cue ball lies
+    pl.push({n, Pi}); c.n = null; c.msg = '';
+    return runRefresh();
+  }
+  const n = c.n ?? runTarget(); if(n == null){ c.msg = 'Pick a ball first.'; return runRefresh(); }
+  const msg = runCallCheck(n, Pi); if(msg){ c.msg = msg; return runRefresh(); }
+  const next = runPlanNext();
+  if(next && n === next.n) next.Pi = Pi;   // the pocket changed: the plan stands
+  else if(next && RUN.off == null) RUN.off = RUN.potted + 1;   // another ball, out of order: not a planned run any more
   RUN.pick = {n, Pi}; RUN.call = null; deal();   // the call is made: down to the ladder's routine
 }
-function runOtherBall(){ if(!runPicking() || RUN.set.pat !== 'call' || runTarget() != null) return; RUN.call = {n: null, Pi: null, sug: null, msg: ''}; deal(); }
-function runUndoPlan(){ if(!runPicking() || runStage() !== 'plan') return; RUN.planning.pop(); RUN.call.msg = ''; runRefresh(); }
+function runUndoPlan(){   // the last tap back: the ball waiting for its pocket, else the last pair
+  if(!runPicking()) return;
+  const c = RUN.call;
+  if(c.n != null && !(c.mode === 'plan' && RUN.set.order === 'rot')) c.n = null; else if(c.mode === 'plan') RUN.planning.pop();
+  c.msg = ''; runRefresh();
+}
+function runPlanDone(){ if(!runPicking() || !runPlanDoneOk()) return; RUN.plan = RUN.planning.map(e=>({...e})); RUN.call = null; deal(); }
+function runChange(){   // mid-rack: the same picker, for a pocket for the ball up now, or another ball and its pocket
+  if(!isRun() || !RUN || RUN.over || !RUN.plan || !RUN.pick || !shot || shot.calling || !shotIdle() || tut.on) return;
+  RUN.call = {mode: 'change', n: null, msg: '', was: RUN.pick}; RUN.pick = null; deal();
+}
+function runChangeBack(){ if(!runPicking() || RUN.call.mode !== 'change' || !RUN.call.was) return; RUN.pick = RUN.call.was; RUN.call = null; deal(); }
 function runQuit(){   // no shot you'd take: the run ends here (counted once a ball has been shot at)
   if(!runPicking()) return;
   runOver('noshot'); answered = true; shot.stage = null;
@@ -3157,7 +3195,7 @@ function runOver(why){
   save();
 }
 // After a shot: the balls where they stopped (any that dropped are off the table), then the next shot, or the run's end.
-// Returns what the log keeps of it: the rack and its setup, which ball of it, and how the run ended if it did.
+// Returns what the log keeps of it: the rack and its setup, which ball of it, whether the plan was left, and how the run ended if it did.
 function runAfterShot(s, run, foul){
   if(!RUN || RUN.over) return {};
   const B = run.sim.balls, at = id => B.find(b=>b.id === id), gone = b => !b || b.state === 'gone' || b.state === 'falling' || !!b.pocket;
@@ -3173,12 +3211,13 @@ function runAfterShot(s, run, foul){
   else if(RUN.set.order === 'eight' && balls.length && !balls.some(b=>b.n === 8)) why = 'eight';   // the 8 went down with balls still up
   else if(!balls.length) why = 'clear';
   else if(RUN.set.pat === 'auto'){ const p = runPick(RUN.cb, balls, runAllowed(balls)); RUN.pick = p ? {n: p.n, Pi: p.Pi} : null; if(!p) why = 'noshot'; }
-  else { RUN.pick = null; RUN.call = null; }   // your call next, from where the cue ball lies
+  else { RUN.pick = null; RUN.call = null; }   // the plan's next, from where the cue ball lies
   if(why) runOver(why);
   renderRun();
-  return {rk: RUN.id, rb: ball, rn: RUN.n0, rp: RUN.set.pat[0], ro: RUN.set.order[0], rh: RUN.set.area === 'half' ? 1 : undefined, re: why || undefined};
+  return {rk: RUN.id, rb: ball, rn: RUN.n0, rp: RUN.set.pat[0], ro: RUN.set.order[0], rh: RUN.set.area === 'half' ? 1 : undefined, rx: RUN.off ? 1 : undefined, re: why || undefined};
 }
 const RUN_WHY = {miss: 'Missed', scratch: 'Scratch', foul: 'Foul', noshot: 'No shot left', eight: 'The 8 dropped early', clear: 'Rack cleared'};
+const runOffNote = () => RUN.off ? `Out of order at ball ${RUN.off}: not a planned run` : '';
 function renderRun(){   // the row under the result card: the rack so far, or the run's summary once it's over
   const el = $('runrow'); if(!el) return;
   el.hidden = !isRun() || !RUN || tut.on;
@@ -3186,53 +3225,82 @@ function renderRun(){   // the row under the result card: the rack so far, or th
   const r = stats.run || {racks: 0, best: 0}, dots = `<span class="rundots" aria-hidden="true">${Array.from({length: RUN.n0}, (_, i)=>`<i class="${i < RUN.potted ? 'on' : RUN.over && i === RUN.potted && RUN.why !== 'clear' ? 'off' : ''}"></i>`).join('')}</span>`;
   const aside = `<span class="runaside"><span>Best run <b>${Math.max(r.best, RUN.potted)}</b></span><span>Racks <b>${r.racks}</b></span></span>`;
   if(!RUN.over){
-    const next = RUN.pick ? null : runTarget(), plan = RUN.plan ? ` · plan ${RUN.plan.join(' › ')}` : '';
-    el.innerHTML = `<span class="runhead">${dots}<span><b>Ball ${RUN.potted + 1} of ${RUN.n0}</b> · ${RUN.potted} run${next != null ? ` · the ${next} next` : ''}${plan}</span></span>${aside}`;
+    const next = RUN.pick ? null : runTarget(), plan = RUN.plan ? ` · plan ${RUN.plan.map(e=>RUN.balls.some(b=>b.n === e.n) ? e.n : `<s>${e.n}</s>`).join(' › ')}` : '';
+    const change = RUN.plan && RUN.pick && shot && !shot.calling && !answered ? ` · <button class="link" id="runchange" aria-label="Change this shot: its pocket, or another ball">Change</button>` : '';
+    el.innerHTML = `<span class="runhead">${dots}<span><b>Ball ${RUN.potted + 1} of ${RUN.n0}</b> · ${RUN.potted} run${next != null ? ` · the ${next} next` : ''}${plan}${RUN.off ? ' · ' + runOffNote().toLowerCase() : ''}${change}</span></span>${aside}`;
   } else {
     const full = RUN.why === 'clear';
-    el.innerHTML = `<span class="runhead">${dots}<span><span class="runverd ${full ? 'ok' : 'no'}">${full ? 'Full run' : 'Run over'}</span><br><b>${RUN.potted} of ${RUN.n0}</b> balls · ${RUN_WHY[RUN.why]}</span></span>${aside}`;
+    el.innerHTML = `<span class="runhead">${dots}<span><span class="runverd ${full ? 'ok' : 'no'}">${full ? 'Full run' : 'Run over'}</span><br><b>${RUN.potted} of ${RUN.n0}</b> balls · ${RUN_WHY[RUN.why]}${RUN.off ? ' · ' + runOffNote() : ''}</span></span>${aside}`;
   }
   renderRunPick();
 }
-// ---- the picker over the table: a target on every ball and, once the ball is named, on every pocket ----
-// Real buttons, placed over the table drawn from above (the view the call is made in), each a 44 px target round a ball that's
-// far smaller than that on a phone: Tab or the arrows go round them, Enter or Space picks, and each says what it is.
+// ---- the picker over the table: a target on every ball and every pocket, drawn in the table's own coordinates ----
+// An SVG laid over the table with the same viewBox as the table drawn from above, so each target sits exactly on its ball or
+// pocket at any size: a hit circle (44 px or more; sizes come from the box's size at render), a quiet ring on what can be
+// picked now, a gold ring on the ball a pocket is being picked for, and a numbered badge, the ball's place in the plan, with the
+// same number at its pocket. Tab or the arrows go round the targets, Enter or Space picks, and each says what it is.
 const POCKET_NAME = ['top-left corner', 'top-right corner', 'bottom-left corner', 'bottom-right corner', 'left side', 'right side'];
-function runPickPos(p){ const vb = (svgEl.getAttribute('viewBox') || '0 0 1 1').split(/[\s,]+/).map(Number); return `left:${((p[0] - vb[0])/vb[2]*100).toFixed(2)}%;top:${((p[1] - vb[1])/vb[3]*100).toFixed(2)}%`; }
+const POCKET_SHORT = ['top left', 'top right', 'bottom left', 'bottom right', 'left side', 'right side'];
 function renderRunPick(){
   const el = $('runpick'); if(!el) return;
   const on = runPicking();
   if(!on){ if(!el.hidden){ el.hidden = true; el.innerHTML = ''; renderModeChip(); } return; }
-  const st = runStage(), c = RUN.call, tgt = runCallBall(), allowed = runAllowed(RUN.balls), planning = RUN.planning || [];
+  const vbs = viewBoxFor(shot), vb = vbs.split(' ').map(Number); el.setAttribute('viewBox', vbs);
+  const box = tableBox.getBoundingClientRect(), k = box.width > 0 && box.height > 0 ? Math.min(box.width/vb[2], box.height/vb[3]) : 5, u = px => px/k;   // px per table inch
+  const c = RUN.call, mode = c.mode, pl = RUN.planning, plan = mode === 'plan' ? pl : RUN.plan || [], next = mode === 'plan' ? null : runPlanNext();
+  const now = mode === 'plan' ? runPlanBallNow() : (c.n ?? (next ? next.n : null));   // the ball a pocket goes with
+  const hitR = Math.max(R + 1, u(22)), bR = u(9), fs = u(11), ringW = u(2), allowed = runAllowed(RUN.balls);
+  const badge = (x, y, txt) => { const w = Math.max(2*bR, u(5) + txt.length*u(6.6)); return `<g class="pn" aria-hidden="true"><rect x="${f2(x - w/2)}" y="${f2(y - bR)}" width="${f2(w)}" height="${f2(2*bR)}" rx="${f2(bR)}" stroke-width="${f2(u(1))}"/><text x="${f2(x)}" y="${f2(y)}" font-size="${f2(fs)}">${txt}</text></g>`; };
   let o = '';
   for(const b of RUN.balls){
-    const i = st === 'plan' ? planning.indexOf(b.n) : RUN.plan ? RUN.plan.indexOf(b.n) : -1, sel = st === 'plan' ? i >= 0 : b.n === tgt;
-    const why = st === 'plan' ? '' : !allowed.includes(b.n) ? (RUN.set.order === 'eight' ? 'the 8 goes last' : 'not next') : st === 'ball' && !runBallOn(b.n) ? 'out of reach' : '';
-    o += `<button type="button" class="pickball${why ? ' dim' : ''}" data-ball="${b.n}" style="${runPickPos(b.p)}" aria-pressed="${sel}" aria-label="${b.n} ball${i >= 0 ? `, ${i + 1} in your plan` : ''}${why ? ', ' + why : ''}">${i >= 0 ? `<span class="pn" aria-hidden="true">${i + 1}</span>` : ''}</button>`;
+    const i = plan.findIndex(e=>e.n === b.n), planned = i >= 0, sel = b.n === now && (mode === 'plan' ? !planned : true);
+    let why = '';
+    if(mode === 'plan'){ if(planned) why = `${i + 1} in your plan`; else if(RUN.set.order === 'rot') why = sel ? '' : 'Rotation: the lowest ball goes first'; else if(RUN.set.order === 'eight' && b.n === 8 && pl.length < RUN.balls.length - 1) why = 'the 8 goes last'; }
+    else if(!allowed.includes(b.n)) why = RUN.set.order === 'eight' ? 'the 8 goes last' : 'not next';
+    else if(!runBallOn(b.n)) why = 'out of reach';
+    const can = !why && !(mode === 'plan' && RUN.set.order === 'rot'), d = R + bR*.8, bx = b.p[0] + d*.72, by = b.p[1] - d*.72;
+    const num = planned ? String(i + 1) : sel && mode === 'plan' ? String(pl.length + 1) : '';
+    o += `<g class="pt pb" role="button" tabindex="0" data-ball="${b.n}" aria-pressed="${sel}" aria-disabled="${!can && !sel}" aria-label="${b.n} ball${planned ? `, ${i + 1} in your plan, ${POCKET_NAME[plan[i].Pi]}` : why ? ', ' + why : ''}">`
+       + `<circle class="hit" cx="${f2(b.p[0])}" cy="${f2(b.p[1])}" r="${f2(hitR)}" stroke-width="${f2(u(1.5))}"/>`
+       + (can || sel ? `<circle class="ring" cx="${f2(b.p[0])}" cy="${f2(b.p[1])}" r="${f2(R + u(3))}" stroke-width="${f2(ringW)}"/>` : '')
+       + (num ? badge(bx, by, num) : '') + `</g>`;
   }
-  if(st === 'pocket') POCKETS.forEach((P, i)=>{ const sel = (c.Pi ?? c.sug) === i; o += `<button type="button" class="pickpocket" data-pocket="${i}" style="${runPickPos(P.c)}" aria-pressed="${sel}" aria-label="${POCKET_NAME[i]} pocket${i === c.sug ? ', suggested' : ''}"></button>`; });
+  const pocketsOn = mode === 'change' || now != null;   // pockets can be picked once there's a ball to pick one for
+  POCKETS.forEach((P, i)=>{
+    const nums = plan.map((e, j)=>e.Pi === i ? j + 1 : 0).filter(Boolean), pr = pocketR(P);
+    const pressed = mode === 'change' && !!next && (c.n == null || c.n === next.n) && i === next.Pi;
+    const inward = P.side ? [Math.sign(W/2 - P.c[0]), 0] : norm([W/2 - P.c[0], H/2 - P.c[1]]), q = add(P.c, mul(inward, pr + bR + u(3)));
+    o += `<g class="pt pp" role="button" tabindex="0" data-pocket="${i}" aria-pressed="${pressed}" aria-disabled="${!pocketsOn}" aria-label="${POCKET_NAME[i]} pocket${nums.length ? ', ' + nums.join(', ') + ' in your plan' : ''}">`
+       + `<circle class="hit" cx="${f2(P.c[0])}" cy="${f2(P.c[1])}" r="${f2(Math.max(pr + 1, hitR))}" stroke-width="${f2(u(1.5))}"/>`
+       + (pocketsOn ? `<circle class="ring" cx="${f2(P.c[0])}" cy="${f2(P.c[1])}" r="${f2(pr + u(3))}" stroke-width="${f2(ringW)}"/>` : '')
+       + (nums.length ? badge(q[0], q[1], nums.join(', ')) : '') + `</g>`;
+  });
   const was = el.contains(document.activeElement) ? {...document.activeElement.dataset} : null;   // a keyboard user's place in it
   el.innerHTML = o; el.hidden = false;
-  if(was){ const f = was.ball ? el.querySelector(`[data-ball="${was.ball}"]`) : was.pocket ? el.querySelector(`[data-pocket="${was.pocket}"]`) : null; try{ (f || el.querySelector('[aria-pressed="true"]') || el.querySelector('button')).focus({preventScroll: true}); }catch(e){} }
+  if(was){ const f = was.ball ? el.querySelector(`[data-ball="${was.ball}"]`) : was.pocket ? el.querySelector(`[data-pocket="${was.pocket}"]`) : null; try{ (f || el.querySelector('[aria-pressed="true"]') || el.querySelector('[role="button"]')).focus({preventScroll: true}); }catch(e){} }
   document.querySelectorAll('#answers button').forEach(b=>b.disabled = true);   // the fraction comes once the shot is called
   renderModeChip();   // the pill makes way for the bottom-left pocket
 }
-function runPickCard(){   // the card under the table while you call: where you are in the call, and the ways out of it
-  const st = runStage(), c = RUN.call, n = runCallBall(), set = RUN.set, planning = RUN.planning || [];
-  let head, msg, btns = '';
-  if(st === 'plan'){
+function runPickCard(){   // the card under the table while you pick: one line on what to pick now, the plan so far, Undo and Done
+  const c = RUN.call, mode = c.mode, pl = RUN.planning, set = RUN.set, N = RUN.balls.length;
+  let head, msg, btns = '', list = '';
+  if(mode === 'plan'){
     head = 'Plan the rack';
-    msg = planning.length ? `${planning.join(' › ')} · ${RUN.balls.length - planning.length} to go` : `Tap the balls in the order you’ll shoot them${set.order === 'eight' ? ', the 8 last' : ''}.`;
-    if(planning.length) btns += `<button class="sumdone" id="runundo">Undo</button>`;
-  } else if(st === 'ball'){ head = 'Call the ball'; msg = `Tap the ball you’ll shoot${set.order === 'eight' && RUN.balls.length > 1 ? ' (the 8 goes last)' : ''}.`; }
-  else {
-    head = `The ${n} ball`;
-    msg = c.sug != null ? `Best pocket: ${POCKET_NAME[c.sug]}. Tap another to change it, or Shoot.` : `No clean pocket from here. Tap a pocket anyway${set.pat === 'call' && runTarget() == null ? ', pick another ball' : ''}, or end the run.`;
-    if(c.sug != null) btns += `<button class="startbtn" id="runshoot">Shoot</button>`;
-    if(set.pat === 'call' && runTarget() == null) btns += `<button class="sumdone" id="runother">Another ball</button>`;
+    const now = runPlanBallNow(), done = pl.length === N;
+    msg = done ? 'Every ball has its pocket. Done to shoot it.' : now != null ? `Pocket for the ${now}` : `Ball ${pl.length + 1}: pick a ball${set.order === 'eight' && N > 1 && pl.length < N - 1 ? ' (the 8 goes last)' : ''}`;
+    if(pl.length || (c.n != null && set.order !== 'rot')) btns += `<button class="sumdone" id="runundo">Undo</button>`;
+    btns += `<button class="startbtn" id="runplandone"${done ? '' : ' disabled'}>Done</button>`;
+    list = pl.map((e, i)=>`<li><b>${i + 1}</b>${e.n} → ${POCKET_SHORT[e.Pi]}</li>`).join('') + (!done && now != null ? `<li class="cur"><b>${pl.length + 1}</b>${now} → …</li>` : '');
+  } else {
+    head = 'Change the shot';
+    const next = runPlanNext();
+    msg = c.n != null ? `Pocket for the ${c.n}${next && c.n !== next.n ? ' (out of order: not a planned run)' : ''}` : next ? `Pick a pocket for the ${next.n}, or another ball${RUN.off ? '' : ' (that ends the planned run)'}.` : 'Pick a ball, then its pocket.';
+    if(c.n != null) btns += `<button class="sumdone" id="runundo">Undo</button>`;
+    if(c.was) btns += `<button class="sumdone" id="runback">Keep the plan</button>`;
+    btns += `<button class="link runend" id="runend">No shot · end run</button>`;
+    list = (RUN.plan || []).map((e, i)=>`<li${RUN.balls.some(b=>b.n === e.n) ? '' : ' class="done"'}><b>${i + 1}</b>${e.n} → ${POCKET_SHORT[e.Pi]}</li>`).join('');
   }
-  btns += `<button class="link runend" id="runend">No shot · end run</button>`;
-  return `<div class="rcard pend runcall"><div class="rhead"><b class="rverd">${head}</b><span class="raside">Ball ${RUN.potted + 1} of ${RUN.n0}${set.order === 'rot' ? ' · Rotation' : set.order === 'eight' ? ' · 8 last' : ''}</span></div><p class="runmsg">${msg}</p>${c && c.msg ? `<p class="runmsg warn">${c.msg}</p>` : ''}<div class="runbtns">${btns}</div></div>`;
+  return `<div class="rcard pend runcall"><div class="rhead"><b class="rverd">${head}</b><span class="raside">Ball ${RUN.potted + 1} of ${RUN.n0}${set.order === 'rot' ? ' · Rotation' : set.order === 'eight' ? ' · 8 last' : ''}</span></div><p class="runmsg" role="status">${msg}</p>${c.msg ? `<p class="runmsg warn">${c.msg}</p>` : ''}${list ? `<ol class="planlist" aria-label="Your plan">${list}</ol>` : ''}<div class="runbtns">${btns}</div></div>`;
 }
 
 // ---------- the routine: read from the ball line, step behind your aim line, get down on it ----------
@@ -4056,12 +4124,7 @@ function tableSVG(s, reveal){
   o += `<circle cx="${W/2}" cy="${H/4}" r=".4" fill="#111" fill-opacity=".85"/><circle cx="${W/2}" cy="${H/4}" r=".12" fill="#fff"/>`;
   for(const p of POCKETS){ o += `<circle cx="${p.c[0]}" cy="${p.c[1]}" r="${pocketR(p)}" fill="#080808"/>`; }
   const P = s.P;
-  if(!s.calling) o += `<circle cx="${P.c[0]}" cy="${P.c[1]}" r="${pocketR(P)+1}" fill="none" stroke="#ffd34d" stroke-width=".45"/>`;
-  else if(s.stage === 'pocket'){   // a call with the ball named: the pocket suggested (or tapped) and the line to it
-    const pe = pocketEdge(s.ob, P, s.T);
-    o += `<circle cx="${P.c[0]}" cy="${P.c[1]}" r="${pocketR(P)+1}" fill="none" stroke="#ffd34d" stroke-opacity=".8" stroke-width=".45"/>`;
-    o += `<line x1="${f2(s.ob[0])}" y1="${f2(s.ob[1])}" x2="${f2(pe[0])}" y2="${f2(pe[1])}" stroke="#ffd34d" stroke-opacity=".7" stroke-width=".3" stroke-dasharray="1 .7"/>`;
-  }
+  if(!s.calling) o += `<circle cx="${P.c[0]}" cy="${P.c[1]}" r="${pocketR(P)+1}" fill="none" stroke="#ffd34d" stroke-width=".45"/>`;   // (under the Run-outs picker nothing is marked: the pockets are yours to pick)
 
   if(reveal){
     const {cb,ob,gb,u,v,n,theta} = s;
@@ -6319,7 +6382,7 @@ function replay(){
 $('replay').addEventListener('click', e=>{ e.stopPropagation(); replay(); });
 // Desktop: the table fills the column down to the bottom of the window; the drawing matches the box shape.
 const mqDesk = matchMedia('(min-width: 900px)');
-function sizeTable(){ if(shot && !anim) draw(answered); }
+function sizeTable(){ if(shot && !anim){ draw(answered); if(runPicking()) renderRunPick(); } }   // (the Run-outs picker sizes its targets to the box)
 function fitViewBox(){   // reading the box's size forces a layout, so it's only done when the box may have changed size
   vbDirty = false;
   const box = document.querySelector('.table-box');
@@ -7663,11 +7726,10 @@ function renderRunSheet(){
     g.querySelectorAll('button').forEach(b=>{
       const v = b.dataset.v, lk = k === 'tb' && !tableUnlocked(v);
       if(k === 'tb'){ lockBtn(b, lk, `Opens at ${stepGrade(TABLE_AT[v])}`); const L = b.querySelector('.lock'); if(L) L.hidden = !lk; }
-      b.disabled = k === 'pat' && v === 'plan' && rot;   // Rotation plans the rack itself
       b.setAttribute('aria-pressed', String(d[k]) === v);
     });
   });
-  $('run-pat-hint').textContent = rot ? 'Rotation: the lowest ball is always next' : d.pat === 'plan' ? 'tap every ball in order before the first shot' : d.pat === 'call' ? 'tap the ball, then its pocket' : 'the easiest ball is picked for you';
+  $('run-pat-hint').textContent = d.pat === 'plan' ? (rot ? 'pick a pocket for each ball, lowest first, before the first shot' : 'pick each ball and its pocket, in order, before the first shot') : 'the easiest ball and pocket are picked for you each shot';
 }
 wireSheet('runsheet', {render: renderRunSheet, snap: ()=>JSON.stringify(runPicks()), back: ()=>$('task-run'),
   changed: ch=>{ if(ch && isRun()){ RUN = null; if(shotIdle()) deal(); } }});   // a new rack to the new picks
@@ -7675,20 +7737,23 @@ document.querySelectorAll('#runsheet [data-run]').forEach(g=>g.addEventListener(
 $('modechip').addEventListener('click', e=>{ e.stopPropagation(); modeChipTap(); });
 renderModeChip();
 // Run-outs, the call: taps on the targets over the table (where two overlap, the one whose centre is nearest), the arrows round them
+function runPickTap(b){ if(!b) return; if(b.dataset.ball) runTapBall(+b.dataset.ball); else if(b.dataset.pocket) runTapPocket(+b.dataset.pocket); }
 $('runpick').addEventListener('click', e=>{
   e.stopPropagation();
-  let b = e.target.closest('button'); if(!b) return;
-  if(e.detail && (e.clientX || e.clientY)){ let best = null, bd = 26; for(const x of $('runpick').querySelectorAll('button')){ const r = x.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2)); if(d < bd){ bd = d; best = x; } } if(best) b = best; }
-  if(b.dataset.ball) runTapBall(+b.dataset.ball); else if(b.dataset.pocket) runTapPocket(+b.dataset.pocket);
+  let b = e.target.closest('[role="button"]'); if(!b) return;
+  if(e.detail && (e.clientX || e.clientY)){ let best = null, bd = 26; for(const x of $('runpick').querySelectorAll('[role="button"]')){ const h = x.querySelector('.hit') || x, r = h.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2)); if(d < bd){ bd = d; best = x; } } if(best) b = best; }
+  runPickTap(b);
 });
 ['pointerdown', 'pointerup'].forEach(t=>$('runpick').addEventListener(t, e=>e.stopPropagation()));   // not a look around the table
 $('runpick').addEventListener('keydown', e=>{
+  const f = [...$('runpick').querySelectorAll('[role="button"]')], i = f.indexOf(document.activeElement); if(!f.length) return;
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); e.stopPropagation(); if(i >= 0) runPickTap(f[i]); return; }
   const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0; if(!d) return;
-  const f = [...$('runpick').querySelectorAll('button')], i = f.indexOf(document.activeElement); if(!f.length) return;
   e.preventDefault(); e.stopPropagation(); f[(i + d + f.length) % f.length].focus();
 });
 $('quick').addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b || !runPicking()) return; e.stopPropagation();
-  if(b.id === 'runshoot') runTapPocket(RUN.call.sug); else if(b.id === 'runother') runOtherBall(); else if(b.id === 'runend') runQuit(); else if(b.id === 'runundo') runUndoPlan(); });
+  if(b.id === 'runplandone') runPlanDone(); else if(b.id === 'runback') runChangeBack(); else if(b.id === 'runend') runQuit(); else if(b.id === 'runundo') runUndoPlan(); });
+$('runrow').addEventListener('click', e=>{ if(e.target.closest('#runchange')){ e.stopPropagation(); runChange(); } });   // mid-rack: the picker again, for this shot
 // background music: off to start; it can only begin after a tap or key (browsers block sound before that)
 if(!['off','parlor','smoke','felt'].includes(settings.music) || (settings.musicV | 0) < 2){ settings.music = 'off'; settings.musicV = 2; }   // music off by default (once, for everyone); the radio turns it on
 renderRadio();
@@ -7738,7 +7803,7 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   drillDeal: ()=>drillDeal(),   // Practice: a deal to the saved picks
   testDeal: (task, g, t)=>{ const sh = ensureShootLevel(), g0 = sh.g, t0 = settings.task; sh.g = g; settings.task = task; try{ setTable(t, settings.pockets); const s = task === 'flash' ? dealShot() : addExtras(shootDeal()); return {s, reach: reachOf(s), max: reachMax(), tb: curTable}; } finally { sh.g = g0; settings.task = t0; } },
   // Run-outs: the rack as it stands, a fresh one, and the game's own deal, call and shoot (the shot plays out at once, no animation)
-  run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, look: ()=>({k: look.k, target: look.target}), walk: ()=>walk, shotAt: (cb, b, Pi, others)=>runShot(cb, b, POCKETS[Pi], others), rig: (s, view)=>{ s.cam = {phase: 'down', k: 1, T: 1, downAt: performance.now()}; const cam = shootCam(s, view || 'down'), u = bridgeAim(s), st = shotStroke(s); return {E: cam.E, f: cam.f, u, tip: st.tip, bg: bridgeGeom(s, u, st.tip[1]), svg: cueRig(cam, s)}; }, other: runOtherBall, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
+  run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, look: ()=>({k: look.k, target: look.target}), walk: ()=>walk, shotAt: (cb, b, Pi, others)=>runShot(cb, b, POCKETS[Pi], others), rig: (s, view)=>{ s.cam = {phase: 'down', k: 1, T: 1, downAt: performance.now()}; const cam = shootCam(s, view || 'down'), u = bridgeAim(s), st = shotStroke(s); return {E: cam.E, f: cam.f, u, tip: st.tip, bg: bridgeGeom(s, u, st.tip[1]), svg: cueRig(cam, s)}; }, done: runPlanDone, undo: runUndoPlan, change: runChange, back: runChangeBack, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
   camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), confetti: (n, f)=>confetti($('hlogo'), n, f), cheerLive: ()=>!!cheerFx || !!cheerQ};
 if(!TEST) testPlayerSkips();   // the test copy's test player: no stance card, tour, lessons or What's new card (defaults stand)
