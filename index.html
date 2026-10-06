@@ -456,6 +456,7 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .buildtag a,.plbuild a{color:inherit;text-decoration:underline;text-decoration-color:rgba(142,156,170,.6);text-underline-offset:3px}
 .buildtag a:hover,.plbuild a:hover{color:var(--ink)}#playercover .plbuild a:hover{color:var(--cream)}
 .devtag{display:inline-block;padding:1px 5px;margin-right:4px;border-radius:4px;background:var(--gold);color:var(--gold-ink);font:600 10px/1.3 var(--body);letter-spacing:.08em}
+.devtag.unltag{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}.devtag[hidden]{display:none}
 .tabpanel .options{gap:12px 18px}
 .quick .ql{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
 .quick .ql.tap{font-size:13px}
@@ -1660,9 +1661,10 @@ function playAs(id){
 // ask(): a question in the app's own card, in place of the browser's. Resolves true (or the typed text, with `value`), or
 // null on Cancel, Esc or a tap outside. Keys stay in the card while it's up; Tab goes round it; focus goes back after.
 let askDone = null, askFrom = null;
-function ask({title, text = '', ok = 'OK', danger = false, value = null, label = '', from = null}){
+function ask({title, text = '', ok = 'OK', danger = false, value = null, label = '', from = null, cancel = 'Cancel'}){   // cancel: null for a card with OK alone
   if(askDone) askDone(null);
   const inp = $('askinput');
+  $('askno').hidden = !cancel; if(cancel) $('askno').textContent = cancel;
   $('asktitle').textContent = title; $('asktext').textContent = text; $('asktext').hidden = !text;
   $('askok').textContent = ok; $('askok').classList.toggle('danger', danger);
   inp.hidden = value == null; inp.value = value == null ? '' : value; inp.setAttribute('aria-label', label || title);
@@ -2090,7 +2092,7 @@ const LADDER_TEXT = ['Guide line, ghost ball and aim-line stance all on', 'Guide
   'Any angle', 'Between fractions: call the nearest', '0.75 s Flash', 'Top of Read: Shoot and Free play open'];
 // Testing: open the site with #dev and tap any grade in the progress ladder to jump there.
 const DEV = /#dev\b/.test(location.href);
-document.querySelector('.table-box').insertAdjacentHTML('afterend', `<div class="buildtag">${DEV_SITE ? '<b class="devtag">DEV</b> ' : ''}<a href="mailto:${CONTACT}">Contact us</a> · <a href="${SOURCE}" target="_blank" rel="noopener">build ${VERSION}</a><span id="fpsmeter"></span></div>` );   // under the table, lined up with its left edge; always shown, so you can tell which build is live
+document.querySelector('.table-box').insertAdjacentHTML('afterend', `<div class="buildtag">${DEV_SITE ? '<b class="devtag">DEV</b> <b class="devtag unltag" id="unltag" title="Every grade, mode and look open; the lessons are skipped" hidden>Unlocked</b> ' : ''}<a href="mailto:${CONTACT}">Contact us</a> · <a href="${SOURCE}" target="_blank" rel="noopener">build ${VERSION}</a><span id="fpsmeter"></span></div>` );   // under the table, lined up with its left edge; always shown, so you can tell which build is live
 // #dev: frames per second, the slowest frame, and what the drawing costs, every half second
 // FPS and timings under the table: on in #dev, or with Settings > Graphics > Show FPS
 const fpsOn = () => DEV || (typeof settings !== 'undefined' && settings.fps === '1');
@@ -6959,14 +6961,37 @@ function openEveryGrade(){
   enforceLocks(); syncPressed(); renderShootControls(); renderStats();   // every lock opens at once: Flash, tables, looks, shaft (menus included, even if open)
   if(!anim) dealFresh();
 }
-// The test copy only (DEV_SITE, under /dev/): a player named "Efren Reyes" (any case or spacing) has every grade open, so
-// everything can be tried on a phone. On the live site the name is just a name: this never runs there.
+// The test copy only (DEV_SITE, under /dev/): a player named "Efren Reyes" (any case or spacing) has every grade, mode and
+// look open and skips every first-run step (stance card on defaults, the tour, the lessons, the What's new card), so
+// everything can be tried on a phone. The lessons, the tour and What's new stay under ?. A card says so once, and an
+// "Unlocked" tag by DEV stays while you play as them. On the live site the name is just a name: none of this runs there.
 const isTestPlayer = name => DEV_SITE === true && String(name || '').trim().replace(/\s+/g, ' ').toLowerCase() === 'efren reyes';
+function testPlayerSkips(){   // the first-run steps marked done (before the first deal, so no lesson starts)
+  if(!isTestPlayer(ME.name)) return false;
+  settings.stanceSet = 1; settings.tourSeen = 1; settings.tut = 1;
+  settings.tutSeen = Object.fromEntries(Object.keys(LESSONS).map(k=>[k, 1]));
+  settings.notesSeen = Math.max(+settings.notesSeen || 0, notesTop);
+  saveSettings(); return true;
+}
+function renderTestMark(){
+  const on = isTestPlayer(ME.name), t = $('unltag'); if(t) t.hidden = !on;
+  if(on) $('plchip').setAttribute('aria-label', `${ME.name}, everything unlocked: switch player`); else $('plchip').removeAttribute('aria-label');
+}
 function testPlayerCheck(){
+  renderTestMark();
   if(!isTestPlayer(ME.name)) return;
+  testPlayerSkips();
+  if(tour.on){ tour.first = false; endTour(); }   // renamed mid-way through the first run: off the tour, the stance card or a lesson
+  if(!$('stancecover').hidden){ $('stancecover').hidden = true; if(shot) shot.bare = false; }
+  if(callLock) lockCalls(false);
+  if(tut.on) endTut();
   const L = ensureShootLevel(), top = SHOOT_GRADES.length - 1;
-  if(L.g === top && L.best === top && settings.shaftGot === '1' && Object.keys(LESSONS).every(k=>settings.tutSeen && settings.tutSeen[k])) return;   // already open: nothing to say
-  openEveryGrade(); notice('Every grade open');
+  if(!(L.g === top && L.best === top && settings.shaftGot === '1')) openEveryGrade();
+  else if(!anim && shot && shot.bare) dealFresh();
+  if(!settings.unlockedSeen){   // once: what this player is
+    settings.unlockedSeen = 1; saveSettings();
+    ask({title: 'Everything unlocked', text: 'This player has every grade, mode and look open, and skips the lessons. It’s a special test mode. The lessons and the tour are still under ?.', ok: 'OK', cancel: null});
+  }
 }
 $('radio').addEventListener('click', e=>{ e.stopPropagation(); applySetting('music', STATIONS[(STATIONS.indexOf(settings.music) + 1) % STATIONS.length]); });
 ['pointerdown'].forEach(t=>$('radio').addEventListener(t, e=>e.stopPropagation()));
@@ -7468,6 +7493,7 @@ $('tourskip').addEventListener('click', ()=>endTour());
 $('tourreplay').addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); startTour(false); });
 ['click', 'pointerdown'].forEach(t=>$('stancecover').addEventListener(t, e=>e.stopPropagation()));
 ['click', 'pointerdown'].forEach(t=>$('startcover').addEventListener(t, e=>e.stopPropagation()));   // a tap on the Flash card isn't a tap on the table
+$('startcover').addEventListener('click', ()=>{ if(!$('startcover').hidden) startFlashMode(); });   // ...it starts the clock, as Start does
 if(!['0','1'].includes(settings.sound)) settings.sound='1';
 if(!['0','1'].includes(settings.uiSound)) settings.uiSound='1';
 if(!['0','1'].includes(settings.haptic)) settings.haptic='1';
@@ -7493,7 +7519,6 @@ if(!['stand','down'].includes(settings.flashView)) settings.flashView = 'stand';
 applyStyle();
 applyGfx();
 if(stats.shoot){ const top = SHOOT_GRADES.length - 1; stats.shoot.best = Math.min(stats.shoot.best ?? 0, top); stats.shoot.g = Math.min(Math.max(stats.shoot.g, stats.shoot.best), top); }   // S+ is gone: anyone there is at S
-$('startcover').addEventListener('click', ()=>{ if(!$('startcover').hidden) startFlashMode(); });   // ...it starts the clock, as Start does
 setTimeout(()=>{ renderLibStatus(); libIdle(); }, 3000);   // start filling the shot library once the page has settled   // grades only go up now: back to your best
 // ---------- mode setup: one sheet for Flash, Practice and Run-outs ----------
 // Opened from the mode's button and from the pill at the foot of the table. Every pick is saved as it's made; what changed
@@ -7655,6 +7680,7 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, look: ()=>({k: look.k, target: look.target}), walk: ()=>walk, shotAt: (cb, b, Pi, others)=>runShot(cb, b, POCKETS[Pi], others), rig: (s, view)=>{ s.cam = {phase: 'down', k: 1, T: 1, downAt: performance.now()}; const cam = shootCam(s, view || 'down'), u = bridgeAim(s), st = shotStroke(s); return {E: cam.E, f: cam.f, u, tip: st.tip, bg: bridgeGeom(s, u, st.tip[1]), svg: cueRig(cam, s)}; }, other: runOtherBall, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
   camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), confetti: (n, f)=>confetti($('hlogo'), n, f), cheerLive: ()=>!!cheerFx || !!cheerQ};
+if(!TEST) testPlayerSkips();   // the test copy's test player: no stance card, tour, lessons or What's new card (defaults stand)
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
 deal();
 if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
