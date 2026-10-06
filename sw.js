@@ -11,6 +11,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && url.pathname.startsWith('/dev/')) return;   // the test copy: never cached, never served from here
   // the web fonts: from the cache at once when we have them (they never change), refreshed in the background
   if (/^fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
     e.respondWith(caches.open(FONTS).then(c => c.match(req).then(hit => {
