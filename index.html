@@ -3407,7 +3407,7 @@ function shootCam(s, view){
   const stand = camAlong(s, d, VIEWS.stand), standAim = camAlong(s, aim, VIEWS.stand), down = camAlong(s, aim, VIEWS.down);
   const c = s.cam || {phase:'stand', k:0};
   const mix = (A, B, k) => camFrom(A.E.map((x, i)=>x + (B.E[i]-x)*k), norm3(A.f.map((x, i)=>x + (B.f[i]-x)*k)), A.hfov + (B.hfov - A.hfov)*k);
-  const base = c.phase === 'step' ? mix(stand, standAim, c.k) : c.phase === 'shift' ? mix(c.fromCam || camAlong(s, c.fromAim || d, VIEWS.stand), standAim, c.k) : c.phase === 'down' ? bendCam(standAim, down, c.k, aim) : view === 'down' && !c.T ? camAlong(s, d, VIEWS.down) : stand;
+  const base = c.phase === 'step' ? standOut(mix(stand, standAim, c.k)) : c.phase === 'shift' ? (c.fromCam ? mix(c.fromCam, standAim, c.k) : standOut(mix(camAlong(s, c.fromAim || d, VIEWS.stand), standAim, c.k))) : c.phase === 'down' ? bendCam(standAim, down, c.k, aim) : view === 'down' && !c.T ? camAlong(s, d, VIEWS.down) : stand;
   return look.k > 0 ? mix(base, overviewCam(s), ease(look.k)) : base;
 }
 // Step back (hold Space, or the eye button): up high behind the shot, the whole table in view. Down on the shot you stay
@@ -3454,22 +3454,34 @@ function riseCam(s, k1, done){   // move between standing behind the aim line (0
   requestAnimationFrame(tick);
 }
 // a camera behind the cue ball looking along dir, tilted to keep the cue ball (and, standing, the pocket) in frame
-// You stand outside the table: standing to read a shot, your feet are on the floor behind the rail and your eyes are about over them,
-// leaning in a few inches at most. Down on the shot you bend over from the hips, so the eye swings forward and down in an arc
+// You stand outside the table: standing to read a shot, your feet are on the floor behind the rail and your eyes are over them,
+// never in over the rail. Down on the shot you bend over from the hips, so the eye swings forward and down in an arc
 // instead of sliding through the table.
-const STAND_LEAN = 4;   // standing upright, how far in past the rail's outer edge your eyes can be (a slight lean over the rail top), inches
-function edgeDist(p, d){   // from p along d to the playing area's edge (the cushion nose)
+function edgeDist(p, d, w = W, h = H){   // from p along d to the playing area's edge (the cushion nose), or to the edge of a w×h box
   let t = Infinity;
-  for(const i of [0, 1]){ const lim = i ? H : W; if(d[i] > 1e-9) t = Math.min(t, (lim - p[i])/d[i]); else if(d[i] < -1e-9) t = Math.min(t, -p[i]/d[i]); }
+  for(const i of [0, 1]){ const lim = i ? h : w; if(d[i] > 1e-9) t = Math.min(t, (lim - p[i])/d[i]); else if(d[i] < -1e-9) t = Math.min(t, -p[i]/d[i]); }
   return Math.max(0, t);
 }
-const standMin = (s, dir, p = s.cb) => edgeDist(p, [-dir[0], -dir[1]]) + PE.C.cushionWidth + PE.C.railWidth - STAND_LEAN;   // the closest your eyes can be, from outside the table
+// the closest your eyes can be: where the line back from p (against dir) crosses the rail's outer edge. Measured along the line
+// to the outline itself, not the cushion nose plus a rail's width: at a shallow angle to a rail those few inches along the line
+// barely move you off the cushion, and the eye ended up over the table.
+const railOut = () => PE.C.cushionWidth + PE.C.railWidth;
+const outerDist = (p, d) => { const o = railOut(); return edgeDist([p[0] + o, p[1] + o], d, W + 2*o, H + 2*o); };
+const standMin = (s, dir, p = s.cb) => outerDist(p, [-dir[0], -dir[1]]);
 // Reading a shot you look along it, not straight down: with the cue ball near the rail you stand back far enough to have it
 // no more than about 60° below your eyes (a foot and a half or so, more for a tall player), instead of having it under your chin.
 const standRead = () => (VIEWS.stand.h - R)*0.58;
-// The slider (`back`) is how far behind that closest spot you stand: 0 leans in at the rail, every inch steps you back, wherever
-// the cue ball is. Your eyes are never more than STAND_LEAN over the rail's outer edge.
+// The slider (`back`) is how far behind that closest spot you stand: 0 is right at the rail's outer edge, every inch steps you
+// back, wherever the cue ball is. Your eyes are never inside the rail's outline.
 const standBackFor = (s, dir, back) => Math.max(standRead(), standMin(s, dir)) + back;
+// A standing eye blended between two lines (stepping over to your aim line) can cut across a corner of the rail: push it
+// back out along the way you're looking, to the rail's outer edge.
+function standOut(cam){
+  const E = cam.E, o = railOut(), f = [cam.f[0], cam.f[1]], fl = len(f);
+  if(!(E[0] > -o && E[0] < W + o && E[1] > -o && E[1] < H + o) || fl < 1e-6) return cam;
+  const t = outerDist(E, [-f[0]/fl, -f[1]/fl]);
+  return camFrom([E[0] - f[0]/fl*t, E[1] - f[1]/fl*t, E[2]], cam.f, cam.hfov);
+}
 function bendCam(A, B, k, dir){   // from standing (A) to down (B) on the same line: the eye pivots about your hips
   const hc = +settings.heightCm >= 150 && +settings.heightCm <= 200 ? +settings.heightCm : 175;
   const hip = [A.E[0] - dir[0]*3, A.E[1] - dir[1]*3, hc/2.54*0.53 - 29.5];   // hips a little behind your eyes, at about half your height
