@@ -6689,15 +6689,28 @@ function revealAnswer(){
     if(typed.endsWith('bsw')){ typed = ''; const t0 = tipBeforeCheat; setTimeout(()=>{ if(t0){ settings.shotTip = t0; saveSettings(); renderShootControls(); } revealAnswer(); }, 0); return; }   // S and W moved the tip: put it back
     if(!typed.endsWith('tincl')) return;
     typed = '';
-    const top = SHOOT_GRADES.length - 1, L = ensureShootLevel();
-    L.g = L.best = top; L.pts = 0; settings.practice = null;
-    settings.tutSeen = Object.fromEntries(Object.keys(LESSONS).map(k=>[k, 1]));   // lessons stay in the ? menu
-    if(settings.shaftGot !== '1'){ settings.shaft = 'carbon'; settings.shaftGot = '1'; }   // as reaching S does
-    saveSettings(); save(); renderBadge(true); renderProgress(); renderPracticeChip();
-    enforceLocks(); syncPressed(); renderShootControls(); renderStats();   // every lock opens at once: Flash, tables, looks, shaft (menus included, even if open)
+    openEveryGrade();
     notice('All grades unlocked');
-    if(!anim) dealFresh();
   }, true);
+}
+// every grade open at once, quietly (no level-up cards): the tincl cheat, and the test player on the test copy (below)
+function openEveryGrade(){
+  const top = SHOOT_GRADES.length - 1, L = ensureShootLevel();
+  L.g = L.best = top; L.pts = 0; settings.practice = null;
+  settings.tutSeen = Object.fromEntries(Object.keys(LESSONS).map(k=>[k, 1]));   // lessons stay in the ? menu
+  if(settings.shaftGot !== '1'){ settings.shaft = 'carbon'; settings.shaftGot = '1'; }   // as reaching S does
+  saveSettings(); save(); renderBadge(true); renderProgress(); renderPracticeChip();
+  enforceLocks(); syncPressed(); renderShootControls(); renderStats();   // every lock opens at once: Flash, tables, looks, shaft (menus included, even if open)
+  if(!anim) dealFresh();
+}
+// The test copy only (DEV_SITE, under /dev/): a player named "Efren Reyes" (any case or spacing) has every grade open, so
+// everything can be tried on a phone. On the live site the name is just a name: this never runs there.
+const isTestPlayer = name => DEV_SITE === true && String(name || '').trim().replace(/\s+/g, ' ').toLowerCase() === 'efren reyes';
+function testPlayerCheck(){
+  if(!isTestPlayer(ME.name)) return;
+  const L = ensureShootLevel(), top = SHOOT_GRADES.length - 1;
+  if(L.g === top && L.best === top && settings.shaftGot === '1' && Object.keys(LESSONS).every(k=>settings.tutSeen && settings.tutSeen[k])) return;   // already open: nothing to say
+  openEveryGrade(); notice('Every grade open');
 }
 $('radio').addEventListener('click', e=>{ e.stopPropagation(); applySetting('music', STATIONS[(STATIONS.indexOf(settings.music) + 1) % STATIONS.length]); });
 ['pointerdown'].forEach(t=>$('radio').addEventListener(t, e=>e.stopPropagation()));
@@ -6892,7 +6905,7 @@ $('plmenu').addEventListener('click', e=>{
   e.stopPropagation(); const b = e.target.closest('button'); if(!b) return; plOpen(false);
   if(b.dataset.pl){ if(b.dataset.pl !== ME.id) playAs(b.dataset.pl); return; }
   if(b.dataset.plact === 'backup'){ openBackup($('plchip')); return; }
-  if(b.dataset.plact === 'rename') ask({title: 'Rename player', value: ME.name, label: 'Player name', ok: 'Rename', from: $('plchip')}).then(r=>{ const v = (r || '').slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); } });
+  if(b.dataset.plact === 'rename') ask({title: 'Rename player', value: ME.name, label: 'Player name', ok: 'Rename', from: $('plchip')}).then(r=>{ const v = (r || '').slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); testPlayerCheck(); } });
   else { showPlayers(); if(b.dataset.plact === 'new') $('plname').focus({preventScroll: true}); }
 });
 document.addEventListener('click', ()=>{ if(!$('plmenu').hidden) plOpen(false); });
@@ -7395,6 +7408,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
   && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
+if(!TEST) testPlayerCheck();   // the test copy's test player (a new one, or one renamed on an earlier visit)
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
