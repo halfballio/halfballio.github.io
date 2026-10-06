@@ -87,6 +87,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .coach p b{color:var(--gold)}
 .coach .coachstep{font:600 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--cream-2)}
 .coach .coachnote{color:#ff9d8f}
+.coach .coachnote.ok{color:var(--cream-2)}
 .coachbtns{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .coachbtns .link{color:var(--cream-2);min-height:40px;text-underline-offset:3px}
 .coachbtns .startbtn{font-size:17px;padding:0 22px;min-height:40px}
@@ -469,6 +470,9 @@ header{position:relative}
 .answers button:hover:not(:disabled){border-color:var(--accent);background:var(--surface-2)}
 .answers button:disabled{cursor:default}
 .answers.locked button,.mods.locked button{opacity:.45;pointer-events:none;box-shadow:none}   /* a new player's first visit: nothing to call until the first lesson */
+.answers.tutoff button{opacity:.35;box-shadow:none;cursor:default}   /* a lesson step with nothing to call: a tap or a key nudges Next / Done instead */
+.coachbtns .startbtn.nudge{animation:coachnudge .45s ease-in-out 2}
+@keyframes coachnudge{0%,100%{transform:scale(1)}50%{transform:scale(1.09);box-shadow:0 0 0 3px rgba(240,191,52,.5)}}
 .answers button.aimed{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .answers button.right{border-color:var(--good);box-shadow:inset 0 0 0 1px var(--good);background:color-mix(in srgb,var(--good) 15%,var(--surface))}
 .answers button.wrong{border-color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
@@ -1347,7 +1351,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 504;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 505;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1433,6 +1437,10 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 505, date: '2026-10-06', title: 'Lessons show you the right shot', items: [
+    'Call a lesson shot wrong and you see it played right, then it’s yours to call again.',
+    'A lesson step with nothing to call leaves the table as it is, and its fractions stand back: Enter, or Done, moves you on.',
+  ]},
   {build: 504, date: '2026-10-05', title: 'A shorter ladder', items: [
     'The ladder ends at S. One grade that repeated another is gone, and every grade after it moved down one.',
     'You keep your progress: your grade shows the same skill under its new letter.',
@@ -4733,6 +4741,7 @@ function markPend(){
   document.querySelectorAll('#mods button').forEach(b=>b.classList.toggle('sel', b.dataset.mod===pend.m));
 }
 function pickFrac(id){
+  if(tut.on && !tstep().ask) return tutNudge();   // a lesson step with nothing to call: point at Next / Done
   if(!canCall()) return;
   if(tut.on) return tutAnswer(id);   // in a lesson a call is the lesson's, not a scored shot
   const c = shot.cam;
@@ -5723,7 +5732,73 @@ function tutShows(st, run){
     default: return true;
   }
 }
+// The coach's stroke has to show what the step teaches, and on a try your right call with the lesson's stroke has to work:
+// pocketed, no scratch, in the zone. Until this layout does, deal another at the same cut (then a degree or two either side).
+// Returns how many layouts it took (0: none worked).
+function tutDealFor(st){
+  const deg = st.deg ?? Math.round(shot.theta);
+  for(let k = 0; k < 400; k++){
+    tutPlan(st); if(tutShows(st, tut.plan.run)) return k + 1;
+    const off = k < 60 ? 0 : (1 + (k >> 1) % 5)*(k % 2 ? 1 : -1);
+    tutShotDeg(Math.max(0, deg + off));
+  }
+  return 0;
+}
 // down on the shot in a lesson: practice strokes until the shot
+// the coach plays the step's stroke (tut.plan): steps behind the line, gets down, a practice stroke or so, then the stroke.
+// live: still wanted, checked before the stroke; done: once it's played out
+function tutCoachPlay(live, done){
+  const s = shot, pl = tut.plan; if(!s || !pl) return;
+  tutBend('step', 450, ()=>tutBend('down', downMs(s) + 150, ()=>{ tutSettle(); setTimeout(()=>{
+    if(!live() || shot !== s) return;
+    const x0 = rigAlpha(s).push || 0;
+    s.tip = pl.tip; cancelAnimationFrame(featherRaf);
+    answered = true; s.pick = {made: pl.run.made, far: !pl.run.made, g2: s.gb};
+    strokeThen(s, x0, ()=>{ if(shot !== s || !tut.on) return;
+      animateShot({made: pl.run.made}, ()=>{ draw(true); tutBend('up', 600); if(done) done(); }, pl.run.made ? '#ffd34d' : MISS, pl.run);
+      const up = rigHitMs(s, pl.run, pl.dir); if(isFinite(up)) setTimeout(()=>{ if(shot === s && s.cam && s.cam.k > 0) tutBend('up', 450); }, up);
+    });
+  }, 1900); }));
+}
+// A lesson shot called wrong: the step stays. Your shot plays out, the note says what it was, then the right one is played
+// (with the step's own stroke and spin, by the coach once you're getting down on shots), and the same shot comes back to
+// call again. Next opens once you've seen it played right.
+const tutLab = r => r.id === 'full' ? 'full' : r.label;
+function tutFresh(s, then){   // the table fades out and back in on the same shot, as it was dealt
+  clearTimeout(tut.fadeT); $('tutfade').classList.add('on');
+  tut.fadeT = setTimeout(()=>{
+    if(tut.on && shot === s){
+      if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
+      cancelAnimationFrame(tut.bRaf); cancelAnimationFrame(featherRaf);
+      s.final = null; s.anim = null; s.pick = null; s.cam = null; s.follow = 0; s.aimDir = null; s.aimId = null; markAim(s);
+      then(); draw(answered);
+    }
+    $('tutfade').classList.remove('on');
+  }, 260);
+}
+function tutShowRight(st, right){   // after your wrong shot has played out
+  const s = shot, tok = tut.fix = {}, live = () => tut.on && tut.fix === tok && tstep() === st && shot === s;
+  const again = () => setTimeout(()=>{ if(!live()) return;   // a moment to see where it went, then the shot is yours again
+    tutFresh(s, ()=>{
+      tut.fix = null; tut.seen = true; freshCall();
+      document.querySelectorAll('#answers button').forEach(b=>{ b.disabled = false; b.setAttribute('aria-disabled', 'false'); });
+      $('coachtext').innerHTML = st.text + '<br><span class="coachnote ok">Now you: call it again.</span>';
+      $('coachnext').hidden = false; $('coachnext').textContent = 'Next';
+    }); }, 1500);
+  setTimeout(()=>{ if(!live()) return;
+    tutFresh(s, ()=>{
+      answered = false;   // standing again, as before a shot (calls wait: tut.fix)
+      document.querySelectorAll('#answers button').forEach(x=>{ x.className = x.dataset.id === right.id ? 'right' : ''; });   // the right call lit while it's played
+      if(tut.plan && st.try){ s.aimId = right.id; s.aimDir = tut.plan.dir; markAim(s); tutCoachPlay(live, again); return; }
+      const oc = outcome(s, s.theta);
+      answered = true; s.pick = {...oc, id: right.id, far: false};
+      if(settings.animate !== '0') animateShot(oc, ()=>{ draw(true); again(); }, '#ffd34d'); else { draw(true); again(); }
+    }); }, 900);
+}
+function tutNudge(){   // a call on a step with nothing to call: point at Next / Done
+  const b = $('coachnext'); if(b.hidden) return;
+  b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge');
+}
 function tutSettle(){ const c = shot && shot.cam; if(!c) return; featherStart(c); featherLoop(shot); }
 // the coach's routine: step behind the line, bend over onto it, and come back up after the shot
 function tutBend(to, ms, done){
@@ -5750,16 +5825,21 @@ function runStepNow(back){
     if(st.shot) tutShot(st.shot);
     if(st.rail) tutRailShot();
     if(st.deg != null) tutShotDeg(st.deg, st.mustMiss);
-    if(st.play || st.try || st.check){   // the coach's stroke has to show what the step teaches: if this layout doesn't, deal another at the same cut
-      const deg = st.deg ?? Math.round(shot.theta);
-      for(let k = 0; k < 40; k++){ tutPlan(st); if(tutShows(st, tut.plan.run)) break; tutShotDeg(deg); }
-    }
+    if(st.play || st.try || st.check) tutDealFor(st);
   }
+  // a step with nothing new for the table (just words, or the lesson's last) leaves it as it is: the balls where they
+  // stopped, the view, the result. Only a new shot, a stroke to play or try, or a close-up sets the table again.
+  const keep = tut.started0 && !(st.shot || st.rail || st.deg != null || st.play || st.try || st.check || st.demo != null || st.ghostAt || st.zoom || st.look)
+    && (!back || tut.shots[tut.i] === shot);
+  tut.started0 = true;
   tut.shots[tut.i] = shot;
-  if(!st.keepPivot) pivot.s = null;   // each step looks around the cue ball, unless it's the one that brings you back to it
+  tut.fix = null; tut.seen = false;   // a wrong call's showing of the right shot, and whether you've seen it (then Next is open)
+  if(!st.keepPivot && !keep) pivot.s = null;   // each step looks around the cue ball, unless it's the one that brings you back to it
   tut.lk = 0;
-  freshCall();
-  shot.cam = null; shot.aimDir = null; shot.zone = null; shot.follow = 0; tut.ctl = null; cancelAnimationFrame(tut.bRaf);   // each step starts standing
+  if(!keep){
+    freshCall();
+    shot.cam = null; shot.aimDir = null; shot.zone = null; shot.follow = 0; tut.ctl = null; cancelAnimationFrame(tut.bRaf);   // each step starts standing
+  }
   if(st.play || st.try || st.check) tutPlan(st);
   renderShootControls();
   if(!shot.gb0) { shot.gb0 = shot.gb; shot.v0 = shot.v; }
@@ -5769,17 +5849,7 @@ function runStepNow(back){
   tut.watch = null;   // a step with a shot to watch plays it as you arrive (no lesson opens on one: there's always a slide to read first)
   if(st.play) tut.watch = ()=>{   // the coach gets down on the shot, then plays it
     if(!tut.on || tstep() !== st || answered || !tut.plan) return;
-    const pl = tut.plan;
-    tutBend('step', 450, ()=>tutBend('down', downMs(shot) + 150, ()=>{ tutSettle(); setTimeout(()=>{   // a practice stroke or so, then the stroke
-      if(!tut.on || tstep() !== st || answered) return;
-      const x0 = rigAlpha(shot).push || 0, s0 = shot;
-      shot.tip = pl.tip; cancelAnimationFrame(featherRaf);
-      answered = true; shot.pick = {made: pl.run.made, far: !pl.run.made, g2: shot.gb};
-      strokeThen(s0, x0, ()=>{ if(shot !== s0 || !tut.on) return;
-      animateShot({made: pl.run.made}, ()=>{ draw(true); tutBend('up', 600); }, pl.run.made ? '#ffd34d' : MISS, pl.run);
-      const up = rigHitMs(shot, pl.run, pl.dir); if(isFinite(up)) setTimeout(()=>{ if(shot === s0 && s0.cam && s0.cam.k > 0) tutBend('up', 450); }, up);
-      });
-    }, 1900); }));
+    tutCoachPlay(()=>tut.on && tstep() === st && !answered);
   };
   if(st.demo != null) tut.watch = ()=>{   // the coach plays the hit for you
     if(!tut.on || tstep() !== st || answered) return;
@@ -5795,13 +5865,14 @@ function runStepNow(back){
   nx.hidden = !(st.next || st.finish);
   nx.textContent = st.finish ? 'Done' : 'Next';
   $('coachback').hidden = tut.i === 0;
-  document.querySelectorAll('#answers button').forEach(b=>b.disabled = !st.ask);
-  draw(false); scheduleFades(); updateControls();
+  document.querySelectorAll('#answers button').forEach(b=>{ b.disabled = false; b.setAttribute('aria-disabled', st.ask ? 'false' : 'true'); });   // nothing to call: dimmed, and a tap points at Next
+  $('answers').classList.toggle('tutoff', !st.ask);
+  draw(answered); scheduleFades(); updateControls();
 }
 function startTut(lesson){
   $('hlogo').classList.remove('hot','over');
   endFlash(); $('sesscover').hidden = true; $('endcover').hidden = true; $('startcover').hidden = true;
-  tut.on = true; tut.i = 0; tut.shots = []; tut.started = false; tut.lesson = LESSONS[lesson] ? lesson : 'shoot';
+  tut.on = true; tut.i = 0; tut.shots = []; tut.started = tut.started0 = false; tut.lesson = LESSONS[lesson] ? lesson : 'shoot';
   cancelAnimationFrame(routineRaf); renderRoutineChip(); renderShootControls();
   $('coach').hidden = false; $('question').hidden = true; $('sessrow').hidden = true;
   showSessIdle(); runStep();
@@ -5809,7 +5880,7 @@ function startTut(lesson){
 }
 function endTut(thenBaseline){
   setTimeout(syncStreakPill, 0);   // the streak comes back to the logo after the lesson
-  tut.on = false; tut.zb = tut.zt = 0; tut.ctl = null; tut.plan = null; tut.watch = null; cancelAnimationFrame(tut.bRaf); cancelAnimationFrame(tut.zRaf); cancelAnimationFrame(tut.gRaf); if(shot && shot.gb0){ shot.gb = shot.gb0; shot.v = shot.v0; } clearTimeout(tut.fadeT); $('tutfade').classList.remove('on');
+  tut.on = false; tut.fix = null; $('answers').classList.remove('tutoff'); document.querySelectorAll('#answers button').forEach(b=>b.removeAttribute('aria-disabled')); tut.zb = tut.zt = 0; tut.ctl = null; tut.plan = null; tut.watch = null; cancelAnimationFrame(tut.bRaf); cancelAnimationFrame(tut.zRaf); cancelAnimationFrame(tut.gRaf); if(shot && shot.gb0){ shot.gb = shot.gb0; shot.v = shot.v0; } clearTimeout(tut.fadeT); $('tutfade').classList.remove('on');
   if(!settings.tut){ settings.tut = 1; saveSettings(); }
   settings.tutSeen = {...(settings.tutSeen || {}), [tut.lesson]: 1}; saveSettings();
   $('coach').hidden = true;
@@ -5829,7 +5900,7 @@ function tutLook(kind, id){
 }
 function tutNext(){
   const st = tstep();
-  if(st.ask && !answered) return;
+  if(st.ask && $('coachnext').hidden) return;   // a call to make, or the right shot still to see
   if(st.finish) return endTut(true);
   tut.i++; runStep();
 }
@@ -5853,37 +5924,37 @@ function tutTry(id){
   answered = true; s.tip = pl.tip; cancelAnimationFrame(featherRaf);
   s.pick = {made: run.made, far: !ok, g2: s.gb, id};
   document.querySelectorAll('#answers button').forEach(x=>{ x.disabled = true; x.className = x.dataset.id === id ? (ok && run.made ? 'right' : 'wrong') : x.dataset.id === right.id ? 'right' : ''; });
-  const lab = r => r.id === 'full' ? 'full' : r.label;
-  const note = run.scratch ? 'Scratch: the cue ball went in.' : !run.made ? (ok ? 'Missed the pocket.' : `It was a <b>${lab(right)}</b>-ball hit.`)
-    : !s.zone ? 'Pocketed.' : run.inZone ? 'Pocketed, and <b>in the zone</b>.' : `Pocketed, ${run.zoneMiss.toFixed(1)}″ off the zone.`;
-  $('coachtext').innerHTML = tstep().text + `<br><span class="coachnote">${note}</span>`;
-  $('coachnext').hidden = false; $('coachnext').textContent = 'Next';
+  const good = ok && run.made && !run.scratch, st = tstep();   // the stroke and spin are the lesson's: only the call can be wrong
+  const note = good ? (!s.zone ? 'Pocketed.' : run.inZone ? 'Pocketed, and <b>in the zone</b>.' : `Pocketed, ${run.zoneMiss.toFixed(1)}″ off the zone.`)
+    : (ok ? (run.scratch ? 'Scratch: the cue ball went in.' : 'Missed the pocket.') : `That was <b>${tutLab(picked)}</b>; this one is <b>${tutLab(right)}</b>.`) + ' Watch it played right.';
+  $('coachtext').innerHTML = st.text + `<br><span class="coachnote">${note}</span>`;
+  if(good || tut.seen){ $('coachnext').hidden = false; $('coachnext').textContent = 'Next'; } else $('coachnext').hidden = true;
   strokeThen(s, x0, ()=>{
     if(shot !== s || !tut.on) return;
-    animateShot({made: run.made}, ()=>{ draw(true); tutBend('up', 600); }, ok && run.made ? '#ffd34d' : MISS, run);
+    animateShot({made: run.made}, ()=>{ draw(true); tutBend('up', 600); if(!good) tutShowRight(st, right); }, ok && run.made ? '#ffd34d' : MISS, run);
     const up = rigHitMs(s, run, dir); if(isFinite(up)) setTimeout(()=>{ if(shot === s && s.cam && s.cam.k > 0) tutBend('up', 450); }, up);   // out of a ball's way
   });
 }
 function tutAnswer(id){
   const st = tstep();
+  if(!st.ask) return tutNudge();
+  if(tut.fix) return;   // the right shot is being shown
   if(st.try) return tutTry(id);
-  if(!st.ask || answered) return;
-  const right = id === shot.answer.id, b = $('ans-'+id);
-  if(st.ask !== 'any' && !right){
-    tableSounds([[0, 'rail', .5]]); b.className = 'wrong'; setTimeout(()=>{ if(!answered) b.className = ''; }, 700);
-    $('coachtext').innerHTML = st.text + '<br><span class="coachnote">Not quite: how much of the object ball does the ghost ball cover?</span>';
-    return;
-  }
+  if(answered) return;
+  const right = id === shot.answer.id;
   answered = true;
   if(settings.animate === '0') tableSounds(shotPlan(shot, right ? outcome(shot, shot.theta) : outcome(shot, ALL.find(r=>r.id===id).deg), .12, .3, 0, false, false));
   document.querySelectorAll('#answers button').forEach(x=>{ x.disabled = true; x.className = x.dataset.id===shot.answer.id ? 'right' : x.dataset.id===id ? 'wrong' : ''; });
   const picked = ALL.find(r=>r.id===id), oc = outcome(shot, picked.deg);
   shot.pick = {...oc, id, far: !right};
   const lab = shot.answer.id==='full' ? 'full' : shot.answer.label;
-  $('coachtext').innerHTML = right ? `Right: a <b>${lab}</b>-ball hit. Watch it go.` : `It was a <b>${lab}</b>-ball hit: the ghost ball covered ${lab==='full' ? 'all' : lab} of it.`;
-  $('coachnext').hidden = false; $('coachnext').textContent = 'Next';
-  if(settings.animate !== '0') animateShot(right ? outcome(shot, shot.theta) : oc, ()=>{ draw(true); }, right ? '#ffd34d' : MISS);
-  else draw(true);
+  const fix = !right && st.ask !== 'any';   // a step with a shot to call right: a wrong call shows you the right one, then it's yours again
+  $('coachtext').innerHTML = right ? `Right: a <b>${lab}</b>-ball hit. Watch it go.` : fix ? st.text + `<br><span class="coachnote">That was <b>${tutLab(picked)}</b>; this one is <b>${lab}</b>: the ghost ball covers ${lab==='full' ? 'all' : lab} of it. Watch it played right.</span>`
+    : `It was a <b>${lab}</b>-ball hit: the ghost ball covered ${lab==='full' ? 'all' : lab} of it.`;
+  if(!fix || tut.seen){ $('coachnext').hidden = false; $('coachnext').textContent = 'Next'; } else $('coachnext').hidden = true;
+  const after = () => { draw(true); if(fix) tutShowRight(st, shot.answer); };
+  if(settings.animate !== '0') animateShot(right ? outcome(shot, shot.theta) : oc, after, right ? '#ffd34d' : MISS);
+  else after();
 }
 // labels, arrows and the lit-up overlap, drawn over the table
 function tutLayer(cam, s, reveal){
@@ -6033,7 +6104,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Shift' && !e.repeat && !$('showright').hidden && !anim){ replayRightNow(); e.preventDefault(); return; }   // or the right shot after a miss
   if(callLock) return;   // a new player before the first lesson: keys 1–5 and Enter have nothing to call
   const k = parseInt(e.key,10);
-  if(tut.on && !tstep().ask) return;
+  if(tut.on && !tstep().ask){ if(k>=1 && k<=REFS.length) tutNudge(); return; }   // nothing to call: point at Next / Done
   if(!isPlace() && k>=1 && k<=REFS.length && !answered){ pickFrac(REFS[k-1].id); e.preventDefault(); }
   else if(shot && shot.phys && !answered && ['ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)){ pickMod({ArrowLeft:'thick', ArrowDown:'center', ArrowRight:'thin'}[e.key]); e.preventDefault(); }
   else if(isPlace() && !answered && (e.key==='ArrowLeft' || e.key==='ArrowRight')){ nudge(e.key==='ArrowLeft'?-1:1, e.shiftKey ? 6 : 1); e.preventDefault(); }
