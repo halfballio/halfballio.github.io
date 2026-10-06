@@ -2225,14 +2225,14 @@ function modeChip(){   // {text, act, label} or null
     return {text: `Practice · ${what}`, act: 'Change', label: `Practice, not scored: ${d.weak ? 'your weakest shots' : what}. Change what comes up`};
   }
   if(isRun()) return {text: `Run-outs · ${runSummary()}`, act: 'Change', label: `Run-outs, not scored: ${runSummary()}. Change the setup`};
-  if(practicing()) return {text: `Practising ${SHOOT_GRADES[+settings.practice]} · not scored`, act: 'Change', label: `Practising ${SHOOT_GRADES[+settings.practice]}, not scored. Pick a grade`};
+  if(practicing()) return {text: 'Practising · not scored', act: '', label: `Practising a passed grade (${SHOOT_GRADES[+settings.practice]}), not scored. Open grades to change or stop`};
   return null;
 }
 function renderModeChip(){
   const el = $('modechip'); if(!el) return;
   const m = tut.on ? null : modeChip();
   el.hidden = !m; if(!m) return;
-  el.innerHTML = `${m.text} <b>${m.act}</b>`; el.setAttribute('aria-label', m.label);
+  el.innerHTML = m.act ? `${m.text} <b>${m.act}</b>` : m.text; el.setAttribute('aria-label', m.label);
 }
 function modeChipTap(){ if(settings.task === 'flash') openSheet('flashsheet', true); else if(isDrill()) openSheet('drill', true); else if(isRun()) openSheet('runsheet', true); else if(practicing()) openProg(true); }
 const NO_TIMER = 1e6;   // from Any angle on, nothing hurries you: you get down when you're ready
