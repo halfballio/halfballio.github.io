@@ -67,7 +67,7 @@ if(DEV_SITE){ const m = document.querySelector('link[rel="manifest"]'); if(m) m.
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:20px 40px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
-button,[role="button"],.tab{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button,[role="button"]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .wrap{max-width:1680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 .gradebadge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;height:40px;box-sizing:border-box;padding:0 10px;border-radius:var(--r);background:var(--navy);color:var(--gold);border:1px solid var(--navy-line);box-shadow:var(--shadow-1);transition:background var(--t-fast) var(--ease)}
@@ -347,10 +347,6 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .modes button{font-size:15px;font-weight:600;min-height:40px;padding:8px 14px;display:inline-flex;align-items:center;justify-content:center}
 .quick{flex-direction:column;align-items:flex-start;gap:2px;min-height:66px}
 .quick .hint{color:var(--muted);font-size:14px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:4px}
-.tab{font:600 14px var(--body);background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);min-height:40px;padding:8px 12px;margin-bottom:-1px;cursor:pointer;transition:color var(--t-fast) var(--ease)}
-.tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
 .tabpanel{display:flex;flex-direction:column;gap:12px;overflow-x:clip}   /* never scroll sideways */
 .tabpanel > section{border:0;padding-top:0}
 .sessrow{min-height:34px;display:flex;align-items:center}
@@ -620,10 +616,6 @@ html.kbd .next:disabled .key{color:var(--muted);border-color:var(--line-strong)}
 .next{font:700 19px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;min-height:48px;background:var(--gold);color:var(--gold-ink);border:0;border-radius:var(--r);padding:14px 16px;cursor:pointer;width:100%;box-shadow:inset 0 -2px 0 rgba(0,0,0,.14),var(--shadow-1);transition:background var(--t-fast) var(--ease)}
 .next:hover:not(:disabled){background:var(--gold-hi)}.next:active:not(:disabled){background:#e0ad25}
 .next:disabled{background:var(--chip);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);cursor:default}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 4px 8px;box-shadow:var(--shadow-1)}
-.stat b{display:block;font-family:var(--display);font-size:28px;line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin-bottom:2px}
-.stat span{display:block;font-size:11px;font-weight:600;line-height:1.3;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .row{display:grid;grid-template-columns:38px 1fr 76px;gap:10px;align-items:center;font-size:13px}
 .row .lab{font-family:var(--display);font-weight:700;font-size:18px}
 .bar{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
@@ -631,7 +623,6 @@ html.kbd .next:disabled .key{color:var(--muted);border-color:var(--line-strong)}
 .row .n,.lean .n{white-space:nowrap;font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px;font-weight:600}
 h3{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:.02em;margin:0 0 4px;line-height:1.1}
-.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px}
 .link{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit;padding:0}
 .link:hover{color:var(--ink)}.sumcover .link:hover,.coach .link:hover{color:var(--cream)}
 .patterns{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:14px}
@@ -695,11 +686,11 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .menu{padding:calc(60px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
   .menucard{padding-inline:16px}.menuhead{margin-inline:-16px;padding-inline:16px}
   .sesslive #sessend{min-height:44px;padding:0 4px}
-  .stat span,.insights dt{font-size:12px}
+  .insights dt{font-size:12px}
   .wrap{gap:8px}.buildtag{margin-top:4px}.main,.main.persp{gap:10px}   /* the mode switch a little higher */
   /* a lesson: the table and the fraction buttons stay together, the coach card under them, compact,
      its text scrolling inside so the whole card (and its Next) fits the screen with the toolbars showing */
-  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabpanel{order:1}
   .coach{padding:10px 12px;gap:6px}
   .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - (100vw - 32px)*2/3 - 332px));max-height:max(60px, calc(100dvh - (100vw - 32px)*2/3 - 332px))}
 }
@@ -713,7 +704,7 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
 @media (hover:none) and (pointer:coarse){
   .plchip,.gradebadge{height:44px}
   .cog,.menuclose{width:44px;height:44px;flex:none}
-  .tab,.modes button,.coachbtns .link,.coachbtns .startbtn,.coachback,.endkeep,.librebuild{min-height:44px}
+  .modes button,.coachbtns .link,.coachbtns .startbtn,.coachback,.endkeep,.librebuild{min-height:44px}
   .seg button,.fpseg button{min-height:40px}.seg.modes button{min-height:44px}
   .menucard .seg button{min-height:44px}
   .next{min-height:52px}
@@ -739,7 +730,6 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .panel{min-height:0;display:flex;flex-direction:column;gap:16px;padding-bottom:10px}
   .q{margin-top:0;line-height:1.1}
   .q small{line-height:1.35}
-  .tabs{margin-top:0}
   .tabpanel{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 }
 /* Phones on their side: the desktop one-screen layout, table left and panel right, fitted to the short screen */
@@ -759,7 +749,7 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .quick{min-height:44px}
   .answers{gap:6px}.answers button{padding:7px 0 5px;font-size:24px;min-height:52px}
   .tabpanel{flex:none;min-height:0;overflow-y:visible;overflow-x:clip}
-  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}   /* a lesson: the coach card under the fraction buttons */
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabpanel{order:1}   /* a lesson: the coach card under the fraction buttons */
   .coach{padding:10px 12px;gap:6px}
   .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - 290px));max-height:max(60px, calc(100dvh - 290px))}
   .menu{padding:calc(56px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
@@ -932,8 +922,6 @@ html.touch .tutlist .kbd-only{display:none}
 .statsbtn svg{color:var(--accent);flex:none}
 .statsbtn[aria-expanded="true"]{background:var(--navy);border-color:var(--navy);color:var(--cream)}.statsbtn[aria-expanded="true"] svg{color:var(--gold)}
 @media (max-width:439px){.statsbtn{width:40px;padding:0;justify-content:center}.statsbtn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
-.tab.on{color:var(--ink);border-bottom-color:var(--gold)}
-.tab svg{margin-left:6px;vertical-align:-2px;color:var(--muted)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .statsview{position:fixed;inset:0;z-index:58;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);animation:svin .18s var(--ease) both}
@@ -1454,19 +1442,7 @@ html.svopen,html.svopen body{overflow:hidden}
       <div class="runrow" id="runrow" hidden aria-live="polite"></div>   <!-- Run-outs: the rack so far, and the run's summary when it ends -->
       <button class="next" id="next" disabled>Next shot <kbd class="key" aria-hidden="true">Enter</kbd></button>
       <button class="sumdone showright" id="showright" hidden><svg class="replayicon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3.5 13.5a8.5 8.5 0 1 0 2.4-7.4L3 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 9.2v6.6l5.4-3.3z" fill="currentColor"/></svg>Replay the right shot <kbd class="key" aria-hidden="true">Shift</kbd></button>
-      <div class="tabs">
-        <button class="tab" data-tab="stats" id="tabbtn-stats" aria-haspopup="dialog" aria-controls="statsview" title="Open all stats">Stats<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      </div>
-      <div class="tabpanel" role="tabpanel" id="tab-shot"><div class="result" id="result"></div></div>
-      <div class="tabpanel" role="tabpanel" id="tab-stats" aria-labelledby="tabbtn-stats" hidden>
-        <div class="stats">
-          <div class="stat"><b id="s-acc">–</b><span id="s-l1">Called right</span></div>
-          <div class="stat" title="Called right over your last 20 shots in this mode"><b id="s-made">–</b><span>Last 20</span></div>
-          <div class="stat"><b id="s-streak">0</b><span>Streak</span></div>
-          <div class="stat"><b id="s-n">0</b><span>Shots</span></div>
-        </div>
-        <div class="foot"><span>Best streak: <b id="s-best">0</b></span></div>
-      </div>
+      <div class="tabpanel" role="tabpanel" id="tab-shot" hidden><div class="result" id="result"></div></div>
 
     </div>
     <section class="statsview" id="statsview" role="dialog" aria-modal="true" aria-labelledby="sv-title" hidden>
@@ -6142,17 +6118,6 @@ function curStreak(){   // the streak you're on right now, in the session being 
 // the fractions a stats view shows: the core five, plus any eighth that has been dealt or called
 const statRefs = L => ALL.filter(r=>r.core || L.some(e=>e.a===r.id || e.p===r.id));
 function renderStats(){
-  const L = statLog(), n = L.length, place = isPlace();
-  const r = runs(L);
-  $('s-l1').textContent = place ? 'Typical miss' : 'Called right';
-  $('s-acc').textContent = !n ? '–' : place
-    ? median(L.map(e=>Math.abs(e.e||0))).toFixed(1)+'°'
-    : pct(L.filter(success).length, n)+'%';
-  const recent = L.slice(-20);
-  $('s-made').textContent = recent.length ? pct(recent.filter(place ? e=>e.m : success).length, recent.length)+'%' : '–';
-  $('s-streak').textContent = r.cur;
-  $('s-best').textContent = r.best;
-  $('s-n').textContent = n;
   renderSession();
   if(SV.open) svRender();
 }
@@ -6222,7 +6187,7 @@ function openStats(v, opts = {}){
   });
   $('svmode').addEventListener('click', e=>{ const b = e.target.closest('[data-svt]'); if(!b || b.dataset.svt === SV.task) return; SV.task = b.dataset.svt; svRender(); });
   $('svclose').addEventListener('click', ()=>openStats(false));
-  ['statsbtn', 'tabbtn-stats'].forEach(id=>$(id).addEventListener('click', ()=>openStats(!SV.open)));
+  $('statsbtn').addEventListener('click', ()=>openStats(!SV.open));
   window.addEventListener('popstate', ()=>{ if(SV.open) openStats(false, {fromPop: true}); });
   // while it's open the game behind takes no keys; Esc closes it, and Tab stays inside it
   window.addEventListener('keydown', e=>{
@@ -6440,12 +6405,6 @@ if(window.ResizeObserver){ const ro = new ResizeObserver(()=>requestAnimationFra
 window.addEventListener('resize', ()=>requestAnimationFrame(alignLogo));
 window.addEventListener('resize', ()=>{ clearTimeout(rsz); rsz = setTimeout(sizeTable, 60); });
 if(mqDesk.addEventListener) mqDesk.addEventListener('change', sizeTable);
-function showTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
-  document.querySelectorAll('.tabpanel').forEach(p=>p.hidden = p.id!=='tab-'+t);
-  settings.tab = t; saveSettings();
-}
-showTab('stats');   // the Shot tab is gone: its result line sits under the table
 $('reset').addEventListener('click', async ()=>{   // all or nothing: your whole progression, Ladder and Flash together
   const warn = `You'll start again at ${SHOOT_GRADES[0]} with no record: every shot and session, Ladder, Flash, Practice and Run-outs, is cleared. Flash, Practice, Run-outs and the bigger tables lock until you earn them back, and the lessons play again as you reach them. This can't be undone.`;
   if(!await ask({title: 'Reset your progress?', text: warn, ok: 'Reset', danger: true})) return;
