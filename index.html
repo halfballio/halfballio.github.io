@@ -4752,19 +4752,23 @@ function cueRig(cam, s){
     const hz = [0, 0, 1], wy = norm3(cross3(hz, ax)), up = norm3(cross3(ax, wy));
     box(c, ax, wy.map(v=>v*w/2), up.map(v=>v*h/2), col, front);
   };
-  // the Halfball logo on the back of the glove: small (about 1½" across on a 3" palm), the two balls on the diagonal
+  // the Halfball logo on the back of the glove: small (about 1½" across on a 3" palm), the site's double-ring mark
   const logo = (P, Q, h) => {
     const a = L(...P), b = L(...Q), c = a.map((v, m)=>(v + b[m])/2), f = norm3(a.map((v, m)=>b[m] - v));
     const wy = norm3(cross3([0, 0, 1], f)), up = norm3(cross3(f, wy)), T = c.map((v, m)=>v + up[m]*(h/2 + .02));
     if((cam.E[0]-T[0])*up[0] + (cam.E[1]-T[1])*up[1] + (cam.E[2]-T[2])*up[2] <= 0) return;   // the back of the hand faces away
     const zT = cam.toCam(T)[2] - .4;   // all of it drawn just over the back of the glove, in this order
-    const disc = (x, y, r, col, k) => faces.push([Array.from({length: 18}, (_, i)=>{ const t2 = i/18*2*Math.PI, u = x + r*Math.cos(t2), v = y + r*Math.sin(t2);
+    const disc = (x, y, r, col, k) => faces.push([Array.from({length: 28}, (_, i)=>{ const t2 = i/28*2*Math.PI, u = x + r*Math.cos(t2), v = y + r*Math.sin(t2);
       return T.map((q, m)=>q + f[m]*u + wy[m]*v); }), col, false, false, 0, zT - k*.01]);
-    // as in the icon: the object ball behind, up and to the right, half covered by the cue ball (a half-ball hit)
-    const R0 = .46, o = R0/(2*Math.SQRT2);   // centres a ball's radius apart, on the diagonal (+f is up the screen, +wy to the right)
-    disc(o, o, R0, '#f5bf1e', 0);                    // the object ball (yellow)
-    disc(-o, -o, R0, '#f7f1e3', 2);                    // the cue ball
-    disc(-o, -o, R0*.24, '#d8352a', 3);                // its red dot
+    // the site's mark (favicon geometry, 32-unit grid): navy disc, gold ring, the object ball behind and up-right, half covered by the cue ball
+    const S = .75/16, d2 = 2.5*S;   // 1½" across; ball centres 2.5 units off the middle on the diagonal (+f is up the screen, +wy to the right)
+    disc(0, 0, 16*S, '#0f2233', 0);
+    disc(0, 0, 14.4*S, '#f0bf34', 1);                  // the gold ring
+    disc(0, 0, 12.6*S, '#132b40', 2);
+    disc(d2, d2, 7*S, '#f5bf1e', 3);                   // the object ball (yellow)
+    disc(-d2, -d2, 7.45*S, '#0f2233', 4);              // the cue ball's dark edge
+    disc(-d2, -d2, 7*S, '#f7f1e3', 5);                 // the cue ball
+    disc(-d2, -d2, 1.6*S, '#d8352a', 6);               // its red dot
   };
   // a pool glove: palm, thumb, index and middle fingers covered, ring and little finger bare, a strap at the wrist
   const gc = isHex(settings.glove) ? settings.glove : GLOVE_DEF, sk = isHex(settings.skin) ? settings.skin : HAND_DEF;
