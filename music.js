@@ -1,11 +1,12 @@
 // Halfball: background music. Three small loops played live with Web Audio (no audio files):
 // Parlor (swing jazz on brushes, vibes lead), Smoke (slow lo-fi, electric piano), Felt (bossa nova on nylon guitar).
 // Each is an 8-bar head, written out, looped as 16 bars: the second time the tune rests for four bars.
+// With the Disco ball set on, the same three stations play three disco tunes instead: Mirror Ball, Strut and Orbit.
 (function(root){
 'use strict';
 let ctx = null, out = null, mix = null, send = null, noise = null, metal = null, metalIn = null, metalOsc = null, crackle = null;
 let timer = 0, track = null, nextT = 0, step = 0, vol = 0.5, tok = 0, sleepTimer = 0, away = false;
-let style = 'normal', wantStyle = 'normal';   // 'disco': the same tunes on a four-on-the-floor groove
+let style = 'normal', wantStyle = 'normal';   // 'disco': each station plays its disco tune instead (see DISCO)
 const KS = {};
 const LEVEL = 0.3;
 const mtof = m => 440*Math.pow(2, (m - 69)/12);
@@ -185,24 +186,79 @@ function strings(t, notes, dur, v){   // a light string section: detuned saws, a
   }));
   lp.connect(g); route(g, 0.5);
 }
-const DISCO_BPM = 118;
-function disco(T, t, bar, e, d8, s){   // the same chords, a disco groove: kick on every beat, open hat on the off-beats, clap on 2 and 4
-  const pick = x => Array.isArray(x) ? x[e < 4 ? 0 : 1] : x;
-  const c = pick(T.chords ? T.chords[bar] : bar), v = T.chords ? T.voice[c] : T.voice[bar];
-  let r = pick(T.roots[bar]); while(r > 47) r -= 12; while(r < 36) r += 12;
-  if(e === 0 || (T.chords && Array.isArray(T.chords[bar]) && e === 4)) strings(t, v, d8*(Array.isArray(T.roots[bar]) ? 4 : 8), 1);
-  bass(t, e % 2 ? r + 12 : r, d8*0.8, (e % 2 ? 0.62 : 0.8)*hv(s));   // the octave bounce
-  if(e % 2 === 0) dkick(t, 0.85); else ohat(t, hv(s));
-  if(e % 2 === 0) chat(t, 0.8*hv(s));
-  if(e === 2 || e === 6) clap(t, 0.9*hv(s));
-  if(e === 3 || e === 7){   // a short chord stab on the and of 2 and 4
-    if(track === 'felt') v.forEach((m, i)=>guitar(t + i*0.008, m, d8*0.7, 0.3*hv(s + i), 0.25));
-    else v.forEach((m, i)=>epiano(t + i*0.008, m, d8*0.7, 0.4*hv(s + i), 0.25));
-  }
+// more disco voices: a synth bass, a slap bass, a filtered pluck (clav, guitar chops), string stabs, two synth leads, a bell, a pad sweep
+function sbass(t, m, dur, v, bright){   // a saw with a sine under it, through a filter that snaps shut
+  const f = mtof(m), o = ctx.createOscillator(), sub = ctx.createOscillator(), sg = ctx.createGain(), lp = ctx.createBiquadFilter(), amp = ctx.createGain();
+  o.type = 'sawtooth'; o.frequency.value = f; sub.frequency.value = f; sg.gain.value = 0.6;
+  lp.type = 'lowpass'; lp.Q.value = 2.5; lp.frequency.setValueAtTime(260 + 2200*bright*v, t); lp.frequency.exponentialRampToValueAtTime(240, t + 0.12);
+  amp.gain.setValueAtTime(0, t); amp.gain.linearRampToValueAtTime(0.3*v, t + 0.004); amp.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+  o.connect(lp); sub.connect(sg); sg.connect(lp); lp.connect(amp); route(amp, 0.04);
+  [o, sub].forEach(x=>{ x.start(t); x.stop(t + dur + 0.08); });
 }
+function slapb(t, m, dur, v, pop){   // a thumbed note, or a popped one: brighter, with the snap of the string
+  sbass(t, m, dur, v, pop ? 1.1 : 0.55);
+  hiss(t, pop ? 0.02 : 0.012, 'bandpass', pop ? 3200 : 1400, 1.2, (pop ? 0.09 : 0.05)*v, 0.001);
+}
+function pluck(t, m, dur, v, type, cut, q, wet){   // one oscillator through a resonant filter that closes as the note dies
+  const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+  o.type = type; o.frequency.value = mtof(m);
+  lp.type = 'lowpass'; lp.Q.value = q; lp.frequency.setValueAtTime(cut, t); lp.frequency.exponentialRampToValueAtTime(Math.max(300, cut*0.2), t + dur);
+  env(g, t, v, 0.002, dur); o.connect(lp); lp.connect(g); route(g, wet);
+  o.start(t); o.stop(t + dur + 0.03);
+}
+function clav(t, m, dur, v){ pluck(t, m, Math.min(0.3, dur + 0.06), 0.07*v, 'square', 4200, 7, 0.15); }
+function chop(t, notes, v, open){   // a muted guitar scratch; open, the chord rings through for a moment
+  hiss(t, 0.03, 'bandpass', 2300, 1.6, 0.045*v, 0.001, 0.1);
+  if(open) notes.forEach((m, i)=>pluck(t + i*0.006, m + 12, 0.07, 0.022*v, 'sawtooth', 3000, 3, 0.12));
+}
+function stab(t, notes, v){   // a short string stab: two detuned saws a note, bowed hard and let go
+  const lp = ctx.createBiquadFilter(), g = ctx.createGain(); lp.type = 'lowpass'; lp.Q.value = 0.6; lp.frequency.value = 3200;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.014*v, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+  notes.forEach(m=>[-10, 10].forEach(c=>{
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m + 12); o.detune.value = c;
+    o.connect(lp); o.start(t); o.stop(t + 0.33);
+  }));
+  lp.connect(g); route(g, 0.4);
+}
+function synlead(t, m, dur, v, type, cut, peak, wet){   // a held synth line with a late vibrato
+  const f = mtof(m), lp = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain(), end = t + dur + 0.15;
+  lp.type = 'lowpass'; lp.Q.value = 1; lp.frequency.value = cut;
+  lfo.frequency.value = 5.5; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f*0.006, t + Math.min(0.5, dur));
+  lfo.connect(lg);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak*v, t + 0.015); g.gain.setValueAtTime(peak*v*0.85, t + Math.max(0.02, dur*0.9));
+  g.gain.linearRampToValueAtTime(0, end);
+  const os = (type === 'sawtooth' ? [-7, 7] : [0]).map(c=>{
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = c;
+    lg.connect(o.frequency); o.connect(lp); return o;
+  });
+  lp.connect(g); route(g, wet);
+  os.concat(lfo).forEach(o=>{ o.start(t); o.stop(end + 0.05); });
+}
+function bell(t, m, v){   // a small glassy bell for the arpeggio
+  const f = mtof(m);
+  [[1, 1, 0.4], [3, 0.25, 0.12]].forEach(([r, a, d])=>{
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f*r;
+    env(g, t, 0.035*v*a, 0.002, d); o.connect(g); route(g, 0.6); o.start(t); o.stop(t + d + 0.05);
+  });
+}
+function sweep(t, notes, dur, v){   // a pad whose filter opens slowly across the chord, then falls back
+  const lp = ctx.createBiquadFilter(), g = ctx.createGain(), end = t + dur + 0.6;
+  lp.type = 'lowpass'; lp.Q.value = 3; lp.frequency.setValueAtTime(300, t);
+  lp.frequency.exponentialRampToValueAtTime(2600, t + dur*0.75); lp.frequency.exponentialRampToValueAtTime(500, end);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.012*v, t + 0.4); g.gain.setValueAtTime(0.012*v, t + dur); g.gain.linearRampToValueAtTime(0, end);
+  notes.forEach(m=>[-8, 8].forEach(c=>{
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = c;
+    o.connect(lp); o.start(t); o.stop(end + 0.05);
+  }));
+  lp.connect(g); route(g, 0.55);
+}
+// a disco tune's chords: a bar holds one chord, or two (first half, second half)
+const half = (x, e) => Array.isArray(x) ? x[e < 4 ? 0 : 1] : x;
+const chordOn = (T, bar, e) => e === 0 || (Array.isArray(T.chords[bar]) && e === 4);   // a new chord starts on this step
+const chordLen = (T, bar, d8) => d8*(Array.isArray(T.chords[bar]) ? 4 : 8);
 function setStyle(st){
   wantStyle = st === 'disco' ? 'disco' : 'normal';
-  if(!timer){ style = wantStyle; if(ctx) metalFor(); }   // not playing: take it now; playing: at the next bar
+  if(!track){ style = wantStyle; if(ctx) metalFor(); }   // nothing on: take it now; a station on: at the next bar
 }
 function metalFor(){ if(track === 'parlor' && style !== 'disco') metalOn(); else metalOff(); }   // only Parlor's swing has a ride cymbal
 function startCrackle(){   // very faint vinyl: sparse pops on a hush of noise, looped
@@ -304,17 +360,104 @@ const TRACKS = {
       if(e === 0 || e === 4) kick(t, 0.3);
     }},
 };
-function warm(id){ if(id === 'felt'){ const T = TRACKS.felt; T.voice.flat().concat(T.mel.flat().map(n=>n[1])).forEach(ksNote); } }
+// the disco tunes, one per station (Parlor's slot, Smoke's, Felt's). Chords by name, a bar of two chords as a pair.
+const low = r => { while(r > 47) r -= 12; while(r < 36) r += 12; return r; };
+const DISCO = {
+  parlor: {name: 'Mirror Ball', bpm: 120, swing: 0.5,   // string disco: octave bass, a lush string bed, stabs, a bright lead
+    // Am7 | D9 | Gmaj7 | Cmaj7 | Fmaj7 | Bm7b5 E7 | Am7 | E7sus E7
+    voice: {Am7: [57,60,64,67], D9: [54,57,60,64], G: [55,59,62,66], C: [55,59,60,64], F: [53,57,60,64], Bm7b5: [57,59,62,65], E7: [56,59,62,64], E7s: [57,59,62,64]},
+    chords: ['Am7','D9','G','C','F',['Bm7b5','E7'],'Am7',['E7s','E7']],
+    roots: [45,38,43,36,41,[47,40],45,[40,40]],
+    mel: [
+      [[0,76,3],[3,79,1],[4,81,2],[6,79,1],[7,76,1]],
+      [[0,78,2],[2,76,1],[3,74,1],[4,72,3],[7,74,1]],
+      [[0,74,2],[2,71,2],[4,74,1],[5,78,1],[6,79,2]],
+      [[0,76,6],[6,74,1],[7,72,1]],
+      [[0,72,2],[2,76,1],[3,77,1],[4,81,3],[7,79,1]],
+      [[0,77,2],[2,74,2],[4,80,2],[6,76,2]],
+      [[0,81,2],[2,84,1],[3,83,1],[4,81,2],[6,76,2]],
+      [[0,74,2],[2,76,2],[4,80,2],[6,83,2]],
+    ],
+    lead: (t, m, d, v)=>synlead(t, m, d, v, 'sawtooth', 3200, 0.03, 0.35),
+    play(t, bar, e, d8, s){
+      const T = this, v = T.voice[half(T.chords[bar], e)], r = low(half(T.roots[bar], e)), rest = (s >> 6) & 1 && bar < 4;
+      if(chordOn(T, bar, e)) strings(t, v, chordLen(T, bar, d8), 1.1);
+      sbass(t, e % 2 ? r + 12 : r, d8*0.7, (e % 2 ? 0.7 : 0.85)*hv(s), 0.5);   // the octave bounce
+      if(e % 2 === 0){ dkick(t, 0.85); chat(t, 0.8*hv(s)); } else ohat(t, hv(s));
+      if(e === 2 || e === 6) clap(t, 0.85*hv(s));
+      if(rest ? [1, 3, 6].includes(e) : (bar % 2 ? [3, 6] : [7]).includes(e)) stab(t, v, (rest ? 1 : 0.8)*hv(s + 3));   // more stabs while the tune rests
+    }},
+  smoke: {name: 'Strut', bpm: 112, swing: 0.5,   // funky disco: slap bass, guitar chops, a clav line, claps on 2 and 4
+    // Em9 | Em9 | A13 | A13 | Cmaj7 | B7 | Em9 | F#m7 B7
+    voice: {Em9: [55,59,62,66], A13: [55,59,61,66], C: [55,59,60,64], B7: [57,59,63,66], Fsm7: [54,57,61,64]},
+    chords: ['Em9','Em9','A13','A13','C','B7','Em9',['Fsm7','B7']],
+    roots: [40,40,45,45,36,47,40,[42,47]],
+    slap: [   // [eighth, semitones over the root, length in eighths, popped]
+      [[0,0,1.5,0],[2,12,0.5,1],[3,0,0.5,0],[4,0,0.4,0],[5,12,0.5,1],[6,10,0.5,1],[7,7,0.5,0]],
+      [[0,0,1,0],[1,0,0.4,0],[3,12,0.5,1],[4,7,1,0],[6,10,0.5,1],[7,12,0.5,1]],
+    ],
+    mel: [
+      [[0,71,1],[1,74,1],[3,76,1],[4,74,1],[6,71,1],[7,69,1]],
+      [[1,67,1],[2,69,1],[3,71,2],[6,74,1],[7,76,1]],
+      [[0,78,1],[2,76,1],[3,73,1],[5,71,1],[6,69,2]],
+      [[1,73,1],[2,76,1],[4,78,2],[7,76,1]],
+      [[0,79,2],[3,76,1],[4,74,1],[5,71,1],[6,72,2]],
+      [[0,75,2],[2,78,1],[3,81,2],[6,78,1],[7,75,1]],
+      [[0,76,1],[1,74,1],[2,71,1],[4,74,1],[5,76,2],[7,79,1]],
+      [[0,78,1],[1,76,1],[2,73,2],[4,75,1],[5,78,1],[6,75,2]],
+    ],
+    lead: (t, m, d, v)=>clav(t, m, d, v),
+    play(t, bar, e, d8, s){
+      const T = this, v = T.voice[half(T.chords[bar], e)], r = half(T.roots[bar], e);
+      for(const [be, iv, len, pop] of T.slap[bar % 2]) if(be === e) slapb(t, r + iv, d8*len, (pop ? 0.8 : 0.9)*hv(s), pop);
+      chop(t, v, (e % 2 ? 1 : 0.6)*hv(s + 7), e % 2 === 1);   // scratching on every eighth, the chord rings on the off-beats
+      if(chordOn(T, bar, e) && bar % 2 === 0) v.forEach((m, i)=>epiano(t + i*0.01, m, d8*1.5, 0.4*hv(s + i), 0.2));
+      if(e === 0 || e === 4 || (e === 5 && bar % 2)) dkick(t, e === 5 ? 0.55 : 0.85);
+      chat(t, (e % 2 ? 0.6 : 0.9)*hv(s));
+      if(e === 7) ohat(t, 0.8*hv(s));
+      if(e === 2 || e === 6) clap(t, 0.95*hv(s));
+    }},
+  felt: {name: 'Orbit', bpm: 124, swing: 0.5,   // space disco: sequenced synth bass, a bell arpeggio, slow pad sweeps, handclaps
+    // Dm9 | Bbmaj7 | Gm9 | A7sus A7 | Dm9 | Bbmaj7 | F C | Gm7 A7
+    voice: {Dm9: [57,60,64,65], Bb: [57,58,62,65], Gm9: [55,58,62,65], A7s: [55,57,62,64], A7: [55,57,61,64], F: [53,57,60,64], C: [55,60,64,67], Gm7: [55,58,62,65]},
+    chords: ['Dm9','Bb','Gm9',['A7s','A7'],'Dm9','Bb',['F','C'],['Gm7','A7']],
+    roots: [38,46,43,[45,45],38,46,[41,48],[43,45]],
+    seq: [0,0,12,0, 0,12,0,12, 0,0,12,0, 7,12,10,12],   // the bass, in sixteenths, over the root
+    arp: [0,2,1,3,2,0,3,1],
+    mel: [
+      [[0,74,3],[3,76,1],[4,77,4]],
+      [[0,81,4],[4,79,2],[6,77,2]],
+      [[0,74,2],[2,77,2],[4,82,4]],
+      [[0,81,4],[4,79,2],[6,76,2]],
+      [[0,77,2],[2,76,1],[3,74,1],[4,69,4]],
+      [[0,70,2],[2,74,2],[4,77,2],[6,81,2]],
+      [[0,84,3],[3,81,1],[4,79,4]],
+      [[0,77,2],[2,74,2],[4,73,4]],
+    ],
+    lead: (t, m, d, v)=>synlead(t, m, d, v, 'square', 1900, 0.032, 0.45),
+    play(t, bar, e, d8, s){
+      const T = this, v = T.voice[half(T.chords[bar], e)], r = low(half(T.roots[bar], e));
+      if(chordOn(T, bar, e)) sweep(t, v, chordLen(T, bar, d8), 1);
+      for(let k = 0; k < 2; k++) sbass(t + k*d8/2, r + T.seq[e*2 + k], d8*0.4, (k ? 0.7 : 0.85)*hv(s + k), 0.6);
+      bell(t, v[T.arp[e]] + 12 + (e >= 4 ? 12 : 0), 0.8*hv(s + 5));
+      if(e % 2 === 0){ dkick(t, 0.85); chat(t, 0.7*hv(s)); } else ohat(t, 0.9*hv(s));
+      if(e === 2 || e === 6) clap(t, 0.9*hv(s));
+    }},
+};
+const tune = id => (style === 'disco' ? DISCO : TRACKS)[id];
+function warm(id){ if(id === 'felt' && style !== 'disco'){ const T = TRACKS.felt; T.voice.flat().concat(T.mel.flat().map(n=>n[1])).forEach(ksNote); } }
 
 function schedule(){
-  const T = TRACKS[track]; if(!T) return;
+  if(!TRACKS[track]) return;
   if(nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05;   // fell behind (a throttled timer): pick up from now, never a burst of missed notes
   while(nextT < ctx.currentTime + 0.3){
-    const s = step % 128, pass = s >> 6, bar = (s >> 3) & 7, e = s & 7;
-    if(e === 0 && style !== wantStyle){ style = wantStyle; metalFor(); }   // switch styles on the bar line
-    const dd = style === 'disco', beat = 60/(dd ? DISCO_BPM : T.bpm), d8 = beat/2;
-    const t = nextT + (e % 2 && !dd ? (T.swing - 0.5)*beat : 0);
-    if(dd) disco(T, t, bar, e, d8, s); else T.play(t, bar, e, d8, s);
+    if((step & 7) === 0 && style !== wantStyle){   // on the bar line: the other station's tune, from its top
+      style = wantStyle; step = 0; metalFor(); warm(track);
+      if(tune(track).crackle) startCrackle(); else stopCrackle();
+    }
+    const T = tune(track), s = step % 128, pass = s >> 6, bar = (s >> 3) & 7, e = s & 7;
+    const beat = 60/T.bpm, d8 = beat/2, t = nextT + (e % 2 ? (T.swing - 0.5)*beat : 0);
+    T.play(t, bar, e, d8, s);
     if(!(pass === 1 && bar < 4)) for(const [me, m, len] of T.mel[bar]) if(me === e) T.lead(t, m, d8*len, (pass ? 0.85 : 1)*hv(s + 50));
     nextT += d8; step++;
   }
@@ -330,10 +473,10 @@ function play(id){
   clearInterval(timer); timer = 0;
   setTimeout(()=>{
     if(my !== tok) return;
-    stopCrackle(); warm(id);
-    track = id; style = wantStyle; metalFor(); step = 0; nextT = ctx.currentTime + 0.1;
+    stopCrackle(); style = wantStyle; warm(id);
+    track = id; metalFor(); step = 0; nextT = ctx.currentTime + 0.1;
     out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setTargetAtTime(vol*LEVEL, ctx.currentTime, 0.5);
-    if(TRACKS[id].crackle) startCrackle();
+    if(tune(id).crackle) startCrackle();
     if(!away){ timer = setInterval(schedule, 50); schedule(); }
   }, wait);
 }
@@ -361,5 +504,7 @@ if(root.document) root.document.addEventListener('visibilitychange', ()=>{
   if(away){ clearInterval(timer); timer = 0; try{ ctx.suspend(); }catch(e){} }
   else resume();
 });
-root.Music = {play, stop, setVolume, setStyle, style: ()=>style, resume, unlock, tracks: Object.fromEntries(Object.entries(TRACKS).map(([k, T])=>[k, T.name])), playing: ()=>track};
+// a station's name: the disco tune's while the Disco set is on
+const stationName = id => { const T = (wantStyle === 'disco' ? DISCO : TRACKS)[id]; return T ? T.name : ''; };
+root.Music = {play, stop, setVolume, setStyle, style: ()=>style, resume, unlock, stationName, tracks: Object.fromEntries(Object.entries(TRACKS).map(([k, T])=>[k, T.name])), playing: ()=>track};
 })(typeof window !== 'undefined' ? window : this);

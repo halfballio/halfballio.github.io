@@ -4120,7 +4120,8 @@ function applyStyle(){
   const S = ST(), n = h => parseInt(h.slice(1), 16);
   if(G3) G3.setColors({cloth: n(S.cloth), shelf: n(S.shelf), cushion: n(S.cushion), nose: n(S.nose), rail: n(S.rail), railEdge: n(S.edge), diamond: n(S.diamond)});
   pcache.key = null;
-  if(window.Music && Music.setStyle) Music.setStyle(settings.ballSet === 'disco' ? 'disco' : 'normal');   // the Disco balls bring disco music
+  if(window.Music && Music.setStyle) Music.setStyle(settings.ballSet === 'disco' ? 'disco' : 'normal');   // the Disco balls bring the disco tunes
+  renderRadio();   // and their names
 }
 function tableSVG(s, reveal){
   let o = `<defs>
@@ -6226,7 +6227,9 @@ const STATIONS = ['off', 'parlor', 'smoke', 'felt'], STATION_NAME = {off: 'Off',
 function renderRadio(){
   const b = $('radio'); if(!b) return;
   const i = STATIONS.indexOf(settings.music);
-  $('radiolbl').textContent = STATION_NAME[settings.music] || 'Off';
+  const name = k => (k !== 'off' && window.Music && Music.stationName && Music.stationName(k)) || STATION_NAME[k];   // the disco tunes' names while the Disco set is on
+  $('radiolbl').textContent = name(settings.music) || 'Off';
+  document.querySelectorAll('[data-set="music"]').forEach(x=>{ x.textContent = name(x.dataset.val); });
   b.classList.toggle('off', settings.music === 'off');
   b.dataset.station = STATIONS[Math.max(0, i)];   // off: a muted speaker; on: gold equaliser bars that move (still under reduced motion)
 }
