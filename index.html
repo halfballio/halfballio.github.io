@@ -844,6 +844,32 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .wnfoot .startbtn{min-width:140px;padding:12px 24px}
 @media (max-width:480px){.wnfoot .startbtn{flex:1}.wnhead{padding:14px 16px 10px}.wnbody{padding:2px 16px}.wnfoot{padding:10px 16px 12px}}
 @media (prefers-reduced-motion:reduce){.wncard{animation:none}}
+/* Back up / Restore: the What's new card, with sections, choices and a message line */
+.bkbody{display:flex;flex-direction:column;gap:10px;padding:10px 20px 16px}
+.bkbody h3{margin:8px 0 0;font:600 12px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bkbody p{margin:0;font-size:14.5px;line-height:1.45;color:var(--ink)}
+.bkbody p.bknote{font-size:13px;color:var(--muted)}
+.bkrow{display:flex;flex-wrap:wrap;gap:8px}
+.bkbody .sumdone,.bkfoot .sumdone{min-height:44px;padding:0 16px}
+.bkrow .sumdone{flex:1 1 auto}
+.bkfoot{gap:10px}
+.bkgroup{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.bkgroup legend{padding:0;margin-bottom:6px;font:600 12px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bkopt{display:flex;align-items:flex-start;gap:10px;min-height:44px;padding:11px 12px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);color:var(--ink);font:600 14.5px/1.35 var(--body);cursor:pointer;transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
+.bkopt:hover{border-color:var(--muted)}
+.bkopt.on{border-color:var(--accent);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--accent)}
+.bkopt input[type=radio]{flex:none;width:18px;height:18px;margin:1px 0 0;accent-color:var(--accent)}
+.bkopt span{flex:1;min-width:0}
+.bkopt small{display:block;margin-top:2px;font-weight:400;font-size:13px;color:var(--muted)}
+.bkopt.off{opacity:.55;cursor:not-allowed}
+.bkname{display:block;font:600 13px var(--body);color:var(--muted)}
+.bkname input{display:block;width:100%;min-height:44px;margin-top:6px;padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);font:500 16px var(--body)}
+.bkname input[aria-invalid="true"]{border-color:var(--bad)}
+.bkerr{margin:0;font-size:13px;color:var(--bad)}.bkerr:empty{display:none}
+.bkmsg{margin:0;padding:10px 12px;border-radius:var(--r);border:1px solid var(--line);border-left:4px solid var(--muted);background:var(--surface-2);font-size:14px;line-height:1.45;color:var(--ink)}
+.bkmsg:empty{display:none}.bkmsg.ok{border-left-color:var(--good)}.bkmsg.bad{border-left-color:var(--bad)}
+.bkwarn{color:var(--bad)!important}
+@media (max-width:480px){.bkbody{padding:8px 16px 14px}.bkfoot .startbtn,.bkfoot .sumdone{flex:1}}
 /* ---------- Stats: the header button, the compact summary under the controls, and the full view ---------- */
 .statsbtn{height:40px;display:inline-flex;align-items:center;gap:7px;padding:0 13px 0 11px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:600 14px var(--body);cursor:pointer;box-shadow:var(--shadow-1);transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
 .statsbtn:hover{border-color:var(--muted)}
@@ -1120,6 +1146,7 @@ html.svopen,html.svopen body{overflow:hidden}
       <div class="opt optrange">Cue and hand opacity <span id="rigopval"></span>
         <input type="range" id="rigoprange" min="50" max="100" step="5" aria-label="Cue and hand opacity, percent">
       </div>
+      <div class="opt">Backup <button class="sumdone librebuild" id="bkopen" aria-haspopup="dialog">Back up / Restore</button></div>
       <div class="opt">Your progress <button class="sumdone librebuild" id="reset">Reset progress</button></div>
       </div>
       <div class="setpane" id="set-table" hidden>
@@ -1386,6 +1413,14 @@ html.svopen,html.svopen body{overflow:hidden}
     <div class="lvupfoot"><button class="startbtn" id="lvupok">Continue</button></div>
   </div>
 </div>
+<div class="menu wnmenu" id="bk" hidden>   <!-- Back up / Restore: save progress to a file, or load it back -->
+  <div class="menucard wncard bkcard" role="dialog" aria-modal="true" aria-labelledby="bktitle" aria-describedby="bkkick">
+    <div class="wnhead"><small id="bkkick"></small><h2 id="bktitle">Back up / Restore</h2></div>
+    <div class="wnbody bkbody" id="bkbody" tabindex="-1"></div>
+    <div class="wnfoot bkfoot" id="bkfoot"></div>
+  </div>
+  <input type="file" id="bkfile" accept=".json,application/json" hidden tabindex="-1">
+</div>
 <script src="engine.js"></script>
 <script src="vendor/three.min.js"></script>
 <script src="table3d.js"></script>
@@ -1493,6 +1528,9 @@ let meId = null, plWired = false;
 const plEsc = t => String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 function plGrade(id){   // their Shoot grade, for the picker
   let s = null; try{ s = JSON.parse(lsGet(plKey('halfball-stats', id))); }catch(e){}
+  return statsGrade(s);
+}
+function statsGrade(s){
   if(!s || (!s.shoot && !(s.log || []).length)) return 'New';
   const g = s.shoot ? ((s.shoot.v | 0) < SHOOT_V ? oldShootG(s.shoot.g | 0) : s.shoot.g | 0) : 0;   // not moved over yet: they haven't played since
   return SHOOT_GRADES[Math.min(Math.max(0, g), SHOOT_GRADES.length - 1)];
@@ -1555,7 +1593,7 @@ try{ Object.assign(settings, JSON.parse(localStorage.getItem(lsKey(KEY('halfball
 // the old setting maps onto the same place mid-table, where it mattered most
 if(settings.railBack == null && settings.standBack != null){ settings.railBack = Math.max(0, Math.min(24, Math.round(+settings.standBack - 28) || 0)); delete settings.standBack; }
 try{ const v = localStorage.getItem(lsKey(KEY('halfball-view'))); if(v && !localStorage.getItem(lsKey(KEY('halfball-settings')))) settings.view = v; }catch(e){}
-function saveSettings(){ try{ localStorage.setItem(lsKey(KEY('halfball-settings')), JSON.stringify(settings)); }catch(e){} }
+function saveSettings(){ if(restoring) return; try{ localStorage.setItem(lsKey(KEY('halfball-settings')), JSON.stringify(settings)); }catch(e){} }
 
 // ---------- What's new: release notes by build, newest first ----------
 // The routine: each time a player-facing change ships, add an entry at the TOP for that build (the BUILD it ships in: the
@@ -1635,7 +1673,33 @@ function load(){
   try{ const s = JSON.parse(localStorage.getItem(lsKey(KEY('halfball-stats')))); if(s && Array.isArray(s.log)) return s; }catch(e){}
   return blankStats();
 }
-function save(){ try{ localStorage.setItem(lsKey(KEY('halfball-stats')), JSON.stringify(stats)); }catch(e){} }
+let restoring = false;   // set while a backup is being written in: nothing in memory may save over it
+function save(){ if(restoring) return; try{ localStorage.setItem(lsKey(KEY('halfball-stats')), JSON.stringify(stats)); askPersist(); }catch(e){} }
+// The log keeps the last LOG_MAX shots and the last SESS_MAX finished sessions. What falls off isn't lost: it is added to
+// per-mode running totals (stats.archive, see stats.js), so lifetime numbers in Stats stay whole. Baselines are always kept.
+const LOG_MAX = 3000, SESS_MAX = 200;
+const statArchive = () => stats.archive || (stats.archive = {v: 1, modes: {}});
+function trimLog(){
+  const cut = stats.log.length - LOG_MAX; if(cut <= 0) return;
+  if(window.HBStats && HBStats.fold) HBStats.fold(statArchive(), stats.log.slice(0, cut), {refs: ALL, success, lean, hot: STREAK_HOT});
+  stats.log = stats.log.slice(cut);
+}
+function trimSessions(){
+  const S = stats.sessions || []; let extra = S.length - SESS_MAX; if(extra <= 0) return;
+  const drop = []; stats.sessions = S.filter(x=>{ if(extra > 0 && !x.base){ extra--; drop.push(x); return false; } return true; });
+  if(window.HBStats && HBStats.foldSessions) HBStats.foldSessions(statArchive(), drop);
+}
+// Ask the browser, once, to keep this site's storage instead of evicting it under pressure: after the first save
+// (a player who has started), not on a bare visit. Some browsers ask the player; others decide quietly.
+let persistAsked = false;
+function askPersist(){
+  if(persistAsked || TEST) return; persistAsked = true;
+  try{
+    if(lsGet('halfball-persist') || !(navigator.storage && navigator.storage.persist)) return;
+    localStorage.setItem(lsKey('halfball-persist'), '1');
+    (navigator.storage.persisted ? navigator.storage.persisted() : Promise.resolve(false)).then(p=>p || navigator.storage.persist()).catch(()=>{});
+  }catch(e){}
+}
 let stats = load();
 // once per player: grades (and the grades in the log, and a practice pick) onto the 14-grade ladder (see SHOOT_V)
 if(stats.shoot && (stats.shoot.v | 0) < SHOOT_V){
@@ -4638,7 +4702,7 @@ function logEntry(extra){   // ts: the minute it was played (minutes since 1970)
   stats.log.push({sid:act, t:settings.task, a:shot.answer.id, s:shot.side, v:settings.view,
     c: settings.view==='top' ? '-' : (isPlace() ? 'line' : stanceAim() ? 'aim' : 'line'),
     md:shot.any ? 'any' : 'ref', ...(shot.phys ? {am: shot.mod, sp: shot.speed, tw: +shot.throwDeg.toFixed(1), ...(shot.alt ? {aa: shot.alt.id, aam: shot.alt.mod} : {})} : {}), th:settings.throw, ln:shot.len, ts: Math.round(Date.now()/60000), rp:shot.replays||0, wk: shot.walked ? 1 : 0, dc:Math.round(len(sub(shot.ob,shot.cb))), dp:Math.round(shot.L), ag:+shot.theta.toFixed(1), pt:shot.P.side?'s':'c', gh: practiceAid() ? 1 : 0, fa: ['ghost','line','stance'].filter(k=>['on','fade'].includes(aidMode(k))).join('') || undefined, tb:settings.table, pk:settings.pockets, ...extra});
-  if(stats.log.length > 3000) stats.log = stats.log.slice(-3000);
+  trimLog();
   laterSave();
 }
 function finishRound(){
@@ -5030,7 +5094,7 @@ function finishSession(){
     Object.assign(rec, {base:1, v:'both', ln:'both', stand: by('stand'), down: by('down')});
   }
   restoreView(a);
-  stats.sessions = (stats.sessions || []).concat(rec).slice(-200);
+  stats.sessions = (stats.sessions || []).concat(rec); trimSessions();
   stats.active = null; syncPressed();
   if(rec.base){ const g0 = gradeFor(pct(rec.right, rec.n)); stats.level = {g: g0, best: g0, pts: 0, v: 2}; aidsOffBelow(-1, g0); rec.grade = stats.level.g; enforceLocks(); syncPressed(); renderBadge(true); playSound('levelup'); }
   else if(a.task==='sess' && a.g0!=null){ rec.g0 = a.g0; rec.grade = level(); }
@@ -5523,11 +5587,12 @@ function renderStats(){
 // ---------- the Stats view: over the table and panel on a desktop, the whole screen on a phone ----------
 const SV = {open: false, tab: 'overview', task: null, opener: null, pushed: false};
 const svTabs = () => window.HBStats ? HBStats.TABS : [];
-function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, gradeStep: GRADE_STEP, spinAt: gradeOf(SH.follow), hot: STREAK_HOT, shoot: stats.shoot}; }
+function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], archive: stats.archive || null, task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, gradeStep: GRADE_STEP, spinAt: gradeOf(SH.follow), hot: STREAK_HOT, shoot: stats.shoot}; }
 function svRender(){
   if(!window.HBStats) return;
-  const hasFlash = SV.task === 'flash' || flashUnlocked() || stats.log.some(e=>e.t === 'flash');
-  const hasPractice = SV.task === 'practice' || practiceUnlocked() || stats.log.some(e=>e.t === 'practice');
+  const inArch = t => !!(stats.archive && stats.archive.modes && stats.archive.modes[t]);
+  const hasFlash = SV.task === 'flash' || flashUnlocked() || stats.log.some(e=>e.t === 'flash') || inArch('flash');
+  const hasPractice = SV.task === 'practice' || practiceUnlocked() || stats.log.some(e=>e.t === 'practice') || inArch('practice');
   $('svmode').hidden = !hasFlash && !hasPractice;
   $('svmode').querySelector('[data-svt="flash"]').hidden = !hasFlash; $('svmode').querySelector('[data-svt="practice"]').hidden = !hasPractice;
   document.querySelectorAll('#svmode button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.svt === SV.task));
@@ -5587,7 +5652,7 @@ function openStats(v, opts = {}){
   window.addEventListener('popstate', ()=>{ if(SV.open) openStats(false, {fromPop: true}); });
   // while it's open the game behind takes no keys; Esc closes it, and Tab stays inside it
   window.addEventListener('keydown', e=>{
-    if(!SV.open) return;
+    if(!SV.open || !$('bk').hidden) return;   // Back up / Restore, over the Stats view, has the keys
     e.stopPropagation();
     if(e.key === 'Escape'){ e.preventDefault(); if(menuOpen()) openMenu(false); else if(!$('prog').hidden) openProg(false); else if(!$('tutmenu').hidden) openTutMenu(false); else openStats(false); return; }
     if(e.key === 'Tab'){
@@ -5806,7 +5871,7 @@ showTab('stats');   // the Shot tab is gone: its result line sits under the tabl
 $('reset').addEventListener('click', ()=>{   // all or nothing: your whole progression, Ladder and Flash together
   const warn = `Reset your progress?\n\nYou'll start again at ${SHOOT_GRADES[0]} with no record: every shot and session, Ladder, Flash and Practice, is cleared. Flash, Practice and the bigger tables lock until you earn them back, and the lessons play again as you reach them. This can't be undone.`;
   if(!confirm(warn)) return;
-  stats.log = []; stats.sessions = []; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; delete settings.lookSeen; applyStyle();
+  stats.log = []; stats.sessions = []; delete stats.archive; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; delete settings.lookSeen; applyStyle();
   if(settings.tutSeen) for(const k in LESSONS) if(LESSONS[k].at > 0) delete settings.tutSeen[k];
   saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderPracticeChip();
   if(!flashUnlocked() && settings.task==='flash' || !freeUnlocked() && settings.task==='free' || !practiceUnlocked() && isDrill()) applySetting('task','shoot');
@@ -6601,7 +6666,7 @@ function renderPlMenu(){
   const full = PL.list.length >= PL_MAX;
   $('plchipname').textContent = ME.name;
   $('plmenu').innerHTML = PL.list.map(p=>`<button role="menuitem" data-pl="${p.id}"${p.id === ME.id ? ' aria-current="true"' : ''}><span>${plEsc(p.name)}</span><small>${plGrade(p.id)}</small></button>`).join('')
-    + '<hr>' + (full ? '' : '<button role="menuitem" data-plact="new">New player…</button>') + '<button role="menuitem" data-plact="rename">Rename…</button><button role="menuitem" data-plact="manage">Manage players…</button>';
+    + '<hr>' + (full ? '' : '<button role="menuitem" data-plact="new">New player…</button>') + '<button role="menuitem" data-plact="rename">Rename…</button><button role="menuitem" data-plact="manage">Manage players…</button><button role="menuitem" data-plact="backup">Back up / Restore…</button>';
 }
 const plOpen = v => { $('plmenu').hidden = !v; $('plchip').setAttribute('aria-expanded', v); if(v) renderPlMenu(); };
 if(!TEST){ $('plwrap').hidden = false; renderPlMenu(); }
@@ -6609,13 +6674,207 @@ $('plchip').addEventListener('click', e=>{ e.stopPropagation(); plOpen($('plmenu
 $('plmenu').addEventListener('click', e=>{
   e.stopPropagation(); const b = e.target.closest('button'); if(!b) return; plOpen(false);
   if(b.dataset.pl){ if(b.dataset.pl !== ME.id) playAs(b.dataset.pl); return; }
+  if(b.dataset.plact === 'backup'){ openBackup($('plchip')); return; }
   if(b.dataset.plact === 'rename'){ const v = (prompt('Player name', ME.name) || '').trim().slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); } }
   else { showPlayers(); if(b.dataset.plact === 'new') $('plname').focus({preventScroll: true}); }
 });
 document.addEventListener('click', ()=>{ if(!$('plmenu').hidden) plOpen(false); });
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && !$('plmenu').hidden){ plOpen(false); e.stopPropagation(); } }, true);
+// ---------- Back up / Restore: a player's progress (or every player's) to a .json file, and back ----------
+// The file: {format, schema, saved, players: [{id, name, settings, stats, view}]}. Only JSON is read from it, checked strictly
+// (shape, types, size) and copied value by value; nothing in it is ever run. A restore replaces you, or adds a new player.
+const BK_FORMAT = 'halfball-backup', BK_SCHEMA = 1, BK_MAX = 16 * 1024 * 1024, BK_KEYS = ['halfball-settings', 'halfball-stats', 'halfball-view'];
+const bk = {view: 'main', file: null, pick: 0, how: 'add', from: null, msg: '', tone: '', addedId: null, addedName: ''};
+function bkRead(id){   // one player as it is saved now
+  const j = k => { try{ return JSON.parse(lsGet(plKey(k, id))); }catch(e){ return null; } };
+  const p = PL.list.find(q=>q.id === id) || ME, v = lsGet(plKey('halfball-view', id));
+  return {id, name: p.name, settings: j('halfball-settings') || {}, stats: j('halfball-stats') || blankStats(), view: v || null};
+}
+function bkShots(st){   // every scored shot, the archive's included
+  let n = (st && Array.isArray(st.log) ? st.log : []).filter(e=>e && !e.gh).length;
+  const m = st && st.archive && st.archive.modes; if(m && typeof m === 'object') for(const k in m) if(m[k] && typeof m[k].n === 'number') n += m[k].n;
+  return n;
+}
+const bkSlug = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'player';
+function bkExport(all){
+  save(); saveSettings();   // what's in play now goes in too
+  const ids = all ? PL.list.map(p=>p.id) : [ME.id];
+  const data = {format: BK_FORMAT, schema: BK_SCHEMA, saved: new Date().toISOString(), players: ids.map(bkRead)};
+  const name = `halfball-${all ? 'all-players' : bkSlug(ME.name)}-${new Date().toISOString().slice(0, 10)}.json`;
+  try{
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: 'application/json'}));
+    const a = document.createElement('a'); a.href = url; a.download = name; a.hidden = true; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    bkSay(`Saved ${name}. Keep it somewhere safe, away from this browser.`, 'ok');
+  }catch(e){ bkSay('Couldn’t save the file. Try again.', 'bad'); }
+}
+// copy a parsed value, keeping only plain JSON, within limits; anything else throws
+function bkClean(v, depth){
+  if(v === null || typeof v === 'boolean') return v;
+  if(typeof v === 'number'){ if(!Number.isFinite(v)) throw 0; return v; }
+  if(typeof v === 'string'){ if(v.length > 4000) throw 0; return v; }
+  if(depth > 8 || typeof v !== 'object') throw 0;
+  if(Array.isArray(v)){ if(v.length > 100000) throw 0; return v.map(x=>bkClean(x, depth + 1)); }
+  const o = {};
+  for(const k of Object.keys(v)){ if(k === '__proto__' || k === 'constructor' || k === 'prototype' || k.length > 64) continue; o[k] = bkClean(v[k], depth + 1); }
+  return o;
+}
+const bkObj = v => v != null && typeof v === 'object' && !Array.isArray(v);
+const bkNum = v => v === undefined || typeof v === 'number';
+const BK_NOT = 'That file isn’t a Halfball backup.', BK_BAD = 'That backup is damaged, so nothing was changed.';
+// a file's text to its players, or a reason it can't be used (shown to the player as is)
+function bkParse(text){
+  let raw; try{ raw = JSON.parse(text); }catch(e){ throw BK_NOT; }
+  if(!bkObj(raw) || raw.format !== BK_FORMAT) throw BK_NOT;
+  if(!Number.isInteger(raw.schema) || raw.schema < 1 || raw.schema > BK_SCHEMA) throw 'This backup can’t be read here.';
+  let d; try{ d = bkClean(raw, 0); }catch(e){ throw BK_BAD; }
+  if(!Array.isArray(d.players) || !d.players.length || d.players.length > PL_MAX) throw BK_BAD;
+  const players = d.players.map(p=>{
+    if(!bkObj(p) || typeof p.name !== 'string' || !p.name.trim() || !bkObj(p.settings) || !bkObj(p.stats)) throw BK_BAD;
+    const st = p.stats;
+    if(!Array.isArray(st.log) || st.log.length > 20000 || !st.log.every(e=>bkObj(e) && bkNum(e.ts) && (e.t === undefined || typeof e.t === 'string'))) throw BK_BAD;
+    if(st.sessions !== undefined && !(Array.isArray(st.sessions) && st.sessions.length <= 5000 && st.sessions.every(bkObj))) throw BK_BAD;
+    if(!['n', 'c', 'made', 'streak', 'best'].every(k=>bkNum(st[k]))) throw BK_BAD;
+    if(st.shoot !== undefined && !(bkObj(st.shoot) && typeof st.shoot.g === 'number')) throw BK_BAD;
+    for(const k of ['level', 'active']) if(st[k] != null && !bkObj(st[k])) throw BK_BAD;
+    if(st.archive !== undefined && !(bkObj(st.archive) && (st.archive.modes === undefined || (bkObj(st.archive.modes) && Object.values(st.archive.modes).every(m=>bkObj(m) && typeof m.n === 'number'))))) throw BK_BAD;
+    if(p.view != null && (typeof p.view !== 'string' || p.view.length > 20)) throw BK_BAD;
+    return {name: p.name.trim().slice(0, 16), settings: p.settings, stats: st, view: p.view || null};
+  });
+  return {saved: typeof d.saved === 'string' && !isNaN(Date.parse(d.saved)) ? new Date(d.saved) : null, players};
+}
+// write one player's keys; if any write fails (storage full), every key goes back as it was
+function bkWrite(id, p){
+  const was = BK_KEYS.map(k=>lsGet(plKey(k, id)));
+  try{
+    localStorage.setItem(lsKey(plKey('halfball-settings', id)), JSON.stringify(p.settings));
+    localStorage.setItem(lsKey(plKey('halfball-stats', id)), JSON.stringify(p.stats));
+    if(p.view) localStorage.setItem(lsKey(plKey('halfball-view', id)), p.view); else localStorage.removeItem(lsKey(plKey('halfball-view', id)));
+    return true;
+  }catch(e){
+    BK_KEYS.forEach((k, i)=>{ try{ if(was[i] == null) localStorage.removeItem(lsKey(plKey(k, id))); else localStorage.setItem(lsKey(plKey(k, id)), was[i]); }catch(x){} });
+    return false;
+  }
+}
+const bkTaken = name => PL.list.find(p=>p.name.toLowerCase() === name.toLowerCase());
+function bkFreeName(name){
+  if(!bkTaken(name)) return name;
+  for(let i = 2; i < 100; i++){ const t = `${name.slice(0, 16 - String(i).length - 1)} ${i}`; if(!bkTaken(t)) return t; }
+  return name;
+}
+function bkSay(msg, tone){
+  bk.msg = msg; bk.tone = tone || '';
+  const m = $('bkmsg'); if(!m) return;
+  m.setAttribute('role', tone === 'bad' ? 'alert' : 'status'); m.className = 'bkmsg' + (tone ? ' ' + tone : ''); m.textContent = msg;
+}
+const bkSummary = st => { const n = bkShots(st); return `${statsGrade(st)} · ${n.toLocaleString()} shot${n === 1 ? '' : 's'}`; };
+function bkRender(){
+  const full = PL.list.length >= PL_MAX, many = PL.list.length > 1, body = $('bkbody'), foot = $('bkfoot');
+  if(bk.view === 'main'){
+    $('bkkick').textContent = ME.name;
+    body.innerHTML = `<p>Your progress is kept in this browser only. Save a backup now and then, and keep the file somewhere safe.</p>`
+      + `<h3>Back up</h3><div class="bkrow"><button class="sumdone" data-bk="me">${many ? `Save ${plEsc(ME.name)}` : 'Save a backup'}</button>${many ? `<button class="sumdone" data-bk="all">Save all ${PL.list.length} players</button>` : ''}</div>`
+      + `<p class="bknote">Grade, stats and settings, as a .json file.</p>`
+      + `<h3>Restore</h3><div class="bkrow"><button class="sumdone" data-bk="pick">Choose a backup file…</button></div>`
+      + `<p class="bknote">You choose what to do with it before anything changes.</p>`
+      + `<p class="bkmsg" id="bkmsg"></p>`;
+    foot.innerHTML = `<button class="startbtn" data-bk="close">Done</button>`;
+  } else if(bk.view === 'confirm'){
+    const F = bk.file, P = F.players[bk.pick];
+    $('bkkick').textContent = 'Restore' + (F.saved ? ` · saved ${F.saved.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}` : '');
+    if(bk.how === 'add' && full) bk.how = 'replace';
+    let h = '';
+    if(F.players.length > 1) h += `<fieldset class="bkgroup"><legend>Which player</legend>` + F.players.map((p, i)=>`<label class="bkopt${i === bk.pick ? ' on' : ''}"><input type="radio" name="bkwho" value="${i}"${i === bk.pick ? ' checked' : ''}><span>${plEsc(p.name)}<small>${bkSummary(p.stats)}</small></span></label>`).join('') + `</fieldset>`;
+    else h += `<p><b>${plEsc(P.name)}</b> · ${bkSummary(P.stats)}</p>`;
+    h += `<fieldset class="bkgroup"><legend>What to do</legend>`
+      + `<label class="bkopt${bk.how === 'add' ? ' on' : ''}${full ? ' off' : ''}"><input type="radio" name="bkhow" value="add"${bk.how === 'add' ? ' checked' : ''}${full ? ' disabled' : ''}><span>Add as a new player<small>${full ? `${PL_MAX} players max: delete one to add another` : 'Everyone here keeps their progress'}</small></span></label>`
+      + `<label class="bkopt${bk.how === 'replace' ? ' on' : ''}"><input type="radio" name="bkhow" value="replace"${bk.how === 'replace' ? ' checked' : ''}><span>Replace ${plEsc(ME.name)}<small>${plEsc(ME.name)} now: ${bkSummary(stats)}</small></span></label></fieldset>`;
+    if(bk.how === 'add') h += `<label class="bkname">Name<input id="bkname" maxlength="16" autocomplete="off" aria-describedby="bkerr" value="${plEsc(bkFreeName(P.name))}"></label><p class="bkerr" id="bkerr"></p>`;
+    else h += `<p class="bkwarn">${plEsc(ME.name)}’s grade, stats and settings here are replaced by the backup’s. This can’t be undone.</p>`;
+    h += `<p class="bkmsg" id="bkmsg"></p>`;
+    body.innerHTML = h;
+    foot.innerHTML = `<button class="sumdone" data-bk="back">Cancel</button><button class="startbtn" data-bk="go">${bk.how === 'add' ? 'Add player' : 'Replace'}</button>`;
+  } else {   // done: what was restored
+    $('bkkick').textContent = 'Restore';
+    body.innerHTML = `<p class="bkmsg" id="bkmsg"></p>`;
+    foot.innerHTML = bk.addedId ? `<button class="sumdone" data-bk="close">Close</button><button class="startbtn" data-bk="playnew">Play as ${plEsc(bk.addedName)}</button>` : `<button class="startbtn" data-bk="close">Done</button>`;
+  }
+  if(bk.msg) bkSay(bk.msg, bk.tone);
+}
+function bkFocus(){ const f = $('bk').querySelector('.bkbody button') || $('bk').querySelector('.bkfoot .startbtn'); if(f) f.focus({preventScroll: true}); }
+function openBackup(from){
+  plOpen(false);
+  bk.from = from || document.activeElement; bk.view = 'main'; bk.file = null; bk.msg = ''; bk.addedId = null;
+  bkRender(); $('bk').hidden = false; $('bkbody').scrollTop = 0;
+  bkFocus();
+}
+function closeBackup(){
+  if($('bk').hidden) return;
+  $('bk').hidden = true; bk.file = null;
+  const f = bk.from && bk.from.isConnected && bk.from !== document.body ? bk.from : null; bk.from = null;
+  if(f) try{ f.focus({preventScroll: true}); }catch(e){}
+}
+function bkMain(){ bk.view = 'main'; bk.file = null; bk.msg = ''; bkRender(); bkFocus(); }
+async function bkLoad(file){
+  bk.msg = '';
+  if(!file) return;
+  if(file.size > BK_MAX){ bkSay('That file is too big to be a Halfball backup.', 'bad'); return; }
+  let text; try{ text = await file.text(); }catch(e){ bkSay('Couldn’t read that file.', 'bad'); return; }
+  try{ bk.file = bkParse(text); }catch(e){ bkSay(typeof e === 'string' ? e : BK_BAD, 'bad'); return; }
+  bk.pick = 0; bk.how = PL.list.length >= PL_MAX ? 'replace' : 'add'; bk.view = 'confirm'; bk.msg = '';
+  bkRender(); $('bkbody').scrollTop = 0;
+  const r = $('bk').querySelector('input[name="bkwho"]:checked') || $('bk').querySelector('input[name="bkhow"]:checked'); if(r) r.focus({preventScroll: true});
+}
+function bkGo(){
+  const P = bk.file && bk.file.players[bk.pick]; if(!P) return;
+  if(bk.how === 'add'){
+    const inp = $('bkname'), name = inp.value.trim().slice(0, 16), err = $('bkerr');
+    const bad = !name ? 'Give the player a name.' : bkTaken(name) ? `There’s already a ${bkTaken(name).name} here. Try ${bkFreeName(name)}.` : PL.list.length >= PL_MAX ? `${PL_MAX} players max: delete one to add another.` : '';
+    if(bad){ err.textContent = bad; inp.setAttribute('aria-invalid', 'true'); inp.focus(); return; }
+    let id; do id = 'p' + Math.random().toString(36).slice(2, 8); while(id === 'p0' || PL.list.some(p=>p.id === id));
+    if(!bkWrite(id, P)){ BK_KEYS.forEach(k=>{ try{ localStorage.removeItem(lsKey(plKey(k, id))); }catch(e){} }); bkSay('Couldn’t add the player: this browser’s storage is full. Nothing was changed.', 'bad'); return; }
+    PL.list.push({id, name}); savePL(); renderPlMenu();
+    bk.view = 'done'; bk.addedId = id; bk.addedName = name; bk.msg = `Added ${name}: ${bkSummary(P.stats)}. Switch to them here, or any time from the player menu.`; bk.tone = 'ok';
+    bkRender(); bkFocus(); return;
+  }
+  restoring = true; clearTimeout(laterT);   // nothing in play may save over the backup now
+  if(!bkWrite(ME.id, P)){ restoring = false; bkSay('Couldn’t restore: this browser’s storage is full. Nothing was changed.', 'bad'); return; }
+  try{ sessionStorage.setItem(lsKey('halfball-restored'), '1'); }catch(e){}
+  playAs(ME.id);   // starts again as you, from the backup
+}
+$('bkopen').addEventListener('click', e=>{ e.stopPropagation(); openBackup(e.currentTarget); });
+$('bkfile').addEventListener('change', e=>{ const f = e.target.files && e.target.files[0]; bkLoad(f); e.target.value = ''; });
+$('bk').addEventListener('change', e=>{
+  const t = e.target;
+  if(t.name === 'bkwho'){ bk.pick = +t.value; bkRender(); $('bk').querySelector(`input[name="bkwho"][value="${bk.pick}"]`).focus({preventScroll: true}); }
+  if(t.name === 'bkhow'){ bk.how = t.value; bkRender(); $('bk').querySelector(`input[name="bkhow"][value="${bk.how}"]`).focus({preventScroll: true}); }
+});
+$('bk').addEventListener('input', e=>{ if(e.target.id === 'bkname'){ $('bkerr').textContent = ''; e.target.removeAttribute('aria-invalid'); } });
+['click', 'pointerdown'].forEach(t=>$('bk').addEventListener(t, e=>{
+  e.stopPropagation();
+  if(t !== 'click') return;
+  if(e.target === $('bk')){ closeBackup(); return; }
+  const b = e.target.closest('[data-bk]'); if(!b) return;
+  const a = b.dataset.bk;
+  if(a === 'me' || a === 'all') bkExport(a === 'all');
+  else if(a === 'pick') $('bkfile').click();
+  else if(a === 'close') closeBackup();
+  else if(a === 'back') bkMain();
+  else if(a === 'go') bkGo();
+  else if(a === 'playnew'){ const id = bk.addedId; closeBackup(); playAs(id); }
+}));
+window.addEventListener('keydown', e=>{   // while it's up, keys stay in the card: Esc steps back or closes, Tab goes round it, Enter in the name adds
+  if($('bk').hidden) return;
+  e.stopPropagation();
+  if(e.key === 'Escape'){ e.preventDefault(); if(bk.view === 'confirm') bkMain(); else closeBackup(); return; }
+  if(e.key === 'Enter' && e.target && e.target.id === 'bkname'){ e.preventDefault(); bkGo(); return; }
+  if(e.key === 'Tab'){
+    const f = [...$('bk').querySelectorAll('button, input:not([type=file]):not([disabled])')].filter(b=>!b.hidden && (b.type !== 'radio' || b.checked)), i = f.indexOf(document.activeElement);
+    if(f.length){ e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus(); }
+  }
+}, true);
 // first launch: set where you stand before anything else
-function closeStance(){ settings.stanceSet = 1; saveSettings(); $('stancecover').hidden = true; showSessIdle(); if(!settings.tourSeen && startTour(true)) return; deal(); }
+function closeStance(){ settings.stanceSet = 1; saveSettings(); askPersist(); $('stancecover').hidden = true; showSessIdle(); if(!settings.tourSeen && startTour(true)) return; deal(); }
 $('stancedone').addEventListener('click', e=>{ e.stopPropagation(); closeStance(); });
 // ---------- the app tour: how to use Halfball (not how to play pool), once for a new player after the stance card ----------
 const TOUR = [
@@ -6898,13 +7157,14 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 ['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
-  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'tutmenu', 'prog', 'lvup', 'drill', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover'].every(id=>!$(id) || $(id).hidden);
+  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover'].every(id=>!$(id) || $(id).hidden);
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
 }
-// Ask the browser to keep this site's storage (scores, settings) instead of evicting it under storage pressure.
-try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+if(settings.stanceSet || stats.log.length) askPersist();   // already playing: ask now (once)
+if(!TEST){ let r = null; try{ r = sessionStorage.getItem(lsKey('halfball-restored')); sessionStorage.removeItem(lsKey('halfball-restored')); }catch(e){}
+  if(r){ openBackup(null); bk.view = 'done'; bk.msg = `Restored from your backup. ${ME.name}: ${statsGrade(stats)} · ${bkShots(stats).toLocaleString()} shots.`; bk.tone = 'ok'; bkRender(); bkFocus(); } }
 })();
 </script>
 <script>
