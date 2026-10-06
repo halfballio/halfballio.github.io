@@ -2259,7 +2259,7 @@ function dealFresh(){
 // The pill at the foot of the table: what the mode you're in is set to, and the way back into its setup. Flash, Practice and
 // Run-outs each have a setup sheet; practising a passed grade goes back to the ladder to pick a grade. The Ladder itself has none.
 function modeChip(){   // {text, act, label} or null
-  if(settings.task === 'flash'){ const t = `${(+settings.flash || 1500)/1000} s`, tb = `${flashTableNow()} ft`; return {text: `Flash · ${t} · ${tb}`, act: 'Change', label: `Flash: each shot shows for ${t}, ${tb} table. Change the setup`}; }
+  if(settings.task === 'flash'){ const t = `${(+settings.flash || 1500)/1000} s`, tb = `${flashTableNow()} ft`; return {text: `Flash · ${t} · ${tb}`, act: '', label: `Flash setup: each shot shows for ${t}, ${tb} table. Open it to change the setup.`}; }
   if(isDrill()){
     const d = drillPicks(), what = d.weak ? 'Your weakest' : d.fr.length === DRILL_FR.length ? 'Every fraction' : d.fr.map(f=>f === 'full' ? 'Full' : ALL.find(r=>r.id === f).label).join(' ');
     return {text: `Practice · ${what}`, act: '', label: `Practice setup: ${d.weak ? 'your weakest shots' : what}, not scored. Open it to change what comes up.`};
