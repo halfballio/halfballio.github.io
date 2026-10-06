@@ -6689,7 +6689,7 @@ $('coachskip').addEventListener('click', ()=>endTut(false));
 $('cog').addEventListener('click', ()=>openMenu(true));
 function openProg(v){ if(v) renderProgress(); $('prog').hidden = !v; if(v){ $('progclose').focus({preventScroll:true}); const h = $('ladder').querySelector('.here'); if(h) h.scrollIntoView({block:'center'}); } else $('badge').focus({preventScroll:true}); }
 $('badge').addEventListener('click', ()=>openProg(true));
-$('badge').addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); e.stopPropagation(); openProg(true); } });
+$('badge').addEventListener('keydown', e=>{ if(!e.defaultPrevented && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); e.stopPropagation(); openProg(true); } });
 $('progclose').addEventListener('click', ()=>openProg(false));
 document.addEventListener('keyup', e=>{ if(e.key===' ' && look.target){ e.preventDefault(); setLook(false); } });
 $('upbtn').addEventListener('click', e=>{ e.stopPropagation(); standUpOff(); });
@@ -6862,6 +6862,25 @@ document.querySelectorAll('#sessidlecover [data-sess]').forEach(b=>b.addEventLis
 $('basestart').addEventListener('click', e=>{ e.stopPropagation(); if(DEV) openProg(true); else startSession(100, true); });
 $('sessidlecover').addEventListener('click', e=>e.stopPropagation());
 $('sesscover').addEventListener('click', e=>e.stopPropagation());
+// a button you clicked or tapped keeps focus, and the browser presses it again on Space or Enter: on the table those keys are
+// the game's (hold Space to look), so a button focused by a pointer lets go after the click and never takes them. A button
+// you Tab to still presses with Space and Enter, and inside a card or menu nothing changes.
+{ let viaPointer = false; const byPointer = new WeakSet();
+  const inCard = el => !!(el.closest && el.closest('[role="dialog"], [role="menu"], [aria-modal="true"]'));
+  const typing = el => /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable;
+  const stale = el => el && el !== document.body && el.nodeType === 1 && byPointer.has(el) && !typing(el) && !inCard(el);
+  window.addEventListener('pointerdown', ()=>{ viaPointer = true; }, {capture: true, passive: true});
+  window.addEventListener('keydown', e=>{ if(e.key === 'Tab') viaPointer = false; }, true);
+  window.addEventListener('focusin', e=>{ if(viaPointer) byPointer.add(e.target); else byPointer.delete(e.target); }, true);   // a card handing focus back after a click counts as the click's
+  window.addEventListener('click', e=>{
+    if(!e.detail) return;   // Space, Enter or a screen reader: keep focus where it is
+    const b = e.target.closest && e.target.closest('button, [role="button"]');
+    if(b && !inCard(b)) setTimeout(()=>{ if(document.activeElement === b && !inCard(b)) b.blur(); }, 0);
+  }, true);
+  ['keydown', 'keyup'].forEach(t=>window.addEventListener(t, e=>{
+    if((e.key === ' ' || (e.key === 'Enter' && t === 'keydown')) && stale(document.activeElement)){ e.preventDefault(); if(t === 'keydown') document.activeElement.blur(); }   // the game still gets the key
+  }, true));
+}
 document.addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT') return;
   if((e.key==='m' || e.key==='M') && !e.metaKey && !e.ctrlKey){ const L = ['off','parlor','smoke','felt']; applySetting('music', L[(L.indexOf(settings.music) + 1) % L.length]); e.preventDefault(); return; }
