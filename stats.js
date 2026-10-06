@@ -18,7 +18,7 @@ function digest(ctx){
   const log = ctx.log || [], last = log[log.length - 1];
   const key = [ctx.task, log.length, last && (last.ts || ''), last && last.p, (ctx.sessions || []).length, ctx.shoot && ctx.shoot.g].join('|');
   if(memo.key === key && memo.ctx === ctx.log) return memo.d;
-  const shoot = ctx.task === 'shoot', idx = {}, refs = ctx.refs;
+  const shoot = ctx.task === 'shoot' || ctx.task === 'practice', practice = ctx.task === 'practice', idx = {}, refs = ctx.refs;   // Practice is shot as on the Ladder, unscored
   refs.forEach((r, i)=>{ idx[r.id] = i; });
   const L = [];
   for(const e of log) if((e.t || 'call') === ctx.task && !e.gh) L.push(e);
@@ -65,7 +65,7 @@ function digest(ctx){
     byRef[a].n++; byRef[a].ok += okA[i]; if(b === a) byRef[a].call++;
     if(b != null) M[a][b]++;
   }
-  const d = {ctx, shoot, L, n, right, calls, made, scr, okA, leanA, streaks, best, curStreak, bestWin, bestWinAt, shown, M, byRef, idx, real, called, callOk};
+  const d = {ctx, shoot, practice, L, n, right, calls, made, scr, okA, leanA, streaks, best, curStreak, bestWin, bestWinAt, shown, M, byRef, idx, real, called, callOk};
   memo = {key, ctx: ctx.log, d};
   return d;
 }
@@ -187,7 +187,7 @@ const fmtDay = m => when(m).toLocaleDateString(undefined, {weekday: 'short', mon
 const fmtTime = m => when(m).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
 
 // ---------- the tabs ----------
-function modeName(d){ return d.shoot ? 'Ladder' : 'Flash'; }
+function modeName(d){ return d.practice ? 'Practice' : d.shoot ? 'Ladder' : 'Flash'; }
 
 function tabOverview(d, w){
   const c = d.ctx, G = c.grades, out = [];
@@ -195,8 +195,8 @@ function tabOverview(d, w){
   const k = [];
   if(d.shoot){
     const g = c.shoot ? c.shoot.g : 0, best = c.shoot ? Math.max(c.shoot.g, c.shoot.best ?? 0) : 0;
-    k.push(kpi(G[g] || '–', 'Grade', best > g ? `best ${G[best]}` : 'Ladder', 'grade lead'));
-    k.push(kpi(d.n ? `${pct(d.right, d.n)}%` : '–', 'Full marks', d.n ? `${num(d.right)} of ${num(d.n)}` : ''));
+    if(!d.practice) k.push(kpi(G[g] || '–', 'Grade', best > g ? `best ${G[best]}` : 'Ladder', 'grade lead'));
+    k.push(kpi(d.n ? `${pct(d.right, d.n)}%` : '–', 'Full marks', d.n ? `${num(d.right)} of ${num(d.n)}` : '', d.practice ? 'lead' : ''));
     k.push(kpi(d.n ? `${pct(d.calls, d.n)}%` : '–', 'Right call', 'the fraction'));
     k.push(kpi(d.n ? `${pct(d.made, d.n)}%` : '–', 'Pocketed', d.scr ? `${pct(d.scr, d.n)}% scratched` : ''));
   } else {
@@ -208,7 +208,7 @@ function tabOverview(d, w){
   k.push(kpi(num(d.n), 'Shots', ''));
   out.push(`<div class="svkpis" role="list" aria-label="Key numbers">${k.map(x=>x.replace('<div class="svkpi', '<div role="listitem" class="svkpi')).join('')}</div>`);
   const grid = [], bl = blocks(d);
-  grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots · History has the grade and streaks`, bl.out.length >= 2
+  grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots · History has ${d.practice ? 'your' : 'the grade and'} streaks`, bl.out.length >= 2
     ? lineChart(bl.out.map(b=>({...b, x: `shot ${num(b.from)}`})), {w: w.full, h: 190, unit: `Each point: ${bl.B} shots`, mean: pct(d.right, d.n), aria: `Accuracy per ${bl.B} shots, ${bl.out.length} blocks, last ${bl.out[bl.out.length - 1].y} percent`,
         read: i=>{ const b = bl.out[i]; return `Shots ${num(b.from)}–${num(b.to)}: ${b.y}%${b.g != null ? ` · grade ${G[b.g]}` : ''}`; }})
     : empty(`Play ${bl.B*2} shots to see your trend`, `${plural(d.n, 'shot')} so far.`), 'wide'));
@@ -296,6 +296,7 @@ function wheres(d){
 function tabShots(d){
   const G = d.ctx.grades;
   if(!d.shoot) return empty('Zone, speed and spin results come from the Ladder', 'Switch to Ladder at the top to see them.');
+  if(d.practice && !d.L.some(e=>typeof e.sv === 'number')) return empty('No Practice shots yet', 'Speed, scratch and spin results show here once you practise.');
   const GS = d.ctx.gradeStep || [], st = e => GS[e.sg];   // a grade's step (zone steps are 9 to 13)
   const zk = e => e.zk || (st(e) >= 9 && st(e) <= 13 ? st(e) : e.z != null ? 0 : null);
   const Z = d.L.filter(e=>e.z != null), grid = [];
@@ -305,7 +306,7 @@ function tabShots(d){
     const zin = Z.filter(e=>e.z === 1).length;
     grid.push(card('Position: zone hit rate', `Shots with a target zone: cue ball pocketed the object ball and stopped in the zone · ${pct(zin, Z.length)}% of ${num(Z.length)}`,
       bars(types, {big: false}) + table(['Shot type', 'Shots', 'Pocketed', 'Scratch'], types.map(t=>[t.label, num(t.n), pc(t.made, t.n), pc(t.sc, t.n)]), 'Zone shots by type: pocketed and scratched')));
-  } else grid.push(card('Position: zone hit rate', 'Shots with a target zone', empty(`Zones start at ${G[9]} (follow)`, 'Each zone shot shows here by type: follow, stun, draw, two rails, english.')));
+  } else if(!d.practice) grid.push(card('Position: zone hit rate', 'Shots with a target zone', empty(`Zones start at ${G[9]} (follow)`, 'Each zone shot shows here by type: follow, stun, draw, two rails, english.')));
   // speed
   const SV = d.L.filter(e=>typeof e.sv === 'number');
   if(SV.length){
