@@ -9,7 +9,7 @@ let COL = {cloth:0x24609c, shelf:0x1f5689, cushion:0x2569a8, nose:0x1a4f80, rail
 function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few less facets (still round at any size a phone shows them)
   if(!T3) return null;
   let renderer;
-  const AA = opts.aa != null ? !!opts.aa : (root.localStorage && (()=>{ try{ return JSON.parse(localStorage.getItem('halfball-settings') || '{}').gfxAA; }catch(e){ return null; } })()) !== '0';   // antialiasing is fixed when the renderer is made
+  const AA = opts.aa != null ? !!opts.aa : (root.localStorage && (()=>{ try{ return JSON.parse(localStorage.getItem(typeof lsKey === 'function' ? lsKey('halfball-settings') : 'halfball-settings') || '{}').gfxAA; }catch(e){ return null; } })()) !== '0';   // antialiasing is fixed when the renderer is made
   try{ renderer = new T3.WebGLRenderer({canvas, antialias:AA, alpha:false, powerPreference:'high-performance'}); }catch(e){ return null; }
   renderer.setPixelRatio(Math.min(1.5, root.devicePixelRatio || 1));   // 1.5× is sharp enough and far cheaper than 2× on retina screens
   renderer.shadowMap.enabled = true;
