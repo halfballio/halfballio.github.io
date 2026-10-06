@@ -1355,7 +1355,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 508;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 509;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1418,7 +1418,7 @@ function showPlayers(){
 }
 let picked = null; try{ picked = sessionStorage.getItem('halfball-go'); sessionStorage.removeItem('halfball-go'); }catch(e){}
 if(!picked && PL.at && Date.now() - PL.at < 15000) picked = PL.cur;   // just picked, where there's no sessionStorage
-let ME = TEST ? {id: 'p0', name: 'Test'} : PL.list.find(p=>p.id === picked) || null;   // every visit starts at the title screen, even with one player
+let ME = TEST ? {id: 'p0', name: 'Test'} : PL.list.find(p=>p.id === picked) || (PL.list.length === 1 ? PL.list[0] : null);   // just one player: straight in (the picker is still in the player menu)
 if(!ME){ ME = await new Promise(go=>{ plPick = go; showPlayers(); }); $('playercover').hidden = true; toTop(); }   // nobody picked yet: the game waits behind the picker, then starts
 meId = ME.id;
 if(!TEST){ PL.cur = ME.id; delete PL.at; savePL(); try{ sessionStorage.setItem('halfball-player', ME.id); }catch(e){} }
