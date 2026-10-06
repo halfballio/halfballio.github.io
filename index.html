@@ -1388,8 +1388,8 @@ html.svopen,html.svopen body{overflow:hidden}
           <div class="lookwrap" id="upwrap" hidden><button class="lookbtn upbtn" id="upbtn" aria-label="Stand up off the shot" title="Stand up (Esc)" data-title-kbd="Stand up (Esc)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14M12 20V9M7 13.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="ckeys"><kbd>Esc</kbd></span></div>
           <div class="lookwrap" id="lookwrap"><button class="lookbtn" id="lookbtn" aria-label="Step back: hold to see the whole table" title="Step back (hold Space)" data-title-kbd="Step back (hold Space)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><span class="ckeys"><kbd>Space</kbd></span></div>
           <div class="lookwrap" id="focuswrap" hidden><button class="lookbtn focusbtn" id="focusbtn" aria-label="Look around the object ball" aria-pressed="false" title="Swap the view’s centre (V)" data-title-kbd="Swap the view’s centre (V)" data-title-touch=""><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle class="fdot" cx="12" cy="12" r="2.6" fill="#d2362b"/></svg></button><span class="ckeys"><kbd>V</kbd></span></div>
-          <div class="tippad" id="tippad" hidden><small>Tip</small>
-            <svg id="tipsvg" viewBox="-1.15 -1.15 2.3 2.3" aria-label="Where the cue tip strikes: tap to set"><circle r="1" fill="#f4efe0" stroke="#cfc6ae" stroke-width=".04"/><path id="tiplimit" d="" fill="#1b6fd1" fill-opacity=".45"/><line x1="-1" y1="0" x2="1" y2="0" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><line x1="0" y1="-1" x2="0" y2="1" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><circle id="tipdot" r=".14" fill="#1b6fd1" stroke="#fff" stroke-width=".04"/></svg>
+          <div class="tippad" id="tippad" hidden><small id="tiplabel">Tip</small>
+            <svg id="tipsvg" viewBox="-1.15 -1.15 2.3 2.3" aria-label="Where the cue tip strikes: tap to set"><circle r="1" fill="#f4efe0" stroke="#cfc6ae" stroke-width=".04"/><path id="tiplimit" d="" fill="#1b6fd1" fill-opacity=".45"/><path id="tipfloor" d="" fill="#000" fill-opacity=".38" hidden/><line x1="-1" y1="0" x2="1" y2="0" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><line x1="0" y1="-1" x2="0" y2="1" stroke="#10283d" stroke-opacity=".2" stroke-width=".02"/><circle id="tipdot" r=".14" fill="#1b6fd1" stroke="#fff" stroke-width=".04"/></svg>
             <span class="ckeys" id="tipkeys"></span>
           </div>
           <div class="speedbar" id="speedbar" hidden aria-label="Speed: drag up or down"><small>Speed</small><div class="speedtrack" id="speedtrack"><i id="speedfill"></i></div><b id="speedval"></b><span class="ckeys"><kbd data-step="1" title="Faster (↑)" data-title-kbd="Faster (↑)" data-title-touch="Faster">↑</kbd><kbd data-step="-1" title="Slower (↓)" data-title-kbd="Slower (↓)" data-title-touch="Slower">↓</kbd></span></div>
@@ -2368,6 +2368,7 @@ function shotStroke(s){
   const V = c.speed ? (coarseSpeed() ? STROKE_MPH[speedLevel()]*MPH : speedFromDiamonds(speedSetting())) : ideal.V;
   let tip = g === SH.throw && !isFree() && !isDrill() ? [0, -.35] : [0, ideal.b];   // the throw step plays soft stun for you: that's where throw shows most
   if(c.up || c.side) tip = snapTip(settings.shotTip || [0, 0], c);
+  if(GEN.g == null && s.gb){ const f = bridgeGeom(s, bridgeAim(s)).tyMin; if(f > -1) tip = tipFloor(tip, c, f); }   // a rail bridge: the cue can't reach low on the ball
   return {V, tip};
 }
 // Play the shot from the cue ball along dir with a stroke: the engine runs it. Deflection (from side spin) is in the engine's strike.
@@ -3398,16 +3399,56 @@ function bendCam(A, B, k, dir){   // from standing (A) to down (B) on the same l
   const E = [hip[0] + dir[0]*r*Math.cos(an) - dir[1]*lat, hip[1] + dir[1]*r*Math.cos(an) + dir[0]*lat, hip[2] + r*Math.sin(an)];
   return camFrom(E, norm3(A.f.map((x, i)=>x + (B.f[i]-x)*k)), A.hfov + (B.hfov - A.hfov)*k);
 }
+// ---------- the bridge: on the cloth, on the rail, or over a ball ----------
+// The ladder deals every shot with room on the cloth for the bridge hand (handRoom). A run plays on from wherever the cue ball
+// stops, so there the hand may not fit: within about a hand of the cushion the bridge goes on the rail (the cue rests on the
+// rail top, a few degrees up, more the closer the ball is to the cushion, and the tip can't strike low on the ball, since the
+// cue has to clear the cushion nose), and with a ball under the bridge the hand goes up on it with the cue over it. The cue,
+// the hand, the camera down on the shot and the stroke's tip all read the shot the same way, from here. The engine plays
+// every shot level: the elevation is in the picture, not in the physics.
+const RAIL_TOP = 1.6;   // the rail's top above the cloth, as the table is drawn
+function bridgeGeom(s, u, ty = 0){
+  const L0 = 0.146*stanceIn() - 1.25, t0 = railBehind(s.cb, u), tipZ = R + ty*R, built = GEN.g != null;   // (the library is built with the hand on the cloth)
+  const g = {rail: false, over: false, t0, tipZ, Lb: bridgeLen(s, u), zf: 0, tyMin: -1, EL: 0, Bz: 0};
+  if(!built && t0 < L0 + 4){   // the hand can't fit on the cloth: a rail bridge, the V a little way onto the rail
+    g.rail = true; g.Lb = Math.max(L0, t0 + PE.C.cushionWidth + 1.5); g.zf = RAIL_TOP;
+    g.Bz = RAIL_TOP + 1.2;   // the cue's axis where it rests on the hand on the rail
+    g.EL = Math.atan2(g.Bz - tipZ, g.Lb);
+    // the cue has to clear the cushion nose: the lowest the tip can strike (a little draw further out, above centre when frozen)
+    const EL0 = Math.atan2(g.Bz - R, g.Lb), need = PE.C.noseHeight + .35 - t0*Math.tan(EL0);
+    g.tyMin = Math.max(-1, Math.min(.6, (need - R)/R)); if(g.tyMin <= -.99) g.tyMin = -1;
+  } else {   // on the cloth: a touch more with top, a touch less with draw, and as steep as it has to be for the butt to pass over the rail
+    const rAt = d => .255 + (d/58)*(.6 - .255), clear = Math.atan2(RAIL_TOP + .15 + rAt(t0) - tipZ, t0);
+    g.EL = Math.max((4 + 2*ty)*RAD, clear); g.Bz = tipZ + g.Lb*Math.tan(g.EL);
+  }
+  if(!built && !g.rail && s.extra && s.extra.length){   // a ball under the bridge: the hand goes up on it, the cue over it
+    const n = [-u[1], u[0]];
+    if(s.extra.some(x=>{ const q = sub(x.p, s.cb), back = -dot(q, u), side = Math.abs(dot(q, n)); return back > R && back < g.Lb + 3.2 && side < 2*R + .4; })){
+      g.over = true; g.zf = 2*R*.55; g.Bz = Math.max(g.Bz, 2*R + 1.2); g.EL = Math.atan2(g.Bz - tipZ, g.Lb);
+    }
+  }
+  return g;
+}
+const bridgeAim = s => s.aimDir || norm(sub(s.gbLook || s.gb, s.cb));
+function tipFloor(tip, c, tyMin){   // the nearest point of the pad at or above the floor
+  if(tyMin <= -1 || tip[1] >= tyMin - 1e-9) return tip;
+  let best = null, bd = Infinity;
+  for(const q of tipPoints(c)){ if(q[1] < tyMin - 1e-9) continue; const d = Math.hypot(q[0] - tip[0], q[1] - tyMin); if(d < bd){ bd = d; best = q; } }
+  return best || [0, Math.max(0, tyMin)];
+}
 function camAlong(s, dir, c){
-  const back = c === VIEWS.stand ? standBackFor(s, dir, c.back) : c === VIEWS.down ? c.back + bridgeLen(s, dir) - (0.146*stanceIn() - 1.25) : c.back;   // down: your eyes stay the same way behind a longer bridge
-  const eye = sub(s.cb, mul(dir, back)), E = [eye[0], eye[1], c.h];
+  const bg = c === VIEWS.down ? bridgeGeom(s, dir, shotStroke(s).tip[1]) : null, raised = !!bg && (bg.rail || bg.over);   // down: your eyes behind the bridge, wherever it is
+  const back = c === VIEWS.stand ? standBackFor(s, dir, c.back) : c === VIEWS.down ? c.back + bg.Lb - (0.146*stanceIn() - 1.25) : c.back;
+  // bridging on the rail (or over a ball) the cue comes up, and so do your eyes: over the rail, looking down at the cue ball
+  const eye = sub(s.cb, mul(dir, back)), E = [eye[0], eye[1], raised ? Math.max(c.h, bg.tipZ + back*Math.tan(bg.EL) + 4.5, bg.rail ? 11 : 0) : c.h];
   const hd = P=>Math.max(0.1, (P[0]-E[0])*dir[0] + (P[1]-E[1])*dir[1]);
-  const aCB = Math.atan2(R - c.h, hd(s.cb)), aP = Math.atan2(1.6 - c.h, hd(s.P.c));
+  const aCB = Math.atan2(R - E[2], hd(s.cb)), aP = Math.atan2(1.6 - E[2], hd(s.P.c));
   const at = hfov => {
     const vHalf = Math.atan((VH/2)/((VW/2)/Math.tan(hfov/2*RAD))), mg = 5*RAD;
     let pr = c.pitch*RAD;
     if(c === VIEWS.stand && aP > pr + vHalf - mg) pr = aP - vHalf + mg;
     if(aCB < pr - vHalf + mg) pr = aCB + vHalf - mg;
+    if(raised) pr = Math.min(pr, aCB + vHalf*.6);   // the cue ball well up the frame, the rail mostly out of it
     return camFrom(E, norm3([dir[0]*Math.cos(pr), dir[1]*Math.cos(pr), Math.sin(pr)]), hfov);
   };
   if(c === VIEWS.stand && IS_PHONE) for(const hf of PHONE_STAND_FOVS){ const cam = at(hf); if(shotInFrame(cam, s)) return cam; }
@@ -3448,6 +3489,9 @@ function renderShootControls(){
   if(c.speed) $('speedval').textContent = coarseSpeed() ? COARSE_LBL[n] : String(n);
   if(c.up || c.side){
     $('tiplimit').setAttribute('d', tipLimitPath(c));
+    { const fl = shot && GEN.g == null && shot.gb ? bridgeGeom(shot, bridgeAim(shot)).tyMin : -1, tf = $('tipfloor');   // a rail bridge: the low part of the ball is out of reach
+      tf.hidden = fl <= -1; if(fl > -1){ const cy = -fl, x0 = Math.sqrt(Math.max(0, 1 - cy*cy)); tf.setAttribute('d', `M${(-x0).toFixed(3)} ${cy.toFixed(3)}A1 1 0 ${cy < 0 ? 1 : 0} 0 ${x0.toFixed(3)} ${cy.toFixed(3)}Z`); }
+      $('tiplabel').textContent = fl > -1 ? 'Tip · rail bridge' : 'Tip'; }
     $('tipkeys').innerHTML = [c.up && 'W', c.side && 'A', c.down && 'S', c.side && 'D', 'X'].filter(Boolean).map(k=>`<kbd${k === 'X' ? ' title="Centre"' : ''}>${k}</kbd>`).join('');   // X: back to centre
   }
 }
@@ -4562,12 +4606,10 @@ function cueRig(cam, s){
   const C0 = [s.cb[0] - u[0]*R, s.cb[1] - u[1]*R];   // the back of the ball, straight on: the bridge lines up behind it whatever the side
   // How steep the cue is: a touch more with top, a touch less with draw (you keep it level to hit low), and as steep as it
   // has to be to clear the cushion behind the cue ball (the butt has to pass over the rail).
-  const t0 = railBehind(s.cb, u), rAt = d => .255 + (d/58)*(.6 - .255);
-  const clear = Math.atan2(1.6 + .15 + rAt(t0) - Cp[2], t0);
-  const EL = Math.max((4 + 2*ty)*RAD, clear);
+  const bg = bridgeGeom(s, u, ty), EL = bg.EL, zf = bg.zf;   // on the cloth, on the rail, or over a ball (bridgeGeom)
   // the bridge: where the cue rests. With side the whole cue moves over, parallel to your line (as the engine strikes it), so the
   // only angle you see between cue and cue ball is the real squirt of your shaft (about 2.5° maple, 1.8° or less LD, near the limit)
-  const Lb = bridgeLen(s, u), Bq = [C0[0] - u[0]*Lb + n[0]*tx*R, C0[1] - u[1]*Lb + n[1]*tx*R, Cp[2] + Lb*Math.tan(EL)];
+  const Lb = bg.Lb, Bq = [C0[0] - u[0]*Lb + n[0]*tx*R, C0[1] - u[1]*Lb + n[1]*tx*R, Cp[2] + Lb*Math.tan(EL)];
   const f3 = norm3([Cp[0] - Bq[0], Cp[1] - Bq[1], Cp[2] - Bq[2]]);   // the cue runs from the bridge to the tip
   const at = (P, d) => [P[0] - f3[0]*d, P[1] - f3[1]*d, P[2] - f3[2]*d];   // d inches back along the cue from P
   const faces = [];   // [pts3, fill]
@@ -4587,7 +4629,7 @@ function cueRig(cam, s){
   }
   // the hand: an open bridge a forearm's length (less 1¼") behind the cue ball, the cue resting in the V of thumb and index knuckle
   const Bp = [Bq[0], Bq[1]];
-  const zv = Math.max(.9, Bq[2] - .3);                     // the V: just under the cue
+  const zv = Math.max(.9 + zf, Bq[2] - .3);                // the V: just under the cue (zf: the hand's floor, the cloth, the rail top, or a ball)
   const L = (x, y, z) => [Bp[0] + u[0]*x + sd[0]*y, Bp[1] + u[1]*x + sd[1]*y, z];
   const V = (x, y, z) => [u[0]*x + sd[0]*y, u[1]*x + sd[1]*y, z];
   const box = (c, ax, ay, az, col, front) => {   // centre and half-axes (world): the faces that face the eye
@@ -4626,22 +4668,22 @@ function cueRig(cam, s){
   if(settings.bridge === 'closed'){
     // closed bridge: the cue runs through a loop of the index finger, resting on the thumb and middle finger; the other fingers spread on the cloth
     const zc = zv + .3;   // the cue's axis here
-    limb([-3.6, 1.4, .55], [-.2, 1.1, zc - .95], 3.0, 1.0, gc);              // palm, a little flatter, beside and below the cue
-    logo([-3.6, 1.4, .55], [-.2, 1.1, zc - .95], 1.0);
-    [[.6, .2], [1.4, .7], [2.1, 1.1]].forEach(([y, fan], i)=>limb([-.2, y, zc - .95], [2.4 - i*.25, y + fan, .3], .62, .55, i < 1 ? gc : sk));   // middle, ring, little finger
+    limb([-3.6, 1.4, zf + .55], [-.2, 1.1, zc - .95], 3.0, 1.0, gc);         // palm, a little flatter, beside and below the cue
+    logo([-3.6, 1.4, zf + .55], [-.2, 1.1, zc - .95], 1.0);
+    [[.6, .2], [1.4, .7], [2.1, 1.1]].forEach(([y, fan], i)=>limb([-.2, y, zc - .95], [2.4 - i*.25, y + fan, zf + .3], .62, .55, i < 1 ? gc : sk));   // middle, ring, little finger
     limb([-1.6, -.6, zc - .9], [.6, -.5, zc - .55], .6, .5, gc);             // thumb, below the cue on its far side
     limb([-.2, .7, zc - .3], [.1, .5, zc + .55], .45, .45, gc);               // index finger, up the near side,
     limb([.1, .5, zc + .55], [.25, -.5, zc + .5], .45, .4, gc, true);         // over the top of the cue (drawn over it),
     limb([.25, -.5, zc + .5], [.35, -.6, zc - .45], .4, .4, gc, true);        // and down the far side to meet the thumb
   } else {
-    limb([-3.6, 1.6, .55], [-.1, 1.5, zv - .35], 3.2, 1.0, gc);                // palm: heel on the cloth, knuckles up by the V
-    logo([-3.6, 1.6, .55], [-.1, 1.5, zv - .35], 1.0);
-    [[.4, .25], [1.2, .7], [2.0, 1.15], [2.7, 1.55]].forEach(([y, fan], i)=>limb([-.1, y, zv - .55], [2.6 - i*.25, y + fan, .3], .62, .55, i < 2 ? gc : sk));   // fingers spread on the cloth
+    limb([-3.6, 1.6, zf + .55], [-.1, 1.5, zv - .35], 3.2, 1.0, gc);           // palm: heel down, knuckles up by the V
+    logo([-3.6, 1.6, zf + .55], [-.1, 1.5, zv - .35], 1.0);
+    [[.4, .25], [1.2, .7], [2.0, 1.15], [2.7, 1.55]].forEach(([y, fan], i)=>limb([-.1, y, zv - .55], [2.6 - i*.25, y + fan, zf + .3], .62, .55, i < 2 ? gc : sk));   // fingers spread
     limb([-1.7, -.5, zv - .85], [.8, -.45, zv - .3], .6, .55, gc);            // thumb, up beside the cue: the V it rests in
   }
-  limb([-3.6, 1.6, .7], [-5, 1.9, 1.6], 2.6, 1.1, gc);                      // wrist, under the glove's strap
-  limb([-4.1, 1.7, .85], [-4.7, 1.8, 1.3], 2.85, 1.35, strapOf(gc));   // the strap
-  limb([-5, 1.9, 1.6], [-14.5, 5.8, 3.9], 2.9, 2.3, sk);                    // forearm, back toward the elbow, rising gently (about 13°)
+  limb([-3.6, 1.6, zf + .7], [-5, 1.9, zf + 1.6], 2.6, 1.1, gc);            // wrist, under the glove's strap
+  limb([-4.1, 1.7, zf + .85], [-4.7, 1.8, zf + 1.3], 2.85, 1.35, strapOf(gc));   // the strap
+  limb([-5, 1.9, zf + 1.6], [-14.5, 5.8, zf + 3.9], 2.9, 2.3, sk);          // forearm, back toward the elbow, rising gently (about 13°)
   // far to near, see-through
   return faces.map(([q, col, cue, front, dz, zAt])=>({q, col, cue, front: front ? 1 : 0, z: zAt ?? q.reduce((t, P)=>t + cam.toCam(P)[2], 0)/q.length + (dz || 0)})).sort((x, y)=>(x.front - y.front) || ((x.cue ? 1 : 0) - (y.cue ? 1 : 0)) || (y.z - x.z))
     .map(({q, col, cue})=>{ const d = polyD(cam, q); return !d ? '' : cue ? `<path d="${d}" fill="${col}" fill-opacity="${ac.toFixed(3)}"/>`
@@ -7557,7 +7599,7 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   drillDeal: ()=>drillDeal(),   // Practice: a deal to the saved picks
   testDeal: (task, g, t)=>{ const sh = ensureShootLevel(), g0 = sh.g, t0 = settings.task; sh.g = g; settings.task = task; try{ setTable(t, settings.pockets); const s = task === 'flash' ? dealShot() : addExtras(shootDeal()); return {s, reach: reachOf(s), max: reachMax(), tb: curTable}; } finally { sh.g = g0; settings.task = t0; } },
   // Run-outs: the rack as it stands, a fresh one, and the game's own deal, call and shoot (the shot plays out at once, no animation)
-  run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, other: runOtherBall, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
+  run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, look: ()=>({k: look.k, target: look.target}), walk: ()=>walk, shotAt: (cb, b, Pi, others)=>runShot(cb, b, POCKETS[Pi], others), rig: (s, view)=>{ s.cam = {phase: 'down', k: 1, T: 1, downAt: performance.now()}; const cam = shootCam(s, view || 'down'), u = bridgeAim(s), st = shotStroke(s); return {E: cam.E, f: cam.f, u, tip: st.tip, bg: bridgeGeom(s, u, st.tip[1]), svg: cueRig(cam, s)}; }, other: runOtherBall, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
   camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), confetti: (n, f)=>confetti($('hlogo'), n, f), cheerLive: ()=>!!cheerFx || !!cheerQ};
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
