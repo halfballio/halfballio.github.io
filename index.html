@@ -6550,18 +6550,18 @@ const SL_CUSHION = [
 const EN = {shaft:'maple', noZone:true, mid:true}, EN_R = [TIP_STEP, 0], EN_L = [-TIP_STEP, 0], EN_2FT = [22, 26], EN_1FT = [12.5, 14];
 const SL_ENGLISH = [
   {...EN, deg:35, aids:{}, play:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true,
-   text:'<b>English</b> is side spin: strike right or left of centre. Off a cushion it changes the angle the cue ball comes off, and can kill or add speed. Here, right english.'},
+   text:'<b>English</b> is side spin: you strike the cue ball to the left or right of its centre. Off a cushion, it changes the angle at which the cue ball rebounds, and it can take speed off or add it. This shot uses right english.'},
   {...EN, deg:30, dist:EN_2FT, group:true, need:'34', aids:{}, check:{k:1.6, tip:EN_R}, ui:['tip'], next:true,
-   text:'Side also pushes the cue ball slightly off your aim: that\'s <b>deflection</b>. So a cut that looks ½ may need to be hit thinner or fuller, depending on the side.'},
+   text:'Side spin also pushes the cue ball slightly off the line you aim along. This is called <b>deflection</b>. Because of it, a cut that looks like a ½-ball hit may need to be played thinner or fuller, depending on which side you use.'},
   {...EN, aids:{ghost:1, line:1}, play:{k:1.6, tip:EN_R, aim:'plain'}, expect:'miss', need:'34', ui:['tip'], next:true,
-   text:'Right english, aimed as a plain ½: it misses.'},
+   text:'This shot uses right english and is aimed as a plain ½-ball hit. Deflection makes it miss.'},
   {...EN, aids:{ghost:1, line:1}, play:{k:1.6, tip:EN_R}, need:'34', ui:['tip'], next:true,
-   text:'Same shot aimed <b>¾</b>: it drops.'},
+   text:'Here is the same shot aimed at <b>¾</b>. This time it drops.'},
   {...EN, deg:30, dist:EN_1FT, aids:{}, try:{k:1.6, tip:[-2*TIP_STEP, 0]}, need:'34', ui:['tip'], ask:'try',
-   text:'Your turn. It looks ½, with a full tip of left english. Call the fraction that pots it.'},
+   text:'Your turn. This cut looks like a ½-ball hit, and the tip is set to a full tip of left english. Call the fraction that pots it.'},
   {...EN, deg:30, dist:EN_2FT, aids:{}, try:{k:1.6, tip:EN_R}, need:'14', ui:['tip'], ask:'try',
-   text:'One more, with ½ tip of right english.'},
-  {finish:true, aids:{}, text:'With side, allow for deflection: hit the cut a little thinner or fuller.'},
+   text:'Try one more. This time the tip is set to half a tip of right english.'},
+  {finish:true, aids:{}, text:'Whenever you use side spin, allow for deflection by playing the cut a little thinner or fuller.'},
 ];
 const SL_ALL = [
   {deg:30, aids:{}, finish:true, text:'Everything is yours: speed, top, back and side. Each zone can be reached more than one way: pick the stroke, then aim for what it does.'},
