@@ -114,13 +114,22 @@ function digest(ctx){
 }
 // Run-outs, rack by rack (rk): balls run, and how it ended (re: miss, scratch, foul, noshot, clear). A rack still being
 // played has no end yet and isn't counted. Totals kept by the game (ctx.run) stand in where the log has been trimmed.
+const RUN_PAT = {a: 'auto', c: 'call', p: 'plan'}, RUN_ORD = {a: 'any', e: 'eight', r: 'rot'};
+const RUN_PAT_NAME = {auto: 'Automatic', call: 'Call each shot', plan: 'Plan the rack'}, RUN_ORD_NAME = {any: 'Any order', eight: '8-ball last', rot: 'Rotation'};
+const setupKey = e => [e.rn || 3, RUN_PAT[e.rp] || 'auto', e.rh ? 'half' : 'full', RUN_ORD[e.ro] || 'any'].join('|');   // as the game keys its own totals
+function setupName(k){ const [n, pat, area, ord] = k.split('|'); return `${n} balls · ${RUN_PAT_NAME[pat] || pat} · ${RUN_ORD_NAME[ord] || ord}${area === 'half' ? ' · half table' : ''}`; }
 function racks(L, kept){
   const by = {}, order = [];
-  for(const e of L){ if(!e.rk) continue; let r = by[e.rk]; if(!r){ r = by[e.rk] = {n: 0, run: 0, end: null, fl: 0}; order.push(r); } r.n++; if(e.m && !e.sc && !e.fl) r.run++; if(e.re) r.end = e.re; }
+  for(const e of L){ if(!e.rk) continue; let r = by[e.rk]; if(!r){ r = by[e.rk] = {n: 0, run: 0, end: null, fl: 0, key: setupKey(e)}; order.push(r); } r.n++; if(e.m && !e.sc && !e.fl) r.run++; if(e.re) r.end = e.re; }
   const done = order.filter(r=>r.end), full = done.filter(r=>r.end === 'clear').length, balls = done.reduce((a, r)=>a + r.run, 0);
   const best = Math.max(0, ...done.map(r=>r.run), kept && kept.best || 0);
   const k = kept && kept.racks > done.length ? kept : null;   // the game's totals cover racks the log no longer holds
-  return {list: done, n: k ? k.racks : done.length, full: k ? k.full : full, balls: k ? k.balls : balls, best, size: (L.find(e=>e.rn) || {}).rn || 3};
+  // by setup: balls a rack, pattern, order rule and table area (the game's own totals stand in where the log has been trimmed)
+  const S = {};
+  for(const r of done){ const x = S[r.key] = S[r.key] || {key: r.key, n: 0, balls: 0, full: 0, best: 0}; x.n++; x.balls += r.run; if(r.end === 'clear') x.full++; x.best = Math.max(x.best, r.run); }
+  for(const [key, g] of Object.entries(kept && kept.by || {})){ const x = S[key]; if(!x || g.racks > x.n) S[key] = {key, n: g.racks, balls: g.balls, full: g.full, best: Math.max(g.best, x ? x.best : 0)}; }
+  const setups = Object.values(S).map(x=>({...x, name: setupName(x.key)})).sort((a, b)=>b.n - a.n);
+  return {list: done, n: k ? k.racks : done.length, full: k ? k.full : full, balls: k ? k.balls : balls, best, size: (L.find(e=>e.rn) || {}).rn || 3, setups};
 }
 // a group's numbers: shots, full marks, and its misses split thin / full
 function group(d, fn){
@@ -271,6 +280,8 @@ function tabOverview(d, w){
   k.push(kpi(num(F.n), 'Shots', d.off ? 'all time' : ''));
   out.push(`<div class="svkpis" role="list" aria-label="Key numbers">${k.map(x=>x.replace('<div class="svkpi', '<div role="listitem" class="svkpi')).join('')}</div>`);
   const grid = [], bl = blocks(d);
+  if(d.run && d.racks.setups.length > 1)   // Run-outs: the setups played, once there's more than one
+    grid.push(card('Runs by setup', 'Each rack counted under the setup it was played with', table(['Setup', 'Racks', 'Balls a rack', 'Full runs', 'Best run'], d.racks.setups.map(x=>[x.name, num(x.n), x.n ? (x.balls/x.n).toFixed(1) : '–', pc(x.full, x.n), num(x.best)]), 'Racks, balls a rack, full runs and best run, by setup')));
   grid.push(card('Accuracy over time', `${d.shoot ? 'Full marks' : 'Called right'} per ${bl.B} shots${recentNote(d)} · History has ${d.practice || d.run ? 'your' : 'the grade and'} streaks`, bl.out.length >= 2
     ? lineChart(bl.out.map(b=>({...b, x: `shot ${num(b.from)}`})), {w: w.full, h: 190, unit: `Each point: ${bl.B} shots`, mean: pct(d.right, d.n), aria: `Accuracy per ${bl.B} shots, ${bl.out.length} blocks, last ${bl.out[bl.out.length - 1].y} percent`,
         read: i=>{ const b = bl.out[i]; return `Shots ${num(b.from)}–${num(b.to)}: ${b.y}%${b.g != null ? ` · grade ${G[b.g]}` : ''}`; }})
