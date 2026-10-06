@@ -285,6 +285,27 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     zone.position.set(z.c[0], z.c[1], .03);
   }
 
+  // ---------- Disco: a mirror ball's spots of coloured light drifting slowly over the cloth and rails ----------
+  // mode 0: off; 1: still spots (reduced motion); 2: drifting. A few soft spot lights with no shadows; the page keeps them off on a phone.
+  const disco = [], DISCO_HUES = [0xff4fd8, 0x4fb8ff, 0xffd84f, 0x4fffb0, 0xb04fff];
+  let discoMode = 0;
+  function placeDisco(t){
+    const n = disco.length, s = t/1000;
+    disco.forEach((L, i)=>{
+      const a = s*(.07 + .015*i) + i*2*Math.PI/n;
+      L.position.set(W/2, H/2, 90);
+      L.target.position.set(W/2 + W*.55*Math.cos(a), H/2 + H*.6*Math.sin(a*1.3 + i*2.1), 0);
+      L.target.updateMatrixWorld();
+    });
+  }
+  function setDisco(mode){
+    if(mode === discoMode) return;
+    if(mode && !disco.length) DISCO_HUES.forEach(c=>{ const L = new T3.SpotLight(c, .5, 0, .07, .85, 0); L.castShadow = false; lights.add(L, L.target); disco.push(L); });
+    discoMode = mode; disco.forEach(L=>L.visible = !!mode);
+    placeDisco(mode === 2 ? root.performance.now() : 0);
+  }
+  const discoMoving = () => discoMode === 2;
+
   // ---------- frame ----------
   // cam: {E, f, focal}; vw, vh: the SVG viewBox size the camera's focal length is in
   function render(cam, vw, vh, pxW, pxH){
@@ -294,6 +315,7 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     camera.position.set(-cam.E[0], cam.E[1], cam.E[2]);
     camera.lookAt(-(cam.E[0] + cam.f[0]), cam.E[1] + cam.f[1], cam.E[2] + cam.f[2]);
     camera.updateProjectionMatrix();
+    if(discoMode === 2) placeDisco(root.performance.now());
     renderer.render(scene, camera);
   }
   // graphics settings: resolution (pixel ratio cap) and shadows ('soft', 'hard' or 'off')
@@ -314,7 +336,7 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
   }
   // a table style (Settings): cloth, cushion and rail colours; the table is rebuilt in them on the next frame
   function setColors(c){ for(const k in c) if(k in COL) COL[k] = c[k]; tableKey = ''; }
-  return {build, setBalls, setArrow, setZone, setMarker, setQuality, setColors, render, renderer};
+  return {build, setBalls, setDisco, discoMoving, setArrow, setZone, setMarker, setQuality, setColors, render, renderer};
 }
 root.Table3D = {make};
 })(typeof window !== 'undefined' ? window : this);

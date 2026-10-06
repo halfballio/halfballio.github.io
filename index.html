@@ -4910,7 +4910,7 @@ function drawInner(reveal){
     const fx = $('tablefx');
     if(fx.getAttribute('viewBox') !== vb) fx.setAttribute('viewBox', vb);
     if(layerHTML.fx !== L.fx){ fx.innerHTML = L.fx; layerHTML.fx = L.fx; }
-    if(G3){ arrowLast = arrowWake = performance.now(); $('table3d').style.display = ''; G3.build(engineTable()); G3.setBalls(G3BALLS, R, ballSet()); { const ma = obMarkA(); G3.setMarker(ma > 0 ? {p: shot.ob, R, a: ma} : null); } G3.setZone(shot && shot.zone && settings.view !== 'top' ? shot.zone : null); setArrows(); glRender(); arrowLoop(); }
+    if(G3){ arrowLast = arrowWake = performance.now(); $('table3d').style.display = ''; G3.build(engineTable()); G3.setBalls(G3BALLS, R, ballSet()); G3.setDisco(ballSet().holo && !IS_PHONE && settings.gfxShadows !== 'off' ? (calmNow() ? 1 : 2) : 0); { const ma = obMarkA(); G3.setMarker(ma > 0 ? {p: shot.ob, R, a: ma} : null); } G3.setZone(shot && shot.zone && settings.view !== 'top' ? shot.zone : null); setArrows(); glRender(); arrowLoop(); }
   }
 }
 // The arrow over the target pocket: it floats gently up and down (only the 3D canvas redraws for that, about 30 times a second).
@@ -5029,7 +5029,7 @@ function arrowLoop(){
     arrowRaf = 0;
     if(!G3 || !lastCam || settings.view === 'top' || document.hidden) return;
     if(now - arrowLast >= bobGap() || settings.gfxBob === '0'){   // Still: only the glide to or from the edge needs frames
-      arrowLast = now; const moving = setArrows(); glRender();
+      arrowLast = now; const moving = setArrows() || G3.discoMoving(); glRender();   // Disco's light spots keep the loop going too
       if(!moving) return;
       if(now - arrowWake > ARROW_IDLE && Math.abs(Math.sin(now/1000*2*Math.PI/1.6)) < .12) return;
     }
