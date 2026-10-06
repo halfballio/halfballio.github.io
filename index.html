@@ -307,8 +307,8 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .stylesize .styleopt{flex-direction:row;justify-content:center}
 @media (min-width:761px){.stylemenu{justify-content:flex-end;align-items:flex-start}}
 @media (max-width:760px){.stylemenu{justify-content:center;align-items:flex-end}.stylecard{max-height:62vh;max-height:62dvh}}   /* phones: a sheet along the bottom, so the table above shows each choice */
-.practicechip{position:absolute;left:12px;bottom:12px;z-index:5;background:rgba(15,34,51,.9);color:var(--cream);font:600 12px var(--body);min-height:32px;padding:6px 14px;border-radius:999px;border:1px solid var(--gold);box-shadow:var(--shadow-2);cursor:pointer}
-.practicechip b{color:var(--gold);margin-left:8px}
+.modechip{position:absolute;left:12px;bottom:12px;z-index:5;background:rgba(15,34,51,.9);color:var(--cream);font:600 12px var(--body);min-height:32px;padding:6px 14px;border-radius:999px;border:1px solid var(--gold);box-shadow:var(--shadow-2);cursor:pointer}
+.modechip b{color:var(--gold);margin-left:8px}
 .ladder li.pick{cursor:pointer}.ladder li.practice .node{outline:2px dashed var(--gold);outline-offset:2px}
 .routinechip kbd{font:600 10px var(--body);padding:1px 5px;margin-left:8px;border-radius:4px;background:rgba(242,234,216,.9);color:var(--navy)}
 html.touch .routinechip kbd{display:none}
@@ -407,11 +407,10 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .sumgrid dd.up{color:#7fe0a0} .sumgrid dd.down{color:#ff9b87}
 .sumbtns{display:flex;gap:12px;align-items:center;margin-top:10px}
 .idlehead{font:700 40px/1.05 var(--display);color:var(--cream);letter-spacing:.06em;text-transform:uppercase}
-#startcover .sumbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px}#startcover .startbtn{white-space:nowrap;font-size:20px;padding:10px 22px;letter-spacing:.05em}
+#startcover .sumbtns{display:flex;justify-content:center;gap:12px}#startcover .startbtn{white-space:nowrap;font-size:20px;padding:10px 28px;letter-spacing:.05em}
 @media (max-width:760px){.idlehead{font-size:32px}}
 .flashpick{display:flex;align-items:center;gap:10px;min-height:34px;color:var(--cream-2)}
 .flashpick[hidden]{display:none}
-.flashtime{margin-top:8px;justify-content:space-between}
 .fpseg{display:flex;border:1px solid rgba(242,234,216,.28);border-radius:var(--r);padding:3px;gap:2px}
 .fpseg button{font-family:var(--body);font-weight:600;font-size:inherit;min-height:32px;border:0;border-radius:7px;background:transparent;color:var(--cream-2);padding:5px 14px;cursor:pointer}
 .fpseg button[aria-pressed="true"]{background:var(--cream);color:var(--navy)}
@@ -667,14 +666,6 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   /* a lesson: the table and the fraction buttons stay together, the coach card under them, compact,
      its text scrolling inside so the whole card (and its Next) fits the screen with the toolbars showing */
   .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabs,.panel > .tabpanel{order:1}
-  /* Flash: its display time sits beside the mode switch, on one row (the group's label still reads it out), so the table,
-     the fractions, the result card and Next shot fit the screen with the toolbars showing */
-  .panel:has(> #flashtime:not([hidden])){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:10px}
-  .panel:has(> #flashtime:not([hidden])) > *{grid-column:1/-1;min-width:0}
-  .panel:has(> #flashtime:not([hidden])) > :is(.modes,#flashtime){grid-column:auto}
-  #flashtime{margin:0;gap:0;font-size:0;align-self:stretch}
-  #flashtime .seg{flex-wrap:nowrap;align-items:stretch}
-  #flashtime .seg button{min-height:44px;padding-inline:9px;white-space:nowrap}
   .coach{padding:10px 12px;gap:6px}
   .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - (100vw - 32px)*2/3 - 332px));max-height:max(60px, calc(100dvh - (100vw - 32px)*2/3 - 332px))}
 }
@@ -750,7 +741,7 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .ctlrow small{font-size:9px}
   .ctlrow .speedbar .ckeys kbd{height:26px;min-width:26px;font-size:14px}
   .radio{left:4px;top:6px;width:60px}.radio .radiodisc{width:32px;height:32px}.radio .radiodisc svg{width:17px;height:17px}
-  .practicechip{bottom:56px;left:8px;font-size:11px;padding:5px 10px;min-height:28px}
+  .modechip{bottom:56px;left:8px;font-size:11px;padding:5px 10px;min-height:28px}
   .routinechip{font-size:12px;padding:4px 10px}
 }
 
@@ -804,10 +795,10 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .radio{left:0;top:2px;width:60px;min-width:48px;min-height:48px;justify-content:center}
   .radio.stylebtn{top:62px}   /* its disc centred over the eye below it (8px in, 44px wide) */
   .radio:active .radiodisc{transform:scale(.92);background:rgba(30,58,84,.96)}
-  .practicechip{bottom:68px;min-height:36px}
-  .practicechip::after,.routinechip::after{content:'';position:absolute;inset:-5px -2px}
+  .modechip{bottom:68px;min-height:36px}
+  .modechip::after,.routinechip::after{content:'';position:absolute;inset:-5px -2px}
   .routinechip{min-height:36px}
-  .practicechip:active,.routinechip:active{background:rgba(30,58,84,.98)}
+  .modechip:active,.routinechip:active{background:rgba(30,58,84,.98)}
 }
 /* phones: the first-launch stance card is a sheet along the bottom of the screen, not inside the short table, so all of it
    (height, distance, colours, Done) can be reached, with the table above it still showing the view as it changes */
@@ -816,28 +807,28 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
 }
 /* Practice: what comes up */
-.drillmenu{z-index:62;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
-.drillcard{width:min(100%,460px);gap:12px;animation:wnin .18s var(--ease)}
-.drillcard .setnote{margin:0;font-size:13px}
-.drillopt{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column}
-.drillopt legend{padding:0;margin:0 0 6px;font:600 14px var(--body);color:var(--ink)}
-.drillopt legend small{color:var(--muted);font-weight:500;font-size:12.5px;margin-left:6px}
-.drillseg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%;box-sizing:border-box}
-.drillseg button{min-height:44px;font-size:14px;padding:6px 8px}
+.modemenu{z-index:62;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+.modecard{width:min(100%,460px);gap:12px;animation:wnin .18s var(--ease)}
+.modecard .setnote{margin:0;font-size:13px}
+.modeopt{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column}
+.modeopt legend{padding:0;margin:0 0 6px;font:600 14px var(--body);color:var(--ink)}
+.modeopt legend small{color:var(--muted);font-weight:500;font-size:12.5px;margin-left:6px}
+.modeseg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%;box-sizing:border-box}
+.modeseg button{min-height:44px;font-size:14px;padding:6px 8px}
 .drillfr button{font-size:17px}
-.drillopt:disabled .drillseg{opacity:.5}.drillopt:disabled .seg button:disabled{opacity:1}
+.modeopt:disabled .modeseg{opacity:.5}.modeopt:disabled .seg button:disabled{opacity:1}
 .drillweak{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:56px;padding:10px 14px;text-align:left;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);color:var(--ink);cursor:pointer;font:inherit;transition:border-color var(--t-fast) var(--ease)}
 .drillweak:hover{border-color:var(--line-strong)}
 .drillweak b{display:block;font:600 15px var(--body)}.drillweak small{display:block;color:var(--muted);font-size:12.5px;line-height:1.35;margin-top:2px}
 .drillsw{flex:none;position:relative;width:42px;height:26px;border-radius:999px;background:var(--line-strong);transition:background var(--t-fast) var(--ease)}
 .drillsw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow-1);transition:transform var(--t-fast) var(--ease)}
 .drillweak[aria-checked="true"]{border-color:var(--gold)}.drillweak[aria-checked="true"] .drillsw{background:var(--gold)}.drillweak[aria-checked="true"] .drillsw::after{transform:translateX(16px)}
-.drilldone{align-self:stretch;margin-top:2px}
+.modedone{align-self:stretch;margin-top:2px}
 @media (max-width:760px){   /* phones: a sheet along the bottom, like the stance card */
-  .drillmenu{align-items:flex-end;padding:max(8px,env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom))}
-  .drillcard{width:100%;max-height:100%;padding:10px 14px 14px;gap:10px}
+  .modemenu{align-items:flex-end;padding:max(8px,env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom))}
+  .modecard{width:100%;max-height:100%;padding:10px 14px 14px;gap:10px}
 }
-@media (prefers-reduced-motion:reduce){.drillcard{animation:none}.drillsw,.drillsw::after{transition:none}}
+@media (prefers-reduced-motion:reduce){.modecard{animation:none}.drillsw,.drillsw::after{transition:none}}
 /* What's new: a centred card over a scrim; the head and Got it stay put while the notes scroll inside */
 .helpbtn{position:relative}
 .wndot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--bg);pointer-events:none}
@@ -1185,9 +1176,6 @@ html.svopen,html.svopen body{overflow:hidden}
         <div class="seg" role="group" aria-label="Ladder table"><button data-set="tablePick" data-val="7">7 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="tablePick" data-val="8">8 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="tablePick" data-val="9">9 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div>
       </div>
       <small class="setnote" id="laddertablenote">Until S, the Ladder plays on your grade's table.</small>
-      <div class="opt">Flash table
-        <div class="seg" role="group" aria-label="Flash table"><button data-set="flashTable" data-val="7">7 ft</button><button data-set="flashTable" data-val="8">8 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="flashTable" data-val="9">9 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div>
-      </div>
       <div class="opt">Balls
         <div class="seg" role="group" aria-label="Ball set"><button data-set="ballSet" data-val="standard">Standard<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="retro">Retro<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="tv">TV<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="ballSet" data-val="blackout">Blackout<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div>
       </div>
@@ -1261,28 +1249,53 @@ html.svopen,html.svopen body{overflow:hidden}
       <ol class="ladder" id="ladder"></ol>
     </div>
   </div>
-  <div class="menu drillmenu" id="drill" hidden>   <!-- Practice: what comes up; a sheet along the bottom on a phone -->
-    <div class="menucard drillcard" role="dialog" aria-modal="true" aria-labelledby="drilltitle" aria-describedby="drillnote">
+  <div class="menu modemenu" id="drill" hidden>   <!-- Practice: what comes up; a sheet along the bottom on a phone -->
+    <div class="menucard modecard" role="dialog" aria-modal="true" aria-labelledby="drilltitle" aria-describedby="drillnote">
       <div class="menuhead"><span id="drilltitle">Practice</span><button class="menuclose" id="drillclose" aria-label="Close">✕</button></div>
       <p class="setnote" id="drillnote">Not scored: your grade and points stay as they are. Change these any time between shots.</p>
       <button class="drillweak" id="drillweak" role="switch" aria-checked="false"><span><b>Drill my weakest</b><small>The fractions and distances you miss most come up more</small></span><i class="drillsw" aria-hidden="true"></i></button>
-      <fieldset class="drillopt" id="drill-fr-box"><legend>Fractions <small id="drill-fr-hint">pick one or more</small></legend>
-        <div class="seg drillseg drillfr" id="drill-fr">
+      <fieldset class="modeopt" id="drill-fr-box"><legend>Fractions <small id="drill-fr-hint">pick one or more</small></legend>
+        <div class="seg modeseg drillfr" id="drill-fr">
           <button data-fr="full" aria-label="Full ball">Full</button><button data-fr="34" aria-label="Three quarter ball">¾</button><button data-fr="12" aria-label="Half ball">½</button><button data-fr="14" aria-label="Quarter ball">¼</button><button data-fr="18" aria-label="Eighth ball">⅛</button>
         </div></fieldset>
-      <fieldset class="drillopt"><legend>Angle</legend>
-        <div class="seg drillseg" data-drill="ang"><button data-v="exact">Exact fractions</button><button data-v="any">Any angle</button></div></fieldset>
-      <fieldset class="drillopt"><legend>Cut</legend>
-        <div class="seg drillseg" data-drill="side"><button data-v="L">Left</button><button data-v="R">Right</button><button data-v="both">Both</button></div></fieldset>
-      <fieldset class="drillopt" id="drill-dist-box"><legend>Distance <small>cue ball to object ball</small></legend>
-        <div class="seg drillseg" data-drill="dist"><button data-v="short">Short</button><button data-v="long">Long</button><button data-v="both">Both</button></div></fieldset>
-      <fieldset class="drillopt"><legend>Table</legend>
-        <div class="seg drillseg" data-drill="tb"><button data-v="7">7 ft</button><button data-v="8">8 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-v="9">9 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
-      <fieldset class="drillopt"><legend>Stroke</legend>
-        <div class="seg drillseg" data-drill="stroke"><button data-v="set">Set for you</button><button data-v="mine">Yours<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
-      <fieldset class="drillopt"><legend>Spin <small id="drill-spin-hint"></small></legend>
-        <div class="seg drillseg" data-drill="spin"><button data-v="center">Center ball</button><button data-v="mine">Yours<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
-      <button class="startbtn drilldone" id="drilldone">Done</button>
+      <fieldset class="modeopt"><legend>Angle</legend>
+        <div class="seg modeseg" data-drill="ang"><button data-v="exact">Exact fractions</button><button data-v="any">Any angle</button></div></fieldset>
+      <fieldset class="modeopt"><legend>Cut</legend>
+        <div class="seg modeseg" data-drill="side"><button data-v="L">Left</button><button data-v="R">Right</button><button data-v="both">Both</button></div></fieldset>
+      <fieldset class="modeopt" id="drill-dist-box"><legend>Distance <small>cue ball to object ball</small></legend>
+        <div class="seg modeseg" data-drill="dist"><button data-v="short">Short</button><button data-v="long">Long</button><button data-v="both">Both</button></div></fieldset>
+      <fieldset class="modeopt"><legend>Table</legend>
+        <div class="seg modeseg" data-drill="tb"><button data-v="7">7 ft</button><button data-v="8">8 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-v="9">9 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
+      <fieldset class="modeopt"><legend>Stroke</legend>
+        <div class="seg modeseg" data-drill="stroke"><button data-v="set">Set for you</button><button data-v="mine">Yours<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
+      <fieldset class="modeopt"><legend>Spin <small id="drill-spin-hint"></small></legend>
+        <div class="seg modeseg" data-drill="spin"><button data-v="center">Center ball</button><button data-v="mine">Yours<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
+      <button class="startbtn modedone" id="drilldone">Done</button>
+    </div>
+  </div>
+  <div class="menu modemenu" id="flashsheet" hidden>   <!-- Flash: the clock, the table and how you look; the same sheet as Practice -->
+    <div class="menucard modecard" role="dialog" aria-modal="true" aria-labelledby="flashtitle" aria-describedby="flashnote">
+      <div class="menuhead"><span id="flashtitle">Flash</span><button class="menuclose" id="flashclose" aria-label="Close">✕</button></div>
+      <p class="setnote" id="flashnote">Call the fraction against the clock. Change these any time between shots.</p>
+      <fieldset class="modeopt"><legend>Each shot shows for</legend>
+        <div class="seg modeseg" role="group" aria-label="How long each Flash shot shows">
+          <button id="flash-1500" data-set="flash" data-val="1500">1.5 s</button>
+          <button id="flash-750" data-set="flash" data-val="750">0.75 s<span class="lock" id="fastlock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
+        </div></fieldset>
+      <fieldset class="modeopt"><legend>Table</legend>
+        <div class="seg modeseg" role="group" aria-label="Flash table"><button data-set="flashTable" data-val="7">7 ft</button><button data-set="flashTable" data-val="8">8 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-set="flashTable" data-val="9">9 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
+      <fieldset class="modeopt"><legend>How you look</legend>
+        <div class="seg modeseg" role="group" aria-label="How you look at each shot"><button data-set="flashView" data-val="stand">Standing</button><button data-set="flashView" data-val="down">Down on the shot</button></div></fieldset>
+      <button class="startbtn modedone" id="flashdone">Done</button>
+    </div>
+  </div>
+  <div class="menu modemenu" id="runsheet" hidden>   <!-- Run-outs: the rack you play; the same sheet as Practice -->
+    <div class="menucard modecard" role="dialog" aria-modal="true" aria-labelledby="runtitle" aria-describedby="runnote">
+      <div class="menuhead"><span id="runtitle">Run-outs</span><button class="menuclose" id="runclose" aria-label="Close">✕</button></div>
+      <p class="setnote" id="runnote">Not scored: your grade and points stay as they are. A change here starts a new rack.</p>
+      <fieldset class="modeopt"><legend>Table</legend>
+        <div class="seg modeseg" data-run="tb"><button data-v="7">7 ft</button><button data-v="8">8 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button><button data-v="9">9 ft<span class="lock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button></div></fieldset>
+      <button class="startbtn modedone" id="rundone">Done</button>
     </div>
   </div>
 
@@ -1330,7 +1343,7 @@ html.svopen,html.svopen body{overflow:hidden}
         </div>
         <div class="speedchip" id="speedchip" hidden></div>
         <button class="routinechip" id="routinechip" hidden></button>
-        <button class="practicechip" id="practicechip" hidden></button>
+        <button class="modechip" id="modechip" hidden></button>
         <button class="radio" id="radio" aria-label="Music: tap to change the station" title="Music (M)" data-label-kbd="Music: change the station (M)" data-label-touch="Music: tap to change the station" data-title-kbd="Music (M)" data-title-touch="">
           <span class="radiodisc"><svg viewBox="0 0 24 24" aria-hidden="true">
             <g class="eq" fill="currentColor"><rect x="4.5" y="6" width="2.6" height="12" rx="1.3"/><rect x="9" y="6" width="2.6" height="12" rx="1.3"/><rect x="13.4" y="6" width="2.6" height="12" rx="1.3"/><rect x="17.8" y="6" width="2.6" height="12" rx="1.3"/></g>
@@ -1356,7 +1369,7 @@ html.svopen,html.svopen body{overflow:hidden}
           <div class="sumcard">
             <div class="idlehead">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg></div>
             <small id="starthint"></small>
-            <div class="sumbtns"><button class="startbtn" data-fv="stand">Standing</button><button class="startbtn" data-fv="down">Down on the shot</button></div>
+            <div class="sumbtns"><button class="startbtn" id="flashstart">Start</button><button class="sumdone" id="flashsetup">Set up</button></div>
           </div>
         </div>
       </div>
@@ -1370,12 +1383,6 @@ html.svopen,html.svopen body{overflow:hidden}
         <button id="task-practice">Practice<span class="lock" id="practicelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-run" data-set="task" data-val="run">Run-outs<span class="lock" id="runlock" aria-label="unlocks at S" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-free" hidden>Free play<span class="lock" id="freelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
-      </div>
-      <div class="opt flashtime" id="flashtime" hidden>Each shot shows for
-        <div class="seg" role="group" aria-label="How long each Flash shot shows">
-          <button id="flash-1500" data-set="flash" data-val="1500">1.5 s</button>
-          <button id="flash-750" data-set="flash" data-val="750">0.75 s<span class="lock" id="fastlock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
-        </div>
       </div>
       <div class="seg trackseg" id="trackseg" role="group" aria-label="Which ladder" hidden>
         <button id="track-read">Read</button><button id="track-shoot">Shoot</button>
@@ -2070,7 +2077,7 @@ let fpsStart = () => {};
 // adding or removing #dev on an open page doesn't reload it by itself: reload so the switch takes effect
 window.addEventListener('hashchange', e=>{ if(/#dev\b/.test(e.newURL) !== /#dev\b/.test(e.oldURL)) location.reload(); });
 function setGradeForTesting(i){
-  settings.practice = null; saveSettings(); setTimeout(renderPracticeChip, 0);
+  settings.practice = null; saveSettings(); setTimeout(renderModeChip, 0);
   if(settings.tutSeen){ const tr = isShooting() ? 'shoot' : 'read'; for(const k in LESSONS) if((LESSONS[k].track || 'read') === tr && LESSONS[k].at > (tr === 'shoot' ? stepOf(i) : i)) delete settings.tutSeen[k]; saveSettings(); }   // lessons above the picked grade play again when you reach them
   if(!hasBaseline()){   // #dev skips the baseline: record a stand-in so everything that needs one opens up
     const p0 = GRADE_FROM[Math.min(i, GRADE_FROM.length-1)];
@@ -2134,7 +2141,7 @@ const LADDER_PICK_AT = SH.all;
 const ladderPickOpen = () => ladderBest() >= LADDER_PICK_AT;
 const ladderTable = () => ladderPickOpen() && ['7','8','9'].includes(settings.tablePick) ? settings.tablePick : gradeTable(shootLevel());
 const flashTableNow = () => tableUnlocked(settings.flashTable) ? settings.flashTable : gradeTable(ladderBest());
-const progTable = () => GEN.g != null ? gradeTable(GEN.g) : settings.task === 'flash' ? flashTableNow() : isDrill() ? drillPicks().tb : ladderTable();
+const progTable = () => GEN.g != null ? gradeTable(GEN.g) : settings.task === 'flash' ? flashTableNow() : isDrill() ? drillPicks().tb : isRun() ? runPicks().tb : ladderTable();
 // a step reached for the first time that opens a bigger table (returns the size, or null): the Ladder moves to it with
 // the grade, and your Flash table moves up to it too (before, to: steps)
 function tableUp(before, to){
@@ -2191,24 +2198,32 @@ const shootLevel = () => GEN.g != null ? GEN.g : isRun() ? SH.all : isFree() ? l
 function setPractice(i){
   const g = stats.shoot ? stats.shoot.g : 0;
   settings.practice = i != null && i < g ? i : null; saveSettings();
-  renderPracticeChip(); renderProgress(); dealFresh();
+  renderModeChip(); renderProgress(); dealFresh();
 }
 // a new grade gets a new shot: not the one waiting from before, and not the one just played
 function dealFresh(){
   if(stats.active && stats.active.pending){ delete stats.active.pending; save(); }
   if(!(cueStroke && cueStroke.s === shot)) deal();
 }
-function renderPracticeChip(){
-  const el = $('practicechip'); if(!el) return;
-  if(isDrill() && !tut.on){   // Practice: what's coming up, and a way back into the setup
+// The pill at the foot of the table: what the mode you're in is set to, and the way back into its setup. Flash, Practice and
+// Run-outs each have a setup sheet; practising a passed grade goes back to the ladder to pick a grade. The Ladder itself has none.
+function modeChip(){   // {text, act, label} or null
+  if(settings.task === 'flash'){ const t = `${(+settings.flash || 1500)/1000} s`, tb = `${flashTableNow()} ft`; return {text: `Flash · ${t} · ${tb}`, act: 'Change', label: `Flash: each shot shows for ${t}, ${tb} table. Change the setup`}; }
+  if(isDrill()){
     const d = drillPicks(), what = d.weak ? 'Your weakest' : d.fr.length === DRILL_FR.length ? 'Every fraction' : d.fr.map(f=>f === 'full' ? 'Full' : ALL.find(r=>r.id === f).label).join(' ');
-    el.hidden = false; el.setAttribute('aria-label', `Practice, not scored: ${d.weak ? 'your weakest shots' : what}. Change what comes up`);
-    el.innerHTML = `Practice · ${what} <b>Change</b>`; return;
+    return {text: `Practice · ${what}`, act: 'Change', label: `Practice, not scored: ${d.weak ? 'your weakest shots' : what}. Change what comes up`};
   }
-  el.removeAttribute('aria-label');
-  el.hidden = !practicing();
-  if(practicing()) el.innerHTML = `Practising ${SHOOT_GRADES[+settings.practice]} · not scored <b>Back to ${SHOOT_GRADES[stats.shoot.g]}</b>`;
+  if(isRun()) return {text: `Run-outs · ${runSummary()}`, act: 'Change', label: `Run-outs, not scored: ${runSummary()}. Change the setup`};
+  if(practicing()) return {text: `Practising ${SHOOT_GRADES[+settings.practice]} · not scored`, act: 'Change', label: `Practising ${SHOOT_GRADES[+settings.practice]}, not scored. Pick a grade`};
+  return null;
 }
+function renderModeChip(){
+  const el = $('modechip'); if(!el) return;
+  const m = tut.on ? null : modeChip();
+  el.hidden = !m; if(!m) return;
+  el.innerHTML = `${m.text} <b>${m.act}</b>`; el.setAttribute('aria-label', m.label);
+}
+function modeChipTap(){ if(settings.task === 'flash') openSheet('flashsheet', true); else if(isDrill()) openSheet('drill', true); else if(isRun()) openSheet('runsheet', true); else if(practicing()) openProg(true); }
 const NO_TIMER = 1e6;   // from Any angle on, nothing hurries you: you get down when you're ready
 const standTime = g => g < SH.down ? 0 : NO_TIMER;   // no timers: from Down on the shot you call a fraction to get down on its line
 // what you control at each step (Free play: everything you've unlocked)
@@ -2923,6 +2938,9 @@ function addExtras(s){
 // The next shot plays from wherever the cue ball stopped, with the other balls where they ended: shape is yours to
 // play, by feel, with no zone drawn. A miss, a scratch, a foul (the cue ball hits another ball first) or no shot left
 // ends the run; clearing the rack is a full run. Nothing here moves the ladder's grade or points.
+const RUN_DEF = {tb: '9'};   // the setup: the table (more below as Run-outs grows)
+function runPicks(){ const d = {...RUN_DEF, ...(settings.run || {})}; if(!tableUnlocked(d.tb)) d.tb = gradeTable(ladderBest()); return d; }   // the saved picks, made safe
+const runSummary = () => `${runPicks().tb} ft`;   // for the pill
 const RUN_BALLS = 3, RUN_MAX_CUT = 80, RUN_GAP = 0.4;   // balls a rack; the thinnest cut that's picked (an eighth-ball cut is 82°); cloth between a path and another ball
 let RUN = null;   // the rack: {id, tb, n0, potted, balls: [{n, p}], cb, pick: {n, Pi}, over, why}
 // Reach in a run: the ladder stands you at the rail behind the cue ball along the aim; in a game you stand at any rail the shot
@@ -4823,7 +4841,7 @@ function dealInner(){
   }
   walk = null; walkDrag = null; document.body.classList.remove('dragging');
   showSessIdle();   // the mode's run starts with its first shot
-  renderPracticeChip();
+  renderModeChip();
   if(baseRun()){ const v = stats.active.n < stats.active.size/2 ? 'stand' : 'down'; if(settings.view!==v){ settings.view = v; syncPressed(); } }
   syncRefs();
   // A session keeps its unanswered shot: reloading, or changing a setting, brings back the same shot instead of a new one.
@@ -4886,7 +4904,7 @@ function showSessIdle(){
 let flashArmed = false;
 function showStart(){
   endFlash();
-  $('starthint').textContent = `Each shot shows for ${(+settings.flash||1500)/1000} s · call the fraction`;
+  $('starthint').textContent = `${(+settings.flash||1500)/1000} s a shot · ${flashTableNow()} ft · ${settings.flashView === 'down' ? 'down on the shot' : 'standing'} · call the fraction`;
   $('startcover').hidden = false;
   document.querySelectorAll('#answers button').forEach(b=>b.disabled=true);
 }
@@ -5925,7 +5943,6 @@ function hideLockTip(){ clearTimeout(lockTip.timer); lockTip.timer = 0; lockTip.
 }
 function syncPressed(){
   if(typeof lookPick === 'object' && lookPick) renderLookPicker();   // the Look picker and its dot follow every change (Settings, a new grade)
-  $('flashtime').hidden = settings.task !== 'flash';   // Flash's display time sits with Flash itself (0.75 s opens at S)
   tableBox.classList.toggle('walkable', walkOn());
   for(const sz of ['8', '9']){ const lk = !tableUnlocked(sz), b = document.querySelector(`[data-set="flashTable"][data-val="${sz}"]`); lockBtn(b, lk, `Unlocks at ${stepGrade(TABLE_AT[sz])}`); b.querySelector('.lock').hidden = !lk; }
   { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open;   // before S: the grade's table, shown as the pick; the others lock
@@ -5954,7 +5971,7 @@ function applySetting(key, val){
   if(tut.on && key==='task') return;
   if(settings[key]===val || (BASE_LOCKED.includes(key) && baseRun()) || (key==='task' && val==='flash' && !flashUnlocked()) || (key==='task' && val==='practice' && !practiceUnlocked()) || (key==='task' && val==='run' && !runUnlocked()) || (key==='tablePick' && (!ladderPickOpen() || ladderTable()===val)) || (key==='flashTable' && (!tableUnlocked(val) || flashTableNow()===val)) || (LOOK_AT[key] && !lookOpen(key, val)) || (key==='shaft' && val === 'carbon' && !carbonUnlocked()) || (key==='ghost' && aidMode('ghost')!=='optional') || (key==='line' && aidMode('line')!=='optional') || (key==='cam' && aidMode('stance')!=='optional') || (key==='walk' && baseRun()) || (key==='flash' && val==='750' && fastFlashLocked())) return;
   settings[key] = val; saveSettings(); syncPressed();
-  if(key==='task'){ setTimeout(renderPracticeChip, 0); setTimeout(syncStreakPill, 0); flashArmed = false; $('startcover').hidden = true; $('sesscover').hidden = true; renderBadge(); renderSession(); renderStats(); renderRun(); }   // the Stats tab switches to that mode's own stats
+  if(key==='task'){ setTimeout(renderModeChip, 0); setTimeout(syncStreakPill, 0); flashArmed = false; $('startcover').hidden = true; $('sesscover').hidden = true; renderBadge(); renderSession(); renderStats(); renderRun(); }   // the Stats tab switches to that mode's own stats
   if(key==='ghost' || key==='line'){ if(shot) draw(answered); }
   else if(key==='streaks') syncStreakPill();
   else if(key==='gfxAA') location.reload();
@@ -5971,7 +5988,9 @@ function applySetting(key, val){
 }
 document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click', ()=>applySetting(b.dataset.set, b.dataset.val)));
 $('task-sess').addEventListener('click', ()=>applySetting('task', 'shoot'));
-$('task-practice').addEventListener('click', ()=>{ if(!practiceUnlocked() || tut.on) return; if(!isDrill()) applySetting('task', 'practice'); openDrill(true); });   // Practice: set it up as you go in
+$('task-practice').addEventListener('click', ()=>{ if(!practiceUnlocked() || tut.on) return; if(!isDrill()) applySetting('task', 'practice'); openSheet('drill', true); });   // Practice: set it up as you go in
+$('task-flash').addEventListener('click', ()=>{ if(settings.task === 'flash' && !tut.on) openSheet('flashsheet', true); });   // (after the setting itself: the sheet opens over the start card)
+$('task-run').addEventListener('click', ()=>{ if(isRun() && !tut.on) openSheet('runsheet', true); });
 $('track-read').addEventListener('click', ()=>{ settings.track = 'read'; applySetting('task', 'sess'); });
 $('track-shoot').addEventListener('click', ()=>{ if(!shootUnlocked()) return; settings.track = 'shoot'; applySetting('task', 'shoot'); });
 
@@ -6051,7 +6070,8 @@ function walkRelease(){
 svgEl.addEventListener('pointerup', walkRelease);
 svgEl.addEventListener('pointercancel', walkRelease);
 tableBox.addEventListener('click', ()=>{ if(anim) return; if(tut.on) return; if(performance.now() - walkEndedAt < 300) return; if(answered && $('sesscover').hidden) nextDeal(); });
-document.querySelectorAll('[data-fv]').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); settings.flashView = b.dataset.fv; saveSettings(); startFlashMode(); }));   // pick how you look, and go
+$('flashstart').addEventListener('click', e=>{ e.stopPropagation(); startFlashMode(); });
+$('flashsetup').addEventListener('click', e=>{ e.stopPropagation(); openSheet('flashsheet', true); });
 // Flash replays: as many as you like (each is still counted on the shot, so the stats can show it)
 function replaysLeft(){ const a = stats.active; return a && a.task === 'flash' ? Infinity : 0; }
 function syncReplay(){ $('replay').hidden = replaysLeft() <= 0; $('replaytext').textContent = 'Replay'; $('replay').setAttribute('aria-label', 'Replay the shot'); }
@@ -6089,7 +6109,7 @@ $('reset').addEventListener('click', async ()=>{   // all or nothing: your whole
   if(!await ask({title: 'Reset your progress?', text: warn, ok: 'Reset', danger: true})) return;
   stats.log = []; stats.sessions = []; delete stats.archive; delete stats.run; RUN = null; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; delete settings.lookSeen; applyStyle();
   if(settings.tutSeen) for(const k in LESSONS) if(LESSONS[k].at > 0) delete settings.tutSeen[k];
-  saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderPracticeChip();
+  saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderModeChip();
   if(!flashUnlocked() && settings.task==='flash' || !freeUnlocked() && settings.task==='free' || !practiceUnlocked() && isDrill() || !runUnlocked() && settings.task==='run') applySetting('task','shoot');
   showSessIdle(); syncPressed(); save(); renderStats(); syncStreakPill(); if(!answered && !anim) deal(); });
 document.querySelectorAll('.sesschip').forEach(b=>b.addEventListener('click', ()=>startSession(+b.dataset.sess)));
@@ -6693,7 +6713,7 @@ function revealAnswer(){
     L.g = L.best = top; L.pts = 0; settings.practice = null;
     settings.tutSeen = Object.fromEntries(Object.keys(LESSONS).map(k=>[k, 1]));   // lessons stay in the ? menu
     if(settings.shaftGot !== '1'){ settings.shaft = 'carbon'; settings.shaftGot = '1'; }   // as reaching S does
-    saveSettings(); save(); renderBadge(true); renderProgress(); renderPracticeChip();
+    saveSettings(); save(); renderBadge(true); renderProgress(); renderModeChip();
     enforceLocks(); syncPressed(); renderShootControls(); renderStats();   // every lock opens at once: Flash, tables, looks, shaft (menus included, even if open)
     notice('All grades unlocked');
     if(!anim) dealFresh();
@@ -6839,6 +6859,7 @@ document.addEventListener('keydown', e=>{
 });
 
 if(!['stand','down'].includes(settings.view)) settings.view='stand';
+if(!['stand','down'].includes(settings.flashView)) settings.flashView='stand';
 settings.mode = 'ref';   // reference cuts only for now
 if(!['line','aim'].includes(settings.cam)) settings.cam='line';
 if(!['short','long','both'].includes(settings.len)) settings.len='both';
@@ -7205,16 +7226,50 @@ applyStyle();
 applyGfx();
 if(stats.shoot){ const top = SHOOT_GRADES.length - 1; stats.shoot.best = Math.min(stats.shoot.best ?? 0, top); stats.shoot.g = Math.min(Math.max(stats.shoot.g, stats.shoot.best), top); }   // S+ is gone: anyone there is at S
 setTimeout(()=>{ renderLibStatus(); libIdle(); }, 3000);   // start filling the shot library once the page has settled   // grades only go up now: back to your best
-// ---------- Practice: the setup ----------
-// Opened from the Practice button and the chip on the table. Every pick is saved as it's made; a change deals a fresh shot
-// when the card closes (a shot you've already played keeps its result, and the next one follows the new picks).
-let drillFrom = null, drillWas = '';
+// ---------- mode setup: one sheet for Flash, Practice and Run-outs ----------
+// Opened from the mode's button and from the pill at the foot of the table. Every pick is saved as it's made; what changed
+// is applied when the sheet closes (a shot you've already played keeps its result, and the next one follows the new picks).
+const SHEETS = {};   // id -> {render, snap, changed, open, back}
+let sheetFrom = null, sheetWas = '';
+const sheetOpen = () => Object.keys(SHEETS).find(id=>!$(id).hidden) || null;
+function openSheet(id, v){
+  const el = $(id), d = SHEETS[id];
+  if(v){
+    if(!el.hidden) return;
+    const other = sheetOpen(); if(other) openSheet(other, false);
+    sheetFrom = document.activeElement; sheetWas = d.snap ? d.snap() : '';
+    if(d.open) d.open();
+    if(d.render) d.render(); el.hidden = false; el.querySelector('.menuclose').focus({preventScroll: true});
+    return;
+  }
+  if(el.hidden) return;
+  el.hidden = true; hideLockTip();
+  try{ (sheetFrom && sheetFrom.isConnected && sheetFrom !== document.body ? sheetFrom : d.back()).focus({preventScroll: true}); }catch(e){}
+  sheetFrom = null;
+  if(d.changed) d.changed(!d.snap || d.snap() !== sheetWas);
+}
+function wireSheet(id, d){
+  SHEETS[id] = d;
+  $(id).addEventListener('click', e=>{ if(e.target === $(id)) openSheet(id, false); });
+  $(id).querySelectorAll('.menuclose, .modedone').forEach(b=>b.addEventListener('click', ()=>openSheet(id, false)));
+}
+window.addEventListener('keydown', e=>{   // while a sheet is up, keys stay in it: Esc closes, Tab goes round it
+  const id = sheetOpen(); if(!id) return;
+  e.stopPropagation();
+  if(e.key === 'Escape'){ e.preventDefault(); openSheet(id, false); return; }
+  if(e.key === 'Tab'){
+    const f = [...$(id).querySelectorAll('button')].filter(b=>!b.disabled && b.getClientRects().length), i = f.indexOf(document.activeElement);
+    if(f.length){ e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus(); }
+  }
+}, true);
+const shotIdle = () => !answered && !anim && !(cueStroke && cueStroke.s === shot);   // a shot waiting to be called: a change deals it again
+// Practice
 function setDrill(k, v){
   const d = drillPicks();
   if(k === 'fr'){ const on = d.fr.includes(v); if(on && d.fr.length === 1) return renderDrill(true); d.fr = on ? d.fr.filter(f=>f !== v) : DRILL_FR.filter(f=>f === v || d.fr.includes(f)); }
   else if(k === 'weak') d.weak = d.weak ? 0 : 1;
   else d[k] = v;
-  settings.drill = d; saveSettings(); renderDrill(); renderPracticeChip();
+  settings.drill = d; saveSettings(); renderDrill(); renderModeChip();
 }
 function renderDrill(last){
   const d = drillPicks(), c = ctrlAt(drillLevel());
@@ -7233,37 +7288,35 @@ function renderDrill(last){
   });
   $('drill-spin-hint').textContent = c.side ? 'yours: follow, draw and english' : c.down ? 'yours: follow and draw' : c.up ? 'yours: follow' : '';
 }
-function openDrill(v){
-  const el = $('drill');
-  if(v){
-    if(!el.hidden) return;
-    drillFrom = document.activeElement; drillWas = JSON.stringify(drillPicks());
-    renderDrill(); el.hidden = false; $('drillclose').focus({preventScroll: true});
-    return;
-  }
-  if(el.hidden) return;
-  el.hidden = true; hideLockTip();
-  try{ (drillFrom && drillFrom.isConnected && drillFrom !== document.body ? drillFrom : $('task-practice')).focus({preventScroll: true}); }catch(e){}
-  drillFrom = null;
-  if(JSON.stringify(drillPicks()) !== drillWas && isDrill()){ nextShot0 = null; if(!answered && !anim && !(cueStroke && cueStroke.s === shot)) deal(); }   // a new shot to the new picks
-}
-$('drillclose').addEventListener('click', ()=>openDrill(false));
-$('drilldone').addEventListener('click', ()=>openDrill(false));
-$('drill').addEventListener('click', e=>{ if(e.target === $('drill')) openDrill(false); });
+wireSheet('drill', {render: renderDrill, snap: ()=>JSON.stringify(drillPicks()), back: ()=>$('task-practice'),
+  changed: ch=>{ if(ch && isDrill()){ nextShot0 = null; if(shotIdle()) deal(); } }});   // a new shot to the new picks
+const openDrill = v => openSheet('drill', v);
 $('drillweak').addEventListener('click', ()=>setDrill('weak'));
 $('drill-fr').addEventListener('click', e=>{ const b = e.target.closest('[data-fr]'); if(b) setDrill('fr', b.dataset.fr); });
 document.querySelectorAll('#drill [data-drill]').forEach(g=>g.addEventListener('click', e=>{ const b = e.target.closest('button[data-v]'); if(b && !b.classList.contains('locked')) setDrill(g.dataset.drill, b.dataset.v); }));
-window.addEventListener('keydown', e=>{   // while it's up, keys stay in the card: Esc closes, Tab goes round it
-  if($('drill').hidden) return;
-  e.stopPropagation();
-  if(e.key === 'Escape'){ e.preventDefault(); openDrill(false); return; }
-  if(e.key === 'Tab'){
-    const f = [...$('drill').querySelectorAll('button')].filter(b=>!b.disabled && b.getClientRects().length), i = f.indexOf(document.activeElement);
-    if(f.length){ e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus(); }
-  }
-}, true);
-$('practicechip').addEventListener('click', e=>{ e.stopPropagation(); if(isDrill()) openDrill(true); else setPractice(null); });
-renderPracticeChip();
+// Flash: its picks are settings (data-set buttons), applied as they're tapped; opening the sheet mid-shot stops the clock,
+// and the start card comes back with the new setup named on it
+wireSheet('flashsheet', {render: syncPressed, back: ()=>$('task-flash'),
+  open: ()=>{ if(settings.task === 'flash' && stats.active && stats.active.task === 'flash' && !answered){ flashArmed = false; showStart(); } },
+  changed: ()=>{ if(settings.task === 'flash' && !$('startcover').hidden) showStart(); renderModeChip(); }});
+// Run-outs
+function setRun(k, v){ const d = runPicks(); d[k] = v; settings.run = d; saveSettings(); renderRunSheet(); renderModeChip(); }
+function renderRunSheet(){
+  const d = runPicks();
+  document.querySelectorAll('#runsheet [data-run]').forEach(g=>{
+    const k = g.dataset.run;
+    g.querySelectorAll('button').forEach(b=>{
+      const v = b.dataset.v, lk = k === 'tb' && !tableUnlocked(v);
+      lockBtn(b, lk, `Opens at ${stepGrade(TABLE_AT[v])}`); const L = b.querySelector('.lock'); if(L) L.hidden = !lk;
+      b.setAttribute('aria-pressed', String(d[k]) === v);
+    });
+  });
+}
+wireSheet('runsheet', {render: renderRunSheet, snap: ()=>JSON.stringify(runPicks()), back: ()=>$('task-run'),
+  changed: ch=>{ if(ch && isRun()){ RUN = null; if(shotIdle()) deal(); } }});   // a new rack to the new picks
+document.querySelectorAll('#runsheet [data-run]').forEach(g=>g.addEventListener('click', e=>{ const b = e.target.closest('button[data-v]'); if(b && !b.classList.contains('locked')) setRun(g.dataset.run, b.dataset.v); }));
+$('modechip').addEventListener('click', e=>{ e.stopPropagation(); modeChipTap(); });
+renderModeChip();
 // background music: off to start; it can only begin after a tap or key (browsers block sound before that)
 if(!['off','parlor','smoke','felt'].includes(settings.music) || (settings.musicV | 0) < 2){ settings.music = 'off'; settings.musicV = 2; }   // music off by default (once, for everyone); the radio turns it on
 renderRadio();
@@ -7394,7 +7447,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 ['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
-  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
+  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'flashsheet', 'runsheet', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
