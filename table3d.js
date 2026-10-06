@@ -36,7 +36,7 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     tableKey = key; W = tbl.W; H = tbl.H; renderer.shadowMap.needsUpdate = true;
     if(tableGroup){ world.remove(tableGroup); tableGroup.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); }
     const g = tableGroup = new T3.Group(); world.add(g);
-    const C = tbl.C, out = C.cushionWidth + C.railWidth, top = 1.6;
+    const C = tbl.C, out = railOut = C.cushionWidth + C.railWidth, top = 1.6;
     const mat = c => new T3.MeshStandardMaterial({color:c, roughness:.9, metalness:0});
     // the light: from above, a little off to the side, covering the table for shadows
     sun.position.set(W*0.35, H*0.4, 160); sun.target.position.set(W/2, H/2, 0);
@@ -168,6 +168,7 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
         x.fillStyle = white; x.fillRect(0, 0, w, h);
         x.fillStyle = color; x.fillRect(0, h*(.5 - L.stripeW/2), w, h*L.stripeW);
       } else { x.fillStyle = color; x.fillRect(0, 0, w, h); }
+      if(L.holo) holoFoil(x, w, h, number);
       // the number spot sits at the texture's centre: local +x
       const sp = L.spot, fs = h*0.17*L.numScale;
       x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(w/2, h/2, w*0.072*sp, h*0.145*sp, 0, 0, Math.PI*2); x.fill();
@@ -181,6 +182,28 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     }
     const t = new T3.CanvasTexture(cv); t.anisotropy = 4;
     return texCache[key] = t;
+  }
+  // Disco: holographic foil baked into the ball's colour. Rainbow bands run diagonally round the ball (a whole number of
+  // them, so the seam meets), with fine bright diffraction lines and prismatic sparkle flecks; the ball's own colour stays as
+  // the tint underneath. The number's circle is drawn afterwards, so it stays plain white.
+  function holoFoil(x, w, h, number){
+    const img = x.getImageData(0, 0, w, h), d = img.data, TAU = Math.PI*2;
+    for(let j=0;j<h;j++) for(let i=0;i<w;i++){
+      const k = (j*w + i)*4, u = i/w, v = j/h, t = u*6 + v*3 + .12*Math.sin(v*TAU*3 + u*TAU*2);
+      const br = (d[k] + d[k+1] + d[k+2])/765, ln = Math.pow(Math.abs(Math.sin(Math.PI*(u*40 + v*20))), 30);
+      for(let c=0;c<3;c++){
+        const rb = .5 + .5*Math.cos(TAU*(t + c/3));
+        d[k+c] = Math.min(255, (d[k+c]/255*.58 + rb*(.3 + .45*br) + ln*.35)*255);
+      }
+    }
+    x.putImageData(img, 0, 0);
+    let sd = 7 + 131*String(number).split('').reduce((a, ch)=>a + ch.charCodeAt(0), 0);
+    const rnd = () => (sd = (sd*9301 + 49297) % 233280)/233280;
+    for(let n=0;n<900;n++){
+      const s = 1 + rnd()*2.2, white = rnd() < .25;
+      x.fillStyle = white ? '#ffffff' : `hsl(${Math.round(rnd()*360)}, 100%, ${Math.round(60 + rnd()*25)}%)`;
+      x.fillRect(rnd()*w, rnd()*h, s, s);
+    }
   }
   // the numbers are drawn in the page's condensed font: on a first visit (or a slow phone) it can still be on its way when the
   // balls are first drawn, and they'd keep the fallback's numbers. When it arrives, the numbered balls are drawn again.
@@ -196,17 +219,19 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     }, ()=>{});
   }catch(e){}
   const sphere = opts.lite ? new T3.SphereGeometry(1, 32, 24) : new T3.SphereGeometry(1, 48, 32);   // 32 round: under half a pixel off round even down on the shot
-  // the ball set's finish: its roughness, and a clear coat on top for the glossiest set (a phone gets the plain glossy surface)
+  // the ball set's finish: its roughness (a low one gives the glossy sets their small, bright highlight). Every set uses the
+  // standard material: the clear coat's extra lighting pass cost too much for what it showed.
   function ballMat(L){
-    const r = L && L.rough != null ? L.rough : .18, m = L && L.clear && (!opts.lite || L.holo)
-      ? new T3.MeshPhysicalMaterial({roughness:r, metalness:0, clearcoat:L.clear, clearcoatRoughness:.03})
-      : new T3.MeshStandardMaterial({roughness:r, metalness:0});
-    if(L && L.holo){   // Disco: a rainbow sheen over the ball's colour, strongest at the edge, shifting as the view moves
+    const m = new T3.MeshStandardMaterial({roughness: L && L.rough != null ? L.rough : .18, metalness:0});
+    if(L && L.holo){   // Disco: strong rainbow bands that slide over the foil as the view moves, brightest at the edge; the number's circle stays clear
       m.customProgramCacheKey = () => 'holo';
       m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', `{
         vec3 vd = normalize(vViewPosition); float f = 1.0 - abs(dot(normal, vd));
-        float h = f*1.4 + normal.x*.45 + normal.y*.3 + vd.x*.6;
-        gl_FragColor.rgb += (.5 + .5*cos(6.2832*(h + vec3(0., .33, .67))))*(.1 + .45*f*f);
+        float k = smoothstep(.95, 1.25, length(vec2((vUv.x - .5)/.08, (vUv.y - .5)/.16)));
+        float h = vUv.x*6.0 + vUv.y*3.0 + normal.x*1.6 + normal.y*1.1 + f*1.5;
+        vec3 rb = .5 + .5*cos(6.2832*(h + vec3(0., .33, .67)));
+        float ln = pow(abs(sin(3.1416*(vUv.x*48.0 + vUv.y*24.0 + normal.x*2.0 + normal.y*1.5))), 24.0);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb*.55 + rb*.75, k*(.45 + .4*f)) + k*rb*(.45*f*f + .3*ln);
       }
       #include <dithering_fragment>`); };
     }
@@ -285,24 +310,56 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     zone.position.set(z.c[0], z.c[1], .03);
   }
 
-  // ---------- Disco: a mirror ball's spots of coloured light drifting slowly over the cloth and rails ----------
-  // mode 0: off; 1: still spots (reduced motion); 2: drifting. A few soft spot lights with no shadows; the page keeps them off on a phone.
-  const disco = [], DISCO_HUES = [0xff4fd8, 0x4fb8ff, 0xffd84f, 0x4fffb0, 0xb04fff];
-  let discoMode = 0;
-  function placeDisco(t){
-    const n = disco.length, s = t/1000;
-    disco.forEach((L, i)=>{
-      const a = s*(.07 + .015*i) + i*2*Math.PI/n;
-      L.position.set(W/2, H/2, 90);
-      L.target.position.set(W/2 + W*.55*Math.cos(a), H/2 + H*.6*Math.sin(a*1.3 + i*2.1), 0);
-      L.target.updateMatrixWorld();
+  // ---------- Disco: a mirror ball's spots of coloured light sweeping over the cloth and rails ----------
+  // mode 0: off; 1: still spots (reduced motion); 2: sweeping. No lights: two flat, unlit layers (one just above the cloth,
+  // one on the rail tops) add a texture of soft coloured spots, turned and drifted by a time uniform. The balls hide the
+  // cloth layer, so they read as normal. The page redraws it at a low rate.
+  let discoMode = 0, discoGroup = null, discoBuilt = '', railOut = 10;
+  const discoMat = (()=>{
+    const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+    const x = cv.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, 512, 512);
+    const hues = ['255,40,200', '40,160,255', '255,220,40', '40,255,150', '170,60,255', '255,90,40'];
+    let sd = 11; const rnd = () => (sd = (sd*9301 + 49297) % 233280)/233280;
+    x.globalCompositeOperation = 'lighter';
+    for(let n=0;n<34;n++){
+      const cx = rnd()*512, cy = rnd()*512, r = 16 + rnd()*26, c = hues[n % hues.length];
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, `rgba(${c},1)`); g.addColorStop(.55, `rgba(${c},.85)`); g.addColorStop(1, `rgba(${c},0)`);
+      x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI*2); x.fill();
+    }
+    const t = new T3.CanvasTexture(cv); t.wrapS = t.wrapT = T3.MirroredRepeatWrapping;
+    return new T3.ShaderMaterial({
+      uniforms: {map: {value: t}, uT: {value: 0}, uC: {value: new T3.Vector2(50, 25)}, uS: {value: 60}},
+      vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }',
+      fragmentShader: `uniform sampler2D map; uniform float uT; uniform vec2 uC; uniform float uS; varying vec2 vP;
+        vec2 turn(vec2 p, float a){ float c = cos(a), s = sin(a); return vec2(c*p.x - s*p.y, s*p.x + c*p.y); }
+        void main(){
+          vec2 p = (vP - uC)/uS;
+          vec3 c = texture2D(map, turn(p, uT*.22)*.5 + .5 + .08*vec2(sin(uT*.13), cos(uT*.11))).rgb
+                 + .7*texture2D(map, turn(p, -uT*.15 + 1.7)*.62 + .5).rgb;
+          gl_FragColor = vec4(c*.62, 1.0);
+        }`,
+      transparent: true, blending: T3.AdditiveBlending, depthWrite: false
     });
+  })();
+  function buildDisco(){
+    if(discoBuilt === tableKey) return;
+    discoBuilt = tableKey;
+    if(!discoGroup){ discoGroup = new T3.Group(); world.add(discoGroup); }
+    discoGroup.children.slice().forEach(m=>{ discoGroup.remove(m); m.geometry.dispose(); });
+    const o = railOut, cloth = new T3.Mesh(new T3.PlaneGeometry(W + 2*o, H + 2*o), discoMat);
+    cloth.position.set(W/2, H/2, .025);
+    const rim = new T3.Shape([new T3.Vector2(-o, -o), new T3.Vector2(W+o, -o), new T3.Vector2(W+o, H+o), new T3.Vector2(-o, H+o)]);
+    const hole = new T3.Path(); hole.moveTo(0, 0); hole.lineTo(0, H); hole.lineTo(W, H); hole.lineTo(W, 0); hole.lineTo(0, 0); rim.holes.push(hole);
+    const rail = new T3.Mesh(new T3.ShapeGeometry(rim), discoMat); rail.position.z = 1.62;
+    cloth.renderOrder = rail.renderOrder = 2; discoGroup.add(cloth, rail);
+    discoMat.uniforms.uC.value.set(W/2, H/2); discoMat.uniforms.uS.value = Math.max(W, H)/2 + o;
   }
   function setDisco(mode){
+    if(mode) buildDisco();
     if(mode === discoMode) return;
-    if(mode && !disco.length) DISCO_HUES.forEach(c=>{ const L = new T3.SpotLight(c, .5, 0, .07, .85, 0); L.castShadow = false; lights.add(L, L.target); disco.push(L); });
-    discoMode = mode; disco.forEach(L=>L.visible = !!mode);
-    placeDisco(mode === 2 ? root.performance.now() : 0);
+    discoMode = mode; if(discoGroup) discoGroup.visible = !!mode;
+    discoMat.uniforms.uT.value = 0;
   }
   const discoMoving = () => discoMode === 2;
 
@@ -315,7 +372,7 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
     camera.position.set(-cam.E[0], cam.E[1], cam.E[2]);
     camera.lookAt(-(cam.E[0] + cam.f[0]), cam.E[1] + cam.f[1], cam.E[2] + cam.f[2]);
     camera.updateProjectionMatrix();
-    if(discoMode === 2) placeDisco(root.performance.now());
+    if(discoMode === 2) discoMat.uniforms.uT.value = root.performance.now()/1000 % 3600;
     renderer.render(scene, camera);
   }
   // graphics settings: resolution (pixel ratio cap) and shadows ('soft', 'hard' or 'off')
