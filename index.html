@@ -382,6 +382,9 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .rr{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:500;white-space:nowrap}
 .rr small{font:600 11px/1 var(--body);letter-spacing:.07em;text-transform:uppercase}
 .rr .rrv{color:var(--good);font-weight:600}
+.rr.rnote{white-space:normal}
+.rcap{margin:-4px 0 8px;font-size:13px;line-height:18px;color:var(--ink)}
+.rcap small{font:600 11px/1 var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--gold-text);margin-right:4px}
 .rdash{display:inline-block;width:28px;height:6px;border-radius:3px;background:var(--chip);vertical-align:middle}
 .rcard:not(.pend) .rverd,.rcard:not(.pend) .rval{animation:rin var(--t) var(--ease) both}
 @keyframes rin{from{opacity:0}to{opacity:1}}
@@ -397,6 +400,7 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
   .rrow.wide{grid-column:1/-1}
   .rk{flex:none;width:4.6em;font-size:10.5px;line-height:19px}
   .rval{gap:0 8px;min-height:19px}
+  .rcap{margin:0 0 3px;font-size:12.5px}
   .rr small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* the arrow and the green say it; "right" stays for screen readers */
 }
 .nudge{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1348,7 +1352,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 506;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 507;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1434,6 +1438,10 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 507, date: '2026-10-06', title: 'One right shot', items: [
+    'The result card names one right shot, the call, stroke and spin that Replay the right shot plays, and the replay lights up that same fraction.',
+    'A call that was right for the stroke and spin you chose is no longer marked wrong: the card says it fits, and shows the right shot beside it.',
+  ]},
   {build: 506, date: '2026-10-06', title: 'The right stroke, shown right', items: [
     'A stroke that drops the ball but scratches now counts as the wrong stroke, and the card names the one that drops it clean.',
     'Replay the right shot plays the stroke and spin the card names, and it always drops clean, english shots included.',
@@ -2882,8 +2890,14 @@ const pocketLevel = s => COARSE.find(l=>STROKE_MPH[l]*MPH >= strikeOf(s).V) || C
 // The right stroke for a shot, the one the result card names and "Replay the right shot" plays, with the right call's aim.
 // Yours, if the right call with it drops clean (and lands in the zone, with the zone's tip); otherwise the zone's own stroke,
 // or with no zone the softest from pocket speed up that drops clean. If none does, pocket speed or harder stands (yours if it's
-// that hard). {st: {V, tip}, lvl, mineOk}; lvl is null when speed isn't yours yet.
+// that hard). {st: {V, tip}, lvl, mineOk, id}; lvl is null when speed isn't yours yet. id: the right call for that stroke and tip,
+// the one fraction the card names as right and the replay lights up: the right shot is one shot.
 function rightStroke(s, sq){
+  const r = rightStroke0(s, sq);
+  r.id = nearestRef(cutForDir(s, aimFor(s, r.st, sq))).id;
+  return r;
+}
+function rightStroke0(s, sq){
   const z = s.zone, c = ctrl(), tip = z ? z.tip : shotStroke(s).tip;
   if(!c.speed){ const st = z ? {V: STROKE_MPH[z.lvl]*MPH, tip} : shotStroke(s); return {st, lvl: null, mineOk: true}; }
   const mine = nearestCoarse(speedLevel()), pl = pocketLevel(s), at = l => ({V: STROKE_MPH[l]*MPH, tip});
@@ -2895,6 +2909,11 @@ function rightStroke(s, sq){
 }
 // what the balls did, and how it went for the ball alone (whatever the call): pocketed clean (and in the zone, if there is one)
 // is a success, pocketed clean but off the zone is half of one, anything else a miss. The Ball row and a lesson's note use it.
+// the right shot in a line, the card's caption: "RIGHT SHOT ¼ · ¾ stroke · ½ tip of top"
+function rightShotLine(s, rs, ideal){
+  const c = ctrl(), t = tipName(snapTip(rs.st.tip || [0, 0]));
+  return '<small>Right shot</small> ' + [fracName(ideal), c.speed && rs.lvl != null && strokeName(rs.lvl) + ' stroke', s.zone && (c.up || c.side) && (t === 'Center' ? 'center ball' : t)].filter(Boolean).join(' · ');
+}
 function ballVerdict(run, zone){
   if(run.scratch) return {v: 'Scratch: the cue ball went in', good: false};
   if(!run.hit) return {v: 'Missed the object ball', good: false};
@@ -2918,13 +2937,14 @@ function takeShot(id){
   const clean = run.made && !run.scratch;
   const pocketLvl = pocketLevel(s);   // pocket speed: the softest stroke that gets it there
   const speedOk = !ctrl().speed || !!s.zone || nearestCoarse(speedLevel()) >= pocketLvl;   // pocket speed or harder
-  const rs = s.rightStroke = rightStroke(s, sq);   // the stroke the card names and the replay plays: one answer for both
+  const rs = s.rightStroke = rightStroke(s, sq);   // the shot the card names and the replay plays (call, stroke, tip): one answer for all
+  const ideal = ALL.find(r=>r.id === rs.id) || right, isIdeal = picked.id === ideal.id;   // your call against the right shot's; ok: against your own stroke and spin's
   const zoneWin = !!s.zone && clean && run.inZone;   // potted and in the zone: a success, whatever fraction or stroke got it there
   const full = zoneWin || (ok && clean && !s.zone && speedOk);
   const partial = ok && clean && !full;
   const q = sub(s.ob, s.cb), qb = dot(q, dir), disc = qb*qb - dot(q, q) + 4*R*R;   // where the cue ball meets the object ball on your call
   s.pick = {made: run.made, far: !ok, g2: disc >= 0 ? add(s.cb, mul(dir, qb - Math.sqrt(disc))) : s.gb, id};
-  document.querySelectorAll('#answers button').forEach(x=>{ x.disabled = true; x.className = x.dataset.id===id ? (ok && run.made ? 'right' : run.made ? 'also' : 'wrong') : x.dataset.id===right.id ? 'right' : ''; });   // your call is marked straight away: the right fraction played too soft or too hard is still a miss
+  document.querySelectorAll('#answers button').forEach(x=>{ x.disabled = true; x.className = x.dataset.id===id ? (isIdeal && run.made ? 'right' : run.made ? 'also' : 'wrong') : x.dataset.id===ideal.id ? 'right' : ''; });   // your call is marked straight away: the right fraction played too soft or too hard is still a miss
   cancelAnimationFrame(featherRaf);
   const play = () => {
   if(isShoot() && practicing()){   // practice: logged as practice, nothing scored
@@ -2945,10 +2965,14 @@ function takeShot(id){
   }
   // the verdict as a small table: your call and the right one, your stroke and the one it wanted, and what the balls did
   const spd = strokeName, want = rs.lvl, mine = speedLevel(), strokeOk = rs.mineOk;   // yours is right if the right call with it drops clean (and in the zone)
-  const ball = ballVerdict(run, s.zone);
+  const ball = ballVerdict(run, s.zone), spinRow = shootRows(s).some(r=>r.k === 'Spin');
   // the same rows the card showed before the call (shootRows), filled in: a miss shows the right answer beside yours
   const rows = shootRows(s).map(r=>{
-    if(r.k === 'Call') return {...r, v: fracName(picked), good: ok ? true : zoneWin ? 'also' : false, right: ok ? '' : fracName(right)};
+    // the call against the right shot's: ✓ if it's the same; a call that was right for your own stroke and spin isn't marked wrong,
+    // it's said so, with the right shot's call beside it
+    if(r.k === 'Call') return isIdeal ? {...r, v: fracName(picked), good: true}
+      : ok ? {...r, v: fracName(picked), good: 'also', wide: true, note: `fits your ${spinRow ? 'stroke and spin' : 'stroke'} · right shot <span class="rrv">${fracName(ideal)}</span>`}
+      : {...r, v: fracName(picked), good: zoneWin ? 'also' : false, right: fracName(ideal)};
     if(r.k === 'Stroke') return {...r, v: spd(mine), good: strokeOk || zoneWin, right: strokeOk || zoneWin ? '' : spd(want)};
     if(r.k === 'Spin'){   // your tip against the one that makes the zone (in half-tip steps: "½ tip of top", "1 tip of draw", "½ tip left"...)
       const mineTip = snapTip(stroke.tip || [0, 0]), zoneTip = s.zone.tip || [0, 0], same = tipName(mineTip) === tipName(zoneTip);
@@ -2956,8 +2980,10 @@ function takeShot(id){
     }
     return {...r, v: ball.v, good: ball.good};
   });
-  const head = full ? 'Good shot' : partial ? 'Pocketed' : ok ? 'Missed' : run.made ? 'Wrong call, but it drops' : 'Missed';
-  $('quick').innerHTML = rcardHTML(head, full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no', rows);
+  const head = full ? 'Good shot' : partial ? 'Pocketed' : ok ? 'Missed' : run.made ? (isIdeal ? 'Pocketed' : 'Wrong call, but it drops') : 'Missed';
+  // the right column is one shot, the one Replay the right shot plays: named above the rows once there's a stroke or spin to it
+  const rightShot = !full && rows.some(r=>r.k === 'Stroke' || r.k === 'Spin') ? rightShotLine(s, rs, ideal) : '';
+  $('quick').innerHTML = rcardHTML(head, full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no', rows, '', rightShot);
   $('showright').hidden = full;   // under Next shot: play it the right way
   $('result').innerHTML = `<div class="resultpair">${overlapSVG(s)}${tipSVG(s)}</div>`;
   const hitT = (obHit(run.sim.events) || {}).t ?? 0;
@@ -4148,17 +4174,18 @@ function endFlash(){ clearTimeout(flashTimer); $('cover').hidden = true; $('flas
 // ---------- round ----------
 // The result card. Before the call it shows the rows this shot will report: what you've already set (stroke, spin) and a
 // dash for the rest, so on the call the values land where the dashes were and nothing below moves.
-// rows: {k: label, v: value (null: pending), good: true | false | 'also' | undefined (not judged), right: the right value when yours differs, wide: across both columns on a phone}
+// rows: {k: label, v: value (null: pending), good: true | false | 'also' | undefined (not judged), right: the right value when yours differs, note: words beside it instead, wide: across both columns on a phone}
+// cap: a line between the verdict and the rows (the right shot, when the right column is one)
 const RICON = {
   ok: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="right"><path d="M2 6.4 4.8 9.2 10 3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   no: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="wrong"><path d="M3 3l6 6M9 3 3 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   also: '<svg class="ricon" viewBox="0 0 12 12" role="img" aria-label="drops, not the ideal call"><circle cx="6" cy="6" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'};
 const rcls = g => g === 'also' ? 'also' : g === true ? 'ok' : g === false ? 'no' : '';
-function rcardHTML(head, cls, rows, aside){
+function rcardHTML(head, cls, rows, aside, cap){
   const pend = head == null;
   const val = r => r.v == null ? '<span class="rdash" aria-label="pending"></span>'
-    : `<span class="rv ${pend ? '' : rcls(r.good)}">${pend ? '' : RICON[rcls(r.good)] || ''}${r.v}</span>${!pend && r.right ? `<span class="rr"><span aria-hidden="true">→</span><small>right</small><span class="rrv">${r.right}</span></span>` : ''}`;
-  return `<div class="rcard${pend ? ' pend' : ''}"><div class="rhead"><b class="rverd ${pend ? '' : cls}">${pend ? 'Call the hit' : (RICON[cls] || '') + head}</b><span class="raside">${aside || ''}</span></div>`
+    : `<span class="rv ${pend ? '' : rcls(r.good)}">${pend ? '' : RICON[rcls(r.good)] || ''}${r.v}</span>${!pend && r.right ? `<span class="rr"><span aria-hidden="true">→</span><small>right</small><span class="rrv">${r.right}</span></span>` : ''}${!pend && r.note ? `<span class="rr rnote">${r.note}</span>` : ''}`;
+  return `<div class="rcard${pend ? ' pend' : ''}"><div class="rhead"><b class="rverd ${pend ? '' : cls}">${pend ? 'Call the hit' : (RICON[cls] || '') + head}</b><span class="raside">${aside || ''}</span></div>${cap ? `<div class="rcap">${cap}</div>` : ''}`
     + `<div class="rrows">${rows.map(r=>`<div class="rrow${r.wide ? ' wide' : ''}"><span class="rk">${r.k}</span><span class="rval">${val(r)}</span></div>`).join('')}</div></div>`;
 }
 const fracName = r => r.id === 'full' ? 'Full' : r.label;
@@ -4890,13 +4917,13 @@ function railVol(vn){ return Math.max(.2, Math.min(1, vn/40)); }
 function showRightShot(){
   const s = shot; if(!s || !answered || anim || cueStroke || s.replay) return;
   const z = s.zone;
-  const sq = shaftSq(), st = (s.rightStroke || rightStroke(s, sq)).st, dir = aimFor(s, st, sq), run = playAim(s, dir, st, true, sq);   // the stroke the card named
+  const sq = shaftSq(), rs = s.rightStroke || rightStroke(s, sq), st = rs.st, dir = aimFor(s, st, sq), run = playAim(s, dir, st, true, sq);   // the shot the card named
   // From where you are, into the right shot: you come up off your shot (if you're still down), the balls fade out where they
   // stopped and back in where they started while you step over behind the right line, then you get down on it, a couple of
   // practice strokes, and the stroke. Played like any shot: you come up out of the way as the balls come back at your cue.
   const c = s.cam, routine = !!(c && c.T), downOn = routine && shootLevel() >= SH.down;
   const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);   // reduced motion: shorter moves
-  const rp = s.replay = {V: st.V, tip: st.tip, feather: false, id: nearestRef(cutForDir(s, dir)).id};   // id: the fraction it's played at
+  const rp = s.replay = {V: st.V, tip: st.tip, feather: false, id: rs.id};   // id: the fraction it's played at, the card's right call
   const ctlBack = () => { ctlGlideMs = calm ? 0 : 450; renderShootControls(); };   // the controls back to your own stroke and call
   const tw = routine ? (c.tw = (c.tw || 0) + 1) : 0;   // owns the camera: a stand-up still running stops where it is
   const live = () => { const ok = shot === s && s.replay === rp && (!routine || c.tw === tw);
