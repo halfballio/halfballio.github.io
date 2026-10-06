@@ -18,7 +18,7 @@ function digest(ctx){
   const log = ctx.log || [], last = log[log.length - 1];
   const key = [ctx.task, log.length, last && (last.ts || ''), last && last.p, (ctx.sessions || []).length, ctx.shoot && ctx.shoot.g].join('|');
   if(memo.key === key && memo.ctx === ctx.log) return memo.d;
-  const shoot = ctx.task === 'shoot', idx = {}, refs = ctx.refs;
+  const run = ctx.task === 'run', shoot = ctx.task === 'shoot' || run, idx = {}, refs = ctx.refs;   // Run-outs are shot and judged as the Ladder is (the right call is the one the stroke needs)
   refs.forEach((r, i)=>{ idx[r.id] = i; });
   const L = [];
   for(const e of log) if((e.t || 'call') === ctx.task && !e.gh) L.push(e);
@@ -65,9 +65,20 @@ function digest(ctx){
     byRef[a].n++; byRef[a].ok += okA[i]; if(b === a) byRef[a].call++;
     if(b != null) M[a][b]++;
   }
-  const d = {ctx, shoot, L, n, right, calls, made, scr, okA, leanA, streaks, best, curStreak, bestWin, bestWinAt, shown, M, byRef, idx, real, called, callOk};
+  const d = {ctx, shoot, run, L, n, right, calls, made, scr, okA, leanA, streaks, best, curStreak, bestWin, bestWinAt, shown, M, byRef, idx, real, called, callOk};
+  if(run) d.racks = racks(L, ctx.run);
   memo = {key, ctx: ctx.log, d};
   return d;
+}
+// Run-outs, rack by rack (rk): balls run, and how it ended (re: miss, scratch, foul, noshot, clear). A rack still being
+// played has no end yet and isn't counted. Totals kept by the game (ctx.run) stand in where the log has been trimmed.
+function racks(L, kept){
+  const by = {}, order = [];
+  for(const e of L){ if(!e.rk) continue; let r = by[e.rk]; if(!r){ r = by[e.rk] = {n: 0, run: 0, end: null, fl: 0}; order.push(r); } r.n++; if(e.m && !e.sc && !e.fl) r.run++; if(e.re) r.end = e.re; }
+  const done = order.filter(r=>r.end), full = done.filter(r=>r.end === 'clear').length, balls = done.reduce((a, r)=>a + r.run, 0);
+  const best = Math.max(0, ...done.map(r=>r.run), kept && kept.best || 0);
+  const k = kept && kept.racks > done.length ? kept : null;   // the game's totals cover racks the log no longer holds
+  return {list: done, n: k ? k.racks : done.length, full: k ? k.full : full, balls: k ? k.balls : balls, best, size: (L.find(e=>e.rn) || {}).rn || 3};
 }
 // a group's numbers: shots, full marks, and its misses split thin / full
 function group(d, fn){
@@ -187,13 +198,21 @@ const fmtDay = m => when(m).toLocaleDateString(undefined, {weekday: 'short', mon
 const fmtTime = m => when(m).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
 
 // ---------- the tabs ----------
-function modeName(d){ return d.shoot ? 'Ladder' : 'Flash'; }
+function modeName(d){ return d.run ? 'Run-out' : d.shoot ? 'Ladder' : 'Flash'; }
 
 function tabOverview(d, w){
   const c = d.ctx, G = c.grades, out = [];
   const last20 = (()=>{ const k = Math.min(20, d.n); let ok = 0; for(let i = d.n - k; i < d.n; i++) ok += d.okA[i]; return k ? `${pct(ok, k)}%` : '–'; })();
   const k = [];
-  if(d.shoot){
+  if(d.run){   // Run-outs: the racks first, then the calls
+    const R = d.racks;
+    k.push(kpi(num(R.n), 'Racks played', R.n ? `${plural(R.size, 'ball')} a rack` : '', 'lead'));
+    k.push(kpi(R.n ? (R.balls/R.n).toFixed(1) : '–', 'Balls a rack', R.n ? `of ${R.size}` : ''));
+    k.push(kpi(R.n ? `${pct(R.full, R.n)}%` : '–', 'Full runs', R.n ? `${num(R.full)} of ${num(R.n)} racks` : ''));
+    k.push(kpi(num(R.best), 'Best run', 'balls in a row'));
+    k.push(kpi(d.n ? `${pct(d.calls, d.n)}%` : '–', 'Right call', 'the fraction'));
+    k.push(kpi(d.n ? `${pct(d.made, d.n)}%` : '–', 'Pocketed', d.scr ? `${pct(d.scr, d.n)}% scratched` : ''));
+  } else if(d.shoot){
     const g = c.shoot ? c.shoot.g : 0, best = c.shoot ? Math.max(c.shoot.g, c.shoot.best ?? 0) : 0;
     k.push(kpi(G[g] || '–', 'Grade', best > g ? `best ${G[best]}` : 'Ladder', 'grade lead'));
     k.push(kpi(d.n ? `${pct(d.right, d.n)}%` : '–', 'Full marks', d.n ? `${num(d.right)} of ${num(d.n)}` : ''));
@@ -203,7 +222,7 @@ function tabOverview(d, w){
     k.push(kpi(d.n ? `${pct(d.right, d.n)}%` : '–', 'Called right', d.n ? `${num(d.right)} of ${num(d.n)}` : '', 'lead'));
   }
   k.push(kpi(last20, 'Last 20', ''));
-  k.push(kpi(num(d.curStreak), 'Streak', d.shoot ? `best ${num(d.best)}` : '', d.shoot ? 'lead' : ''));
+  if(!d.run) k.push(kpi(num(d.curStreak), 'Streak', d.shoot ? `best ${num(d.best)}` : '', d.shoot ? 'lead' : ''));
   if(!d.shoot) k.push(kpi(num(d.best), 'Best streak', ''));
   k.push(kpi(num(d.n), 'Shots', ''));
   out.push(`<div class="svkpis" role="list" aria-label="Key numbers">${k.map(x=>x.replace('<div class="svkpi', '<div role="listitem" class="svkpi')).join('')}</div>`);
@@ -299,8 +318,9 @@ function tabShots(d){
   const GS = d.ctx.gradeStep || [], st = e => GS[e.sg];   // a grade's step (zone steps are 9 to 13)
   const zk = e => e.zk || (st(e) >= 9 && st(e) <= 13 ? st(e) : e.z != null ? 0 : null);
   const Z = d.L.filter(e=>e.z != null), grid = [];
-  // zones by shot type
-  if(Z.length){
+  // zones by shot type (Run-outs have no zones: shape is played by feel)
+  if(d.run){
+  } else if(Z.length){
     const types = [9, 10, 11, 12, 13, 0].map(k=>{ const x = Z.filter(e=>zk(e) === k); return {k, label: k ? ZONE_NAME[k] : 'Mixed (S)', n: x.length, ok: x.filter(e=>e.z === 1).length, made: x.filter(e=>e.m).length, sc: x.filter(e=>e.sc).length}; }).filter(t=>t.n);
     const zin = Z.filter(e=>e.z === 1).length;
     grid.push(card('Position: zone hit rate', `Shots with a target zone: cue ball pocketed the object ball and stopped in the zone · ${pct(zin, Z.length)}% of ${num(Z.length)}`,
@@ -325,7 +345,7 @@ function tabShots(d){
   // scratches
   const scr = d.L.filter(e=>e.sc).length, P = d.L.filter(e=>e.sv != null || e.z != null || e.sc != null);
   grid.push(card('Scratches', 'Cue ball in a pocket', P.length ? `<div class="svkpis mini">${kpi(`${pct(scr, P.length)}%`, 'Scratch rate', `${num(scr)} of ${num(P.length)}`)}${kpi(num(d.L.slice(-100).filter(e=>e.sc).length), 'Scratches', 'last 100 shots')}</div>`
-    + (scr ? `<h4>Scratch rate by shot type</h4>` + bars(Object.entries({'Follow': 9, 'Stun': 10, 'Draw': 11, 'Two rails': 12, 'English': 13}).map(([label, k])=>{ const x = Z.filter(e=>zk(e) === k); return {label, n: x.length, ok: x.filter(e=>e.sc).length}; }).filter(r=>r.n), {min: 5}).replace(/<ul class="svbars"/, '<ul class="svbars bad"') : '<p class="svnote">No scratches.</p>')
+    + (scr && !d.run ? `<h4>Scratch rate by shot type</h4>` + bars(Object.entries({'Follow': 9, 'Stun': 10, 'Draw': 11, 'Two rails': 12, 'English': 13}).map(([label, k])=>{ const x = Z.filter(e=>zk(e) === k); return {label, n: x.length, ok: x.filter(e=>e.sc).length}; }).filter(r=>r.n), {min: 5}).replace(/<ul class="svbars"/, '<ul class="svbars bad"') : '<p class="svnote">No scratches.</p>')
     : empty('No shot results yet', 'Scratches show once you play Ladder shots.')));
   // spin
   const TP = d.L.filter(e=>Array.isArray(e.tp));
