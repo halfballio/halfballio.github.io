@@ -1347,7 +1347,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 504;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 505;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1433,6 +1433,10 @@ function saveSettings(){ try{ localStorage.setItem(KEY('halfball-settings'), JSO
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 505, date: '2026-10-06', title: 'The right stroke, shown right', items: [
+    'A stroke that drops the ball but scratches now counts as the wrong stroke, and the card names the one that drops it clean.',
+    'Replay the right shot plays the stroke and spin the card names, and it always drops clean, english shots included.',
+  ]},
   {build: 504, date: '2026-10-05', title: 'A shorter ladder', items: [
     'The ladder ends at S. One grade that repeated another is gone, and every grade after it moved down one.',
     'You keep your progress: your grade shows the same skill under its new letter.',
@@ -2020,10 +2024,11 @@ function playAim(s, dir, stroke, record, sq){
 }
 // the aim straight at the right contact (no allowance for throw or deflection): the dealer's reference
 const idealDir = s => norm(sub(s.gb, s.cb));
-// the aim that pots it with this stroke (allowing for its throw and deflection): searched outward from the ideal line
+// the aim that pots it with this stroke (allowing for its throw and deflection): searched outward from the ideal line, 2° each
+// way for throw, plus the most side spin can push the cue ball off line with this cue (a whippy shaft with english needs more)
 function aimFor(s, stroke, sq){
-  const d0 = idealDir(s);
-  for(let k=0; k<=40; k++){
+  const d0 = idealDir(s), side = Math.abs((stroke.tip || [0, 0])[0]) * (sq == null ? PE.SQUIRT : sq);
+  for(let k=0, K = 40 + 2*Math.ceil(side/(0.1*RAD)); k<=K; k++){
     const off = (k % 2 ? 1 : -1)*Math.ceil(k/2)*0.1*RAD, d = rot(d0, off);
     if(playAim(s, d, stroke, false, sq).made) return d;
   }
@@ -2870,6 +2875,22 @@ function rigHitMs(s, run, dir){
   }
   return isFinite(first) ? Math.max(0, first*1000 - 350) : Infinity;
 }
+// pocket speed: the softest of your four strokes that gets the object ball to the pocket
+const pocketLevel = s => COARSE.find(l=>STROKE_MPH[l]*MPH >= strikeOf(s).V) || COARSE[COARSE.length - 1];
+// The right stroke for a shot, the one the result card names and "Replay the right shot" plays, with the right call's aim.
+// Yours, if the right call with it drops clean (and lands in the zone, with the zone's tip); otherwise the zone's own stroke,
+// or with no zone the softest from pocket speed up that drops clean. If none does, pocket speed or harder stands (yours if it's
+// that hard). {st: {V, tip}, lvl, mineOk}; lvl is null when speed isn't yours yet.
+function rightStroke(s, sq){
+  const z = s.zone, c = ctrl(), tip = z ? z.tip : shotStroke(s).tip;
+  if(!c.speed){ const st = z ? {V: STROKE_MPH[z.lvl]*MPH, tip} : shotStroke(s); return {st, lvl: null, mineOk: true}; }
+  const mine = nearestCoarse(speedLevel()), pl = pocketLevel(s), at = l => ({V: STROKE_MPH[l]*MPH, tip});
+  const clean = l => { const st = at(l), r = playAim(s, aimFor(s, st, sq), st, false, sq); return r.made && !r.scratch && (!z || r.inZone); };
+  const cands = z ? [...(z.lvls || []).includes(mine) ? [mine] : [], z.lvl] : [...mine >= pl ? [mine] : [], ...COARSE.filter(l=>l >= pl && l !== mine)];
+  let lvl = cands.find(clean);
+  if(lvl == null) lvl = z ? z.lvl : Math.max(mine, pl);
+  return {st: at(lvl), lvl, mineOk: lvl === mine};
+}
 function takeShot(id){
   if(answered || !shot || !isShooting() || anim) return;
   const s = shot, stroke = shotStroke(s), rig0 = rigAlpha(s), withCue = rig0.a > .01, feather0 = rig0.push || 0;   // where the practice stroke is right now, read before anything changes
@@ -2884,8 +2905,9 @@ function takeShot(id){
   // full marks: the right call, it drops clean, and in the zone if there is one. Harder than pocket speed is fine if it drops clean.
   // The right call that misses the zone is a partial: no points either way.
   const clean = run.made && !run.scratch;
-  const pocketLvl = COARSE.find(l=>STROKE_MPH[l]*MPH >= idealV) || COARSE[COARSE.length - 1];   // pocket speed: the softest stroke that gets it there
+  const pocketLvl = pocketLevel(s);   // pocket speed: the softest stroke that gets it there
   const speedOk = !ctrl().speed || !!s.zone || nearestCoarse(speedLevel()) >= pocketLvl;   // pocket speed or harder
+  const rs = s.rightStroke = rightStroke(s, sq);   // the stroke the card names and the replay plays: one answer for both
   const zoneWin = !!s.zone && clean && run.inZone;   // potted and in the zone: a success, whatever fraction or stroke got it there
   const full = zoneWin || (ok && clean && !s.zone && speedOk);
   const partial = ok && clean && !full;
@@ -2911,8 +2933,7 @@ function takeShot(id){
     if(full && st >= STREAK_HOT) cheer(st, prevStreak < STREAK_HOT);
   }
   // the verdict as a small table: your call and the right one, your stroke and the one it wanted, and what the balls did
-  const spd = strokeName, want = s.zone && s.zone.lvl ? s.zone.lvl : pocketLvl, mine = speedLevel();
-  const strokeOk = s.zone && s.zone.lvls ? s.zone.lvls.some(l=>spd(l) === spd(mine)) : s.zone ? spd(mine) === spd(want) : nearestCoarse(mine) >= want;   // no zone: pocket speed or harder
+  const spd = strokeName, want = rs.lvl, mine = speedLevel(), strokeOk = rs.mineOk;   // yours is right if the right call with it drops clean (and in the zone)
   const ball = run.scratch ? 'Scratch: the cue ball went in' : !run.hit ? 'Missed the object ball' : !run.made ? (run.obIn ? 'Wrong pocket' : 'Missed the pocket')
     : s.zone ? (run.inZone ? 'Pocketed, in the zone' : `Pocketed, missed the zone by ${run.zoneMiss.toFixed(1)}″`) : 'Pocketed';
   // the same rows the card showed before the call (shootRows), filled in: a miss shows the right answer beside yours
@@ -4859,15 +4880,7 @@ function railVol(vn){ return Math.max(.2, Math.min(1, vn/40)); }
 function showRightShot(){
   const s = shot; if(!s || !answered || anim || cueStroke || s.replay) return;
   const z = s.zone;
-  let st, dir, run; const sq = shaftSq();
-  if(z || !ctrl().speed){ st = z ? {V: STROKE_MPH[z.lvl]*MPH, tip: z.tip} : shotStroke(s); dir = aimFor(s, st, sq); run = playAim(s, dir, st, true, sq); }
-  else {   // your speed is yours: one of your four strokes, from pocket speed up, with this grade's tip, the first that drops it clean
-    const tip = shotStroke(s).tip, V0 = strikeOf(s).V;
-    for(const l of COARSE.filter(l=>STROKE_MPH[l]*MPH >= V0 || l === COARSE[COARSE.length - 1])){
-      st = {V: STROKE_MPH[l]*MPH, tip}; dir = aimFor(s, st, sq); run = playAim(s, dir, st, true, sq);
-      if(run.made && !run.scratch) break;
-    }
-  }
+  const sq = shaftSq(), st = (s.rightStroke || rightStroke(s, sq)).st, dir = aimFor(s, st, sq), run = playAim(s, dir, st, true, sq);   // the stroke the card named
   // From where you are, into the right shot: you come up off your shot (if you're still down), the balls fade out where they
   // stopped and back in where they started while you step over behind the right line, then you get down on it, a couple of
   // practice strokes, and the stroke. Played like any shot: you come up out of the way as the balls come back at your cue.
