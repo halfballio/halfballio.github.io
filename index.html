@@ -4426,8 +4426,7 @@ function perspDyn(cam, s, reveal){
   }
   // trails: where the balls have travelled (during the animation, and the cue ball's path afterwards)
   const trail = s.anim ? s.anim.trail : (reveal && s.final ? s.final.trail : null);
-  const aimSeen = tut.on && !!tstep().aimLine && !!s.aimDir;   // a lesson that shows where the cue pointed (English: the cue ball's trail leaves it)
-  if(trail && (refOn('refTrail') || aimSeen)){
+  if(trail && refOn('refTrail')){
     o += dashedLine(cam, trail.cb, '#f4efe0', .6, '2 4');
     if(trail.ob && trail.obCol !== '#ffd34d') o += dashedLine(cam, trail.ob, trail.obCol, .9, '3 4');   // on a right call the yellow line already grows along it
   }
@@ -4435,9 +4434,6 @@ function perspDyn(cam, s, reveal){
   // the aim-line aid: a line on the cloth from the cue ball along the shot line to the ghost ball (may be fading away)
   const lA = reveal || s.anim || replayBare(s) ? 0 : aidAlpha('line');
   if(lA > 0){ const a3 = [s.cb[0], s.cb[1], .03], b3 = [(s.gbLook || s.gb)[0], (s.gbLook || s.gb)[1], .03]; o += `<path d="${segD(cam, a3, b3)}" stroke="#fff" stroke-opacity="${(.9*lA).toFixed(3)}" stroke-width="${DASH_W}" stroke-linecap="round" stroke-dasharray="3 4"/>`; }
-  // the aim line in an English lesson: solid blue from the cue ball, as far as the object ball and a little past, before,
-  // during and after the shot, so you can see the cue ball's path leave it
-  if(aimSeen){ const e = add(s.cb, mul(s.aimDir, len(sub(s.ob, s.cb)) + 3*R)); o += `<path d="${segD(cam, [s.cb[0], s.cb[1], .03], [e[0], e[1], .03])}" stroke="#7cc4ff" stroke-opacity=".9" stroke-width="${DASH_W}" stroke-linecap="round"/>`; }
   // balls, far to near
   const A = s.anim, F = reveal && !A ? s.final : null;
   const cbP = A ? A.cb : F ? F.cb : s.cb;   // null once the cue ball has dropped into a pocket
@@ -6492,27 +6488,19 @@ const SL_CUSHION = [
 // and the aim that pots it with the step's stroke is nearest the fraction the step names (need).
 const EN = {shaft:'maple', noZone:true, mid:true}, EN_R = [TIP_STEP, 0], EN_L = [-TIP_STEP, 0], EN_2FT = [22, 26], EN_1FT = [12.5, 14];
 const SL_ENGLISH = [
+  {...EN, deg:35, aids:{}, play:{k:2.6, tip:[.45,0]}, shows:'rail', ui:['tip'], next:true,
+   text:'<b>English</b> is side spin: strike right or left of centre. Off a cushion it changes the angle the cue ball comes off, and can kill or add speed. Here, right english.'},
   {...EN, deg:30, dist:EN_2FT, group:true, need:'34', aids:{}, check:{k:1.6, tip:EN_R}, ui:['tip'], next:true,
-   text:'<b>English</b>: strike left or right of centre. On the tip pad the dots are half a tip apart: ' + kt('<b>W</b>, <b>A</b>, <b>S</b> and <b>D</b> move the tip up, left, down and right.', 'tap or drag to the one you want.') + ' 3 o\'clock is right english, 9 o\'clock left. Off a cushion it widens or narrows the angle. It also pushes the cue ball <b>off your aim line</b>, away from the side you hit: right english sends it left, left english right. So with side you aim <b>fuller or thinner</b> to make up for it.'},
-  {...EN, aids:{}, ui:['tip'], next:true,
-   text:'How far off grows with <b>how much side</b> and <b>how far the cue ball travels</b>: it still runs straight, just at a slight angle to your line. With a maple shaft (this lesson always uses one), ½ tip of side puts it about a quarter of a ball off after 2 ft, a full tip about half a ball. The carbon shaft that opens at S pushes it off about half as much.'},
-  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_R, aim:'plain'}, expect:'miss', need:'34', ui:['tip'], next:true,
-   text:'A ½-ball cut, about 2 ft, with <b>½ tip of right english</b>. Aimed as a plain ½ (the blue line), the cue ball drifts left of it and hits thinner. Watch it miss.'},
-  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_R}, need:'34', ui:['tip'], next:true,
-   text:'Aim fuller, at <b>¾</b>: the drift carries the cue ball back to the contact the cut needs, and it drops.'},
-  {...EN, deg:30, dist:EN_2FT, group:true, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_L, aim:'plain'}, expect:'miss', need:'14', ui:['tip'], next:true,
-   text:'Now <b>½ tip of left english</b>: the cue ball drifts right, and on this cut that makes it hit fuller. Aimed as a plain ½, it misses.'},
-  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1.6, tip:EN_L}, need:'14', ui:['tip'], next:true,
-   text:'Aim thinner, at <b>¼</b>, and it drops. If the drift takes the cue ball toward the middle of the object ball, aim thinner; away from it, aim fuller.'},
+   text:'Side also pushes the cue ball slightly off your aim: that\'s <b>deflection</b>. So a cut that looks ½ may need to be hit thinner or fuller, depending on the side.'},
+  {...EN, aids:{ghost:1, line:1}, play:{k:1.6, tip:EN_R, aim:'plain'}, expect:'miss', need:'34', ui:['tip'], next:true,
+   text:'Right english, aimed as a plain ½: it misses.'},
+  {...EN, aids:{ghost:1, line:1}, play:{k:1.6, tip:EN_R}, need:'34', ui:['tip'], next:true,
+   text:'Same shot aimed <b>¾</b>: it drops.'},
   {...EN, deg:30, dist:EN_1FT, aids:{}, try:{k:1.6, tip:[-2*TIP_STEP, 0]}, need:'34', ui:['tip'], ask:'try',
-   text:'Your turn. It looks ½, about 1 ft, with a <b>full tip of left english</b> set on the tip pad. Call the fraction that allows for the drift to get down on its line, then call it again to shoot.'},
+   text:'Your turn. It looks ½, with a full tip of left english. Call the fraction that pots it.'},
   {...EN, deg:30, dist:EN_2FT, aids:{}, try:{k:1.6, tip:EN_R}, need:'14', ui:['tip'], ask:'try',
-   text:'One more: it looks ½, about 2 ft, with <b>½ tip of right english</b>.'},
-  {...EN, deg:30, dist:EN_2FT, group:true, aids:{ghost:1, line:1}, aimLine:true, play:{k:3.2, tip:EN_L}, need:'14', ui:['tip', 'speed'], next:true,
-   text:'<b>Speed</b> doesn\'t change the drift: soft or firm, the cue ball leaves your line at the same angle. Here it\'s firm, with ½ tip of left english, aimed ¼ for the drift. It drops.'},
-  {...EN, aids:{ghost:1, line:1}, aimLine:true, play:{k:1, tip:EN_L, aimK:3.2}, expect:'miss', ui:['tip', 'speed'], next:true,
-   text:'Same aim, same side, soft. The cue ball takes the same line, but slower, the balls grip more and <b>throw</b> the object ball further off line, and it misses. The softer the shot, the more throw matters.'},
-  {finish:true, aids:{}, text:'Hit the side you need, then aim fuller or thinner by how far the cue ball travels.'},
+   text:'One more, with ½ tip of right english.'},
+  {finish:true, aids:{}, text:'With side, allow for deflection: hit the cut a little thinner or fuller.'},
 ];
 const SL_ALL = [
   {deg:30, aids:{}, finish:true, text:'Everything is yours: speed, top, back and side. Each zone can be reached more than one way: pick the stroke, then aim for what it does.'},
