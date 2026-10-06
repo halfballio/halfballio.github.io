@@ -1738,6 +1738,8 @@ try{ Object.assign(settings, JSON.parse(localStorage.getItem(lsKey(KEY('halfball
 // standing back used to be inches from the cue ball (24–48, with a lean-in rule mid-table); now it's inches behind the rail (0–24):
 // the old setting maps onto the same place mid-table, where it mattered most
 if(settings.railBack == null && settings.standBack != null){ settings.railBack = Math.max(0, Math.min(24, Math.round(+settings.standBack - 28) || 0)); delete settings.standBack; }
+// the default is now 20 (it was 2): anyone still on the old default (or who never set it) moves to the new one, once
+if(!settings.rb20){ if(settings.railBack == null || +settings.railBack === 2) settings.railBack = 20; settings.rb20 = 1; }
 try{ const v = localStorage.getItem(lsKey(KEY('halfball-view'))); if(v && !localStorage.getItem(lsKey(KEY('halfball-settings')))) settings.view = v; }catch(e){}
 function saveSettings(){ if(restoring) return; try{ localStorage.setItem(lsKey(KEY('halfball-settings')), JSON.stringify(settings)); }catch(e){} }
 
@@ -4177,7 +4179,7 @@ function tableSVG(s, reveal){
 }
 
 const VIEWS = {
-  stand:{back:2, h:38, pitch:-30, hfov:72, yawMix:.45},   // looking out along the shot, not down at your feet: the cue ball is kept in frame below
+  stand:{back:20, h:38, pitch:-30, hfov:72, yawMix:.45},   // looking out along the shot, not down at your feet: the cue ball is kept in frame below
   down: {back:14, h:7.5, pitch:-15, hfov:82, yawMix:.4},
 };
 const cross3=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
@@ -7306,12 +7308,11 @@ if(stats.level && !stats.level.v){   // grades gained F at the bottom and S at t
 }
 enforceLocks(); renderBadge();
 wireShootControls();
-// where you stand: your eyes over the table from your height, and how far behind the rail (a common default: 175 cm, 2" back:
-// at the rail with a slight lean, eyes 2" in over the rail's outer edge)
+// where you stand: your eyes over the table from your height, and how far behind the rail's outer edge (default: 175 cm, 20" back)
 const BED = 29.5;   // the cloth's height above the floor, inches
 function applyStance(){
   const hc = +settings.heightCm >= 150 && +settings.heightCm <= 200 ? +settings.heightCm : 175;
-  const back = Math.max(0, Math.min(24, settings.railBack == null || isNaN(+settings.railBack) ? 2 : +settings.railBack));
+  const back = Math.max(0, Math.min(24, settings.railBack == null || isNaN(+settings.railBack) ? 20 : +settings.railBack));
   // reading a shot you lean in a little: eyes about 0.86 of your height off the floor
   VIEWS.stand.h = Math.max(14, hc/2.54*0.86 - BED); VIEWS.stand.back = back;
   // down on the shot, a pool stance (not snooker's chin on the cue): chin 1–2" over the cue, eyes straight over it.
