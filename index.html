@@ -434,7 +434,8 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .sumgrid dd.up{color:#7fe0a0} .sumgrid dd.down{color:#ff9b87}
 .sumbtns{display:flex;gap:12px;align-items:center;margin-top:10px}
 .idlehead{font:700 40px/1.05 var(--display);color:var(--cream);letter-spacing:.06em;text-transform:uppercase}
-#startcover .sumbtns{display:flex;justify-content:center;gap:12px}#startcover .startbtn{white-space:nowrap;font-size:20px;padding:10px 28px;letter-spacing:.05em}
+#startcover{cursor:pointer}#startcover .sumcard{gap:10px}#startcover .startbtn{white-space:nowrap;font-size:20px;min-height:48px;min-width:132px;padding:10px 28px;letter-spacing:.05em}
+.table-box:has(#startcover:not([hidden])) .modechip{z-index:7}   /* Flash, ready: the pill stays on top, the way back to the picks */
 @media (max-width:760px){.idlehead{font-size:32px}}
 .flashpick{display:flex;align-items:center;gap:10px;min-height:34px;color:var(--cream-2)}
 .flashpick[hidden]{display:none}
@@ -1401,11 +1402,10 @@ html.svopen,html.svopen body{overflow:hidden}
           <div class="speedbar" id="speedbar" hidden aria-label="Speed: drag up or down"><small>Speed</small><div class="speedtrack" id="speedtrack"><i id="speedfill"></i></div><b id="speedval"></b><span class="ckeys"><kbd data-step="1" title="Faster (↑)" data-title-kbd="Faster (↑)" data-title-touch="Faster">↑</kbd><kbd data-step="-1" title="Slower (↓)" data-title-kbd="Slower (↓)" data-title-touch="Slower">↓</kbd></span></div>
         </div>
         <div class="lvlcard" id="lvlcard" hidden aria-live="polite"><small id="lvlhead"></small><b id="lvlgrade"></b><span id="lvlnote"></span></div>
-        <div class="cover sumcover" id="startcover" hidden>   <!-- Flash: how you look, and go -->
+        <div class="cover sumcover flashready" id="startcover" hidden>   <!-- Flash: the shot stays hidden till you start the clock; the picks live in the sheet (the pill) -->
           <div class="sumcard">
-            <div class="idlehead">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg></div>
-            <small id="starthint"></small>
-            <div class="sumbtns"><button class="startbtn" id="flashstart">Start</button><button class="sumdone" id="flashsetup">Set up</button></div>
+            <button class="startbtn" id="flashstart" aria-describedby="flashreadynote">Start</button>
+            <small id="flashreadynote">The shot shows when you start.</small>
           </div>
         </div>
       </div>
@@ -5139,10 +5139,9 @@ function showSessIdle(){
   }
 }
 let flashArmed = false;
-function showStart(){
+function showStart(){   // Flash, ready: the table covered and one Start (a tap anywhere on it starts too); the picks are in the sheet, behind the pill
   endFlash();
-  $('starthint').textContent = `${(+settings.flash||1500)/1000} s a shot · ${flashTableNow()} ft · ${settings.flashView === 'down' ? 'down on the shot' : 'standing'} · call the fraction`;
-  $('startcover').hidden = false;
+  $('startcover').hidden = false; renderModeChip();
   document.querySelectorAll('#answers button').forEach(b=>b.disabled=true);
 }
 function startFlashMode(){
@@ -6309,7 +6308,6 @@ svgEl.addEventListener('pointerup', walkRelease);
 svgEl.addEventListener('pointercancel', walkRelease);
 tableBox.addEventListener('click', ()=>{ if(anim) return; if(tut.on) return; if(performance.now() - walkEndedAt < 300) return; if(answered && $('sesscover').hidden) nextDeal(); });
 $('flashstart').addEventListener('click', e=>{ e.stopPropagation(); startFlashMode(); });
-$('flashsetup').addEventListener('click', e=>{ e.stopPropagation(); openSheet('flashsheet', true); });
 // Flash replays: as many as you like (each is still counted on the shot, so the stats can show it)
 function replaysLeft(){ const a = stats.active; return a && a.task === 'flash' ? Infinity : 0; }
 function syncReplay(){ $('replay').hidden = replaysLeft() <= 0; $('replaytext').textContent = 'Replay'; $('replay').setAttribute('aria-label', 'Replay the shot'); }
@@ -7495,6 +7493,7 @@ if(!['stand','down'].includes(settings.flashView)) settings.flashView = 'stand';
 applyStyle();
 applyGfx();
 if(stats.shoot){ const top = SHOOT_GRADES.length - 1; stats.shoot.best = Math.min(stats.shoot.best ?? 0, top); stats.shoot.g = Math.min(Math.max(stats.shoot.g, stats.shoot.best), top); }   // S+ is gone: anyone there is at S
+$('startcover').addEventListener('click', ()=>{ if(!$('startcover').hidden) startFlashMode(); });   // ...it starts the clock, as Start does
 setTimeout(()=>{ renderLibStatus(); libIdle(); }, 3000);   // start filling the shot library once the page has settled   // grades only go up now: back to your best
 // ---------- mode setup: one sheet for Flash, Practice and Run-outs ----------
 // Opened from the mode's button and from the pill at the foot of the table. Every pick is saved as it's made; what changed
@@ -7565,7 +7564,7 @@ $('drillweak').addEventListener('click', ()=>setDrill('weak'));
 $('drill-fr').addEventListener('click', e=>{ const b = e.target.closest('[data-fr]'); if(b) setDrill('fr', b.dataset.fr); });
 document.querySelectorAll('#drill [data-drill]').forEach(g=>g.addEventListener('click', e=>{ const b = e.target.closest('button[data-v]'); if(b && !b.classList.contains('locked')) setDrill(g.dataset.drill, b.dataset.v); }));
 // Flash: its picks are settings (data-set buttons), applied as they're tapped; opening the sheet mid-shot stops the clock,
-// and the start card comes back with the new setup named on it
+// and closing it leaves the table covered with one Start, ready to go
 wireSheet('flashsheet', {render: syncPressed, back: ()=>$('task-flash'),
   open: ()=>{ if(settings.task === 'flash' && stats.active && stats.active.task === 'flash' && !answered){ flashArmed = false; showStart(); } },
   changed: ()=>{ if(settings.task === 'flash' && !$('startcover').hidden) showStart(); renderModeChip(); }});
