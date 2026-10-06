@@ -1404,7 +1404,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 513;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 514;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1626,9 +1626,8 @@ function throwFor(s, phi){ return throwAtContact(contactSpeed(s), phi, s.stroke 
 const MU_G = 108;                                     // sliding friction μ·g, in/s² (μ ≈ 0.28: a medium cloth, not a fast one)
 const A_ROLL = 6;                                     // rolling resistance, in/s²
 const POCKET_ARRIVE = 14;                             // pocket speed: how fast the object ball is still going as it drops, in/s
-const MOD_DEG = 3;
+const MOD_DEG = 3;   // how far a "thick" or "thin" call moves the hit, in degrees of cut
 const CHEAT_SHARE = 0.4;   // any-angle shots aimed at one side of the pocket instead of the middle
-const PHYS_SPREAD = 4;                              // speed & throw shots look within this many degrees of a fraction                                   // how far a "thick" or "thin" call moves the hit, in degrees of cut
 const MODS = [{id:'thick', label:'Thick', key:'←'}, {id:'center', label:'Center', key:'↓'}, {id:'thin', label:'Thin', key:'→'}];
 
 function nearestRef(theta){
@@ -1656,7 +1655,6 @@ function weightedIndex(w){
 function chooseAim(i){
   if(forceDeg != null) return forceDeg;   // the tutorial asks for an exact cut
   const r = REFS[i];
-  if(physOn()){ const [lo, hi] = BOUNDS[i]; return rnd(Math.max(lo > 0 ? lo + 1 : 0, r.deg - PHYS_SPREAD), Math.min(hi - 1, r.deg + PHYS_SPREAD)); }   // close to a fraction: speed & throw decide the adjustment
   if(anyOn()){ const [lo, hi] = BOUNDS[i]; return rnd(lo > 0 ? lo + 1 : 0, hi - 1); }   // any angle, but never within 1° of a boundary: every answer is clear
   return r.id==='full' ? rnd(0,1) : r.deg + rnd(-1,1);
 }
@@ -1706,7 +1704,7 @@ function obRunMax(theta, ob, P){
 const obRunOk = s => s.L <= obRunMax(s.theta, s.ob, s.P) + 1e-6;
 function generate(bucket){   // bucket: which fraction to deal (picked once per deal, so fractions that are harder to place aren't dealt less)
   const w = bucketWeights();
-  const throwOn = throwNow(), phys = physOn(), speed = SHOT_SPEED, wantFlip = throwOn && !tut.on && Math.random() < 1/3;
+  const throwOn = throwNow(), speed = SHOT_SPEED, wantFlip = throwOn && !tut.on && Math.random() < 1/3;
   const lenCls = tut.on && GEN.g == null ? 'short' : Math.random() < longShare() ? 'long' : 'short';   // the grade sets the mix of short and long shots
   const k = H/100;
   const RANGE = lenCls==='long' ? {p:[28*k,80*k], d:[30*k, IS_PHONE ? PHONE_MAX_D - 2*R - 1 : 70*k]} : {p:[7,34], d:[7,26]};   // phones: never over 3½ ft
@@ -1740,30 +1738,17 @@ function generate(bucket){   // bucket: which fraction to deal (picked once per 
     if(segDist(cb, ob, T) < 2*R+0.4) continue;
     if(len(sub(cb,ob)) < 4*R) continue;
     const right = [-v[1], v[0]];
-    const cand = {any: anyOn(), phys, speed, len:lenCls, theta:cut, pathDeg:tp, throwOn, sign, P, ob, cb, gb, u, v, n,
+    const cand = {any: anyOn(), phys: false, speed, len:lenCls, theta:cut, pathDeg:tp, throwOn, sign, P, ob, cb, gb, u, v, n,
       L: dist, tol: tolC, T, uC, cheat, side: dot(u,right)>0?'R':'L',
       color: pick(OB_COLORS), answer: nearestRef(cut), pick:null, spot: spotToward(sub(cb, ob)),
       stroke, spinR: throwOn ? 0 : 1, throwDeg: cut - tp, gbLook: throwOn ? sub(ob, mul(u, 2*R)) : null};   // gbLook: the ghost ball as the shot looks (the pocket line), before throw   // the call is the hit it needs; with throw that can be a thinner fraction than it looks
     if(throwOn && (nearestRef(tp).id !== cand.answer.id) !== wantFlip) continue;   // about one throw shot in three is one where throw changes the fraction
     const near = inReach(cand);   // a cue ball out of reach from the rail behind it: only if nothing else turns up
     if(!near && far) continue;
-    if(phys){
-      // center if the plain fraction pockets at this speed; otherwise which way the hit has to move
-      cand.mod = outcome(cand, cand.answer.deg).made ? 'center' : cut > cand.answer.deg ? 'thin' : 'thick';
-      // a thick or thin call has to be a readable adjustment: no shots where the plain fraction misses by a hair
-      if(cand.mod !== 'center' && Math.abs(cut - cand.answer.deg) < MOD_DEG/2) continue;
-      // the same hit named from the neighbouring fraction: between full and ¾, "full thin" and "¾ thick" are both right
-      const k = CORE.indexOf(cand.answer), nb = cand.mod==='thin' ? CORE[k+1] : cand.mod==='thick' ? CORE[k-1] : null;
-      // (only when the hit really sits between them: about as close to the neighbour as to the fraction it looks like)
-      cand.alt = nb && (cand.mod==='thin' ? cut < nb.deg : cut > nb.deg) && Math.abs(cut - nb.deg) <= Math.abs(cut - cand.answer.deg) + 1.5
-        ? {id: nb.id, mod: cand.mod==='thin' ? 'thick' : 'thin'} : null;
-      cand.throwDeg = cut - tp;
-    }
     const play = outcome(cand, cut);
     if(!play.made || play.scratch) continue;              // the right call has to drop, without the cue ball following it into a pocket
     if(!near){ far = cand; continue; }
     if(!fallback) fallback = cand;
-    if(cand.any && !phys && level() < BETWEEN_AT && !outcome(cand, cand.answer.deg).made) continue;   // any angle (B): only cuts the plain fraction still pockets; from B+ any cut at all
     if(Math.abs(u[0]) > 0.85 && dist > W*0.55) continue;   // no long runs across the table along an end rail: that layout only ever came up as a thin cut, so it gave the answer away
     if(pocketInView(cand)) return cand;
   }
@@ -1786,9 +1771,6 @@ const AIDS = {
   stance: {name:'Aim-line stance', fade:{},          goneAt:7, tip:'You look from directly behind the cue, on the line it travels, so the overlap is plain to see. From the ball line you stand behind the cue ball instead, as in a real read.'},
 };
 const ANY_AT = 8;                                            // B: cuts at any angle (the right call always pockets)
-const PHYS_AT = 99;                                          // thick / center / thin as part of the call: retired (too fine a judgement); B+ gives it as feedback instead
-const BETWEEN_AT = 9;                                        // B+: cuts between fractions; you call the nearest, the result says which way to nudge
-const THROW_AT = 99;                                         // throw is taught in the Shoot ladder now; Read deals rolling shots
 const SHOT_SPEED = 'medium';   // pocket speed: throw as for a medium-soft hit                                  // one speed for every shot, at every grade (slow and medium come back with a rolling cue-ball path)
 const FAST_FLASH_AT = 10;                                    // A-: 0.75 s Flash
 const LEAN_AT = 7;                                           // the weak-spot lean starts once you read unaided (B-)
@@ -1836,8 +1818,7 @@ function aidAlpha(key){
   return t < d ? 1 : Math.max(0, 1 - (t - d)/500);
 }
 const stanceAim = () => aidAlpha('stance') > 0;
-const physOn = () => !tut.on && adaptiveOn() && level()!==null && level() >= PHYS_AT;
-const throwNow = () => tut.on ? tut.lesson === 'throw' : !isShooting() && adaptiveOn() && level()!==null && level() >= THROW_AT;
+const throwNow = () => tut.on && tut.lesson === 'throw';   // throw is taught in the Shoot ladder; dealt shots roll
 const anyOn = () => !tut.on && (isShooting() ? shootLevel() >= SH.any && (isFree() || adaptiveOn()) : adaptiveOn() && level()!==null && level() >= ANY_AT);   // on the ladder from its own step; Flash always
 const fastFlashLocked = () => ladderBest() < FAST_FLASH_GRADE;
 const AID_SET = {ghost:['ghost','0'], line:['line','0'], stance:['cam','line']};
@@ -1932,7 +1913,6 @@ const SHOOT_TEXT = [
 const SHOOT_UP = {[SH.noPath]:'No path', [SH.noLine]:'No guide line', [SH.noGhost]:'👻 No ghost ball', [SH.down]:'🧍 Cue and hand',
   [SH.any]:'📐 Any angle', [SH.speed]:'🎚️ Speed', [SH.throw]:'🌀 Throw', [SH.follow]:'⤴️ Center ball: follow', [SH.stun]:'⏹️ Center ball: stun', [SH.draw]:'⤵️ Center ball: draw', [SH.cushion]:'↩️ Center ball: two rails', [SH.english]:'🌪️ English', [SH.all]:'🏆 Everything'};
 const SHOOT_DOWN = {[SH.noGhost]:'Ghost ball back', [SH.down]:'Shoot standing again', [SH.any]:'Fraction angles only', [SH.speed]:'Speed set for you', [SH.follow]:'No more zones · tip back to centre', [SH.draw]:'No more draw', [SH.english]:'No more english'};
-const READ_TOP = 11;   // finishing the Read ladder (A) opens Shoot and Free play
 const shootUnlocked = () => true;
 // the table grows with you: 7 ft to start, 8 ft at D, 9 ft at C (with any angle) (Sessions by your grade; Flash and Free play by your best)
 // By step, like every unlock: 8 ft with no guide line, 9 ft with any angle
@@ -6240,7 +6220,6 @@ document.addEventListener('keydown', e=>{
   const k = parseInt(e.key,10);
   if(tut.on && !tstep().ask){ if(k>=1 && k<=REFS.length) tutNudge(); return; }   // nothing to call: point at Next / Done
   if(!isPlace() && k>=1 && k<=REFS.length && !answered){ pickFrac(REFS[k-1].id); e.preventDefault(); }
-  else if(shot && shot.phys && !answered && ['ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)){ pickMod({ArrowLeft:'thick', ArrowDown:'center', ArrowRight:'thin'}[e.key]); e.preventDefault(); }
   else if(isPlace() && !answered && (e.key==='ArrowLeft' || e.key==='ArrowRight')){ nudge(e.key==='ArrowLeft'?-1:1, e.shiftKey ? 6 : 1); e.preventDefault(); }
   else if(isShooting() && !answered && ctrl().speed && (e.key==='ArrowUp' || e.key==='ArrowDown')){ setSpeedLevel(speedLevel() + (e.key==='ArrowUp' ? 1 : -1)); e.preventDefault(); }
   else if(isShooting() && !answered && /^[wasdx]$/i.test(e.key) && !e.metaKey && !e.ctrlKey){ nudgeTip(e.key.toLowerCase()); e.preventDefault(); }
