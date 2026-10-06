@@ -761,6 +761,12 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .wnfoot .startbtn{min-width:140px;padding:12px 24px}
 @media (max-width:480px){.wnfoot .startbtn{flex:1}.wnhead{padding:14px 16px 10px}.wnbody{padding:2px 16px}.wnfoot{padding:10px 16px 12px}}
 @media (prefers-reduced-motion:reduce){.wncard{animation:none}}
+/* keyboard shortcuts: the What's new card, a key on the left and what it does on the right */
+.keyscard{width:min(100%,420px)}
+.keylist{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;align-items:baseline;margin:14px 0 16px;font-size:14.5px;line-height:1.4;color:var(--ink)}
+.keylist dt{display:flex;flex-wrap:wrap;gap:4px;white-space:nowrap}.keylist dd{margin:0}.keylist dd small{display:block;color:var(--muted);font-size:12.5px}
+.keylist kbd{display:inline-block;min-width:24px;text-align:center;font:600 12px/1 var(--mono);color:var(--ink);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;padding:4px 6px;background:var(--surface-2)}
+html.touch .tutlist .kbd-only{display:none}
 /* a small question card (rename, delete, reset): the What's new card's head and foot, over everything, the title screen too */
 .menu.wnmenu.askmenu{z-index:110}
 .askcard{width:min(100%,400px)}.askcard form{display:contents}
@@ -1002,7 +1008,7 @@ html.svopen,html.svopen body{overflow:hidden}
   <div class="menu" id="tutmenu" hidden>
     <div class="menucard" role="dialog" aria-label="Help">
       <div class="menuhead"><span>Help</span><button class="menuclose" id="tutmenuclose" aria-label="Close">✕</button></div>
-      <div class="tutlist"><button id="tourreplay">App tour<small>How Halfball works</small></button></div>
+      <div class="tutlist"><button id="tourreplay">App tour<small>How Halfball works</small></button><button id="keysopen" class="kbd-only">Keyboard shortcuts<small>?</small></button></div>
       <div class="tutlist" id="tutlist"></div>
     </div>
   </div>
@@ -1271,6 +1277,26 @@ html.svopen,html.svopen body{overflow:hidden}
     <div class="wnfoot"><button class="startbtn" id="wnok">Got it</button></div>
   </div>
 </div>
+<div class="menu wnmenu" id="keys" hidden>   <!-- keyboard shortcuts: ? or the Help menu -->
+  <div class="menucard wncard keyscard" role="dialog" aria-modal="true" aria-labelledby="keystitle">
+    <div class="wnhead"><h2 id="keystitle">Keyboard shortcuts</h2></div>
+    <div class="wnbody" id="keysbody" tabindex="-1">
+      <dl class="keylist">
+        <dt><kbd>1</kbd>–<kbd>5</kbd></dt><dd>Call the fraction<small>Full, ¾, ½, ¼, ⅛</small></dd>
+        <dt><kbd>Enter</kbd></dt><dd>Next shot, or the lesson’s next step</dd>
+        <dt><kbd>Shift</kbd></dt><dd>Replay, or watch the right shot after a miss</dd>
+        <dt><kbd>Space</kbd></dt><dd>Hold to step back and see the whole table</dd>
+        <dt><kbd>V</kbd></dt><dd>Look from the object ball, and back</dd>
+        <dt><kbd>↑</kbd><kbd>↓</kbd></dt><dd>Stroke speed<small>Once speed opens on the ladder</small></dd>
+        <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move the tip on the cue ball; <kbd>X</kbd> centres it<small>Once spin opens on the ladder</small></dd>
+        <dt><kbd>Esc</kbd></dt><dd>Stand up off the shot, or close what’s open</dd>
+        <dt><kbd>M</kbd></dt><dd>Change the music</dd>
+        <dt><kbd>?</kbd></dt><dd>This list</dd>
+      </dl>
+    </div>
+    <div class="wnfoot"><button class="startbtn" id="keysok">Got it</button></div>
+  </div>
+</div>
 <div class="menu wnmenu askmenu" id="ask" hidden>   <!-- a question in the app's own card: rename a player, or make sure before deleting -->
   <div class="menucard wncard askcard" role="dialog" aria-modal="true" aria-labelledby="asktitle" aria-describedby="asktext">
     <form id="askform" novalidate>
@@ -1373,7 +1399,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 511;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 512;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -6188,6 +6214,8 @@ $('sesscover').addEventListener('click', e=>e.stopPropagation());
 document.addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT') return;
   if((e.key==='m' || e.key==='M') && !e.metaKey && !e.ctrlKey){ const L = ['off','parlor','smoke','felt']; applySetting('music', L[(L.indexOf(settings.music) + 1) % L.length]); e.preventDefault(); return; }
+  if(e.key==='?' && !e.metaKey && !e.ctrlKey){ openTutMenu(false); openKeys(true); e.preventDefault(); return; }   // the keyboard shortcuts
+  if(e.key==='Escape' && !$('tutmenu').hidden){ openTutMenu(false); $('help').focus({preventScroll: true}); e.preventDefault(); return; }
   if(e.key===' ' && isShooting() && settings.view !== 'top' && $('stancecover').hidden){ e.preventDefault(); if(!e.repeat) setLook(true); return; }
   if(!$('stancecover').hidden){ if(e.key==='Enter'){ closeStance(); e.preventDefault(); } return; }
   if(tut.on && e.key==='Enter'){ tutNext(); e.preventDefault(); return; }
@@ -6443,6 +6471,24 @@ deal();
 if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
 syncStreakPill(); requestAnimationFrame(alignLogo);
 if(!settings.tut && !(stats.log || []).length && !baselines().length){ settings.tut = 1; saveSettings(); }   // first visit: the Shooting lesson opens on the first shot
+// ---------- keyboard shortcuts: ? or the Help menu; keys stay in the card while it's up, Esc or ? closes it ----------
+let keysFrom = null;
+function openKeys(v){
+  if(v === !$('keys').hidden) return;
+  if(v){ keysFrom = document.activeElement; $('keys').hidden = false; $('keysbody').scrollTop = 0; $('keysok').focus({preventScroll: true}); return; }
+  $('keys').hidden = true;
+  const f = keysFrom && keysFrom.isConnected && keysFrom !== document.body && !keysFrom.closest('[hidden]') ? keysFrom : $('help'); keysFrom = null;
+  try{ f.focus({preventScroll: true}); }catch(e){}
+}
+$('keysopen').addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openKeys(true); keysFrom = $('help'); });
+$('keysok').addEventListener('click', e=>{ e.stopPropagation(); openKeys(false); });
+['click', 'pointerdown'].forEach(t=>$('keys').addEventListener(t, e=>{ e.stopPropagation(); if(t === 'click' && e.target === $('keys')) openKeys(false); }));
+window.addEventListener('keydown', e=>{
+  if($('keys').hidden) return;
+  e.stopPropagation();
+  if(e.key === 'Escape' || e.key === '?'){ e.preventDefault(); openKeys(false); }
+  else if(e.key === 'Tab'){ e.preventDefault(); (document.activeElement === $('keysok') ? $('keysbody') : $('keysok')).focus(); }
+}, true);
 // ---------- What's new (the list, WHATS_NEW, is near the top): a dot on ? while there's something unseen, the card once ----------
 const wnDate = d => { const t = new Date(d + 'T12:00:00'); return isNaN(t) ? d : t.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}); };
 const wnVer = e => '1.' + e.build;   // just the build it shipped in
@@ -6498,7 +6544,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 ['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
-  && ['playercover', 'stancecover', 'menu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask'].every(id=>!$(id) || $(id).hidden);
+  && ['playercover', 'stancecover', 'menu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
