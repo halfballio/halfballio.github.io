@@ -761,6 +761,15 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .wnfoot .startbtn{min-width:140px;padding:12px 24px}
 @media (max-width:480px){.wnfoot .startbtn{flex:1}.wnhead{padding:14px 16px 10px}.wnbody{padding:2px 16px}.wnfoot{padding:10px 16px 12px}}
 @media (prefers-reduced-motion:reduce){.wncard{animation:none}}
+/* a small question card (rename, delete, reset): the What's new card's head and foot, over everything, the title screen too */
+.menu.wnmenu.askmenu{z-index:110}
+.askcard{width:min(100%,400px)}.askcard form{display:contents}
+.askbody{padding:14px 20px 18px;display:flex;flex-direction:column;gap:12px}.askbody p{margin:0;font-size:14.5px;line-height:1.45;color:var(--ink)}
+.askbody input{width:100%;height:48px;font:500 16px var(--body);padding:8px 14px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink)}
+.askbody input:focus{border-color:var(--ring)}
+.wnfoot.askfoot{gap:10px}.askfoot .sumdone{min-width:110px}
+.startbtn.danger,.startbtn.danger:hover,.startbtn.danger:active{background:var(--bad);color:var(--accent-ink)}.startbtn.danger:hover{filter:brightness(1.08)}
+@media (max-width:480px){.askbody{padding:12px 16px 16px}.askfoot .sumdone{flex:1}}
 /* ---------- Stats: the header button, the compact summary under the controls, and the full view ---------- */
 .statsbtn{height:40px;display:inline-flex;align-items:center;gap:7px;padding:0 13px 0 11px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:600 14px var(--body);cursor:pointer;box-shadow:var(--shadow-1);transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
 .statsbtn:hover{border-color:var(--muted)}
@@ -1262,6 +1271,15 @@ html.svopen,html.svopen body{overflow:hidden}
     <div class="wnfoot"><button class="startbtn" id="wnok">Got it</button></div>
   </div>
 </div>
+<div class="menu wnmenu askmenu" id="ask" hidden>   <!-- a question in the app's own card: rename a player, or make sure before deleting -->
+  <div class="menucard wncard askcard" role="dialog" aria-modal="true" aria-labelledby="asktitle" aria-describedby="asktext">
+    <form id="askform" novalidate>
+      <div class="wnhead"><h2 id="asktitle"></h2></div>
+      <div class="wnbody askbody"><p id="asktext"></p><input id="askinput" maxlength="16" autocomplete="off" hidden></div>
+      <div class="wnfoot askfoot"><button type="button" class="sumdone" id="askno">Cancel</button><button type="submit" class="startbtn" id="askok"></button></div>
+    </form>
+  </div>
+</div>
 <script src="engine.js"></script>
 <script src="vendor/three.min.js"></script>
 <script src="table3d.js"></script>
@@ -1355,7 +1373,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 509;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 510;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1388,9 +1406,42 @@ function playAs(id){
     go(p); return;
   }
   PL.cur = id; PL.at = Date.now(); savePL(); try{ sessionStorage.setItem('halfball-go', id); }catch(e){} location.reload(); }   // a pick lasts this one load: coming back to the site always starts at the title screen
-function delPlayer(id){
+// ask(): a question in the app's own card, in place of the browser's. Resolves true (or the typed text, with `value`), or
+// null on Cancel, Esc or a tap outside. Keys stay in the card while it's up; Tab goes round it; focus goes back after.
+let askDone = null, askFrom = null;
+function ask({title, text = '', ok = 'OK', danger = false, value = null, label = '', from = null}){
+  if(askDone) askDone(null);
+  const inp = $('askinput');
+  $('asktitle').textContent = title; $('asktext').textContent = text; $('asktext').hidden = !text;
+  $('askok').textContent = ok; $('askok').classList.toggle('danger', danger);
+  inp.hidden = value == null; inp.value = value == null ? '' : value; inp.setAttribute('aria-label', label || title);
+  askFrom = from || document.activeElement; $('ask').hidden = false;
+  if(value != null){ inp.focus({preventScroll: true}); inp.select(); } else $('askok').focus({preventScroll: true});
+  if(!ask.wired){ ask.wired = true;
+    const done = v => { if(askDone) askDone(v); };
+    $('askform').addEventListener('submit', e=>{ e.preventDefault(); if(inp.hidden) return done(true); const v = inp.value.trim(); if(v) done(v); else inp.focus(); });
+    $('askno').addEventListener('click', ()=>done(null));
+    ['click', 'pointerdown'].forEach(t=>$('ask').addEventListener(t, e=>{ e.stopPropagation(); if(t === 'click' && e.target === $('ask')) done(null); }));
+    window.addEventListener('keydown', e=>{
+      if($('ask').hidden) return;
+      e.stopPropagation();
+      if(e.key === 'Escape'){ e.preventDefault(); done(null); }
+      else if(e.key === 'Tab'){
+        const f = [inp, $('askno'), $('askok')].filter(b=>!b.hidden), i = f.indexOf(document.activeElement);
+        e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus();
+      }
+    }, true);
+  }
+  return new Promise(go=>{ askDone = v=>{
+    askDone = null; $('ask').hidden = true;
+    const f = askFrom; askFrom = null;
+    if(f && f.isConnected && f !== document.body && !f.closest('[hidden]')) try{ f.focus({preventScroll: true}); }catch(e){}
+    go(v);
+  }; });
+}
+async function delPlayer(id){
   const p = PL.list.find(q=>q.id === id);
-  if(!p || !confirm(`Delete ${p.name}? Their grade, stats and settings go for good.`)) return;
+  if(!p || !await ask({title: `Delete ${p.name}?`, text: 'Their grade, stats and settings go for good.', ok: 'Delete', danger: true})) return;
   ['halfball-settings', 'halfball-stats', 'halfball-view'].forEach(k=>{ try{ localStorage.removeItem(plKey(k, id)); }catch(e){} });
   PL.list = PL.list.filter(q=>q !== p); if(PL.cur === id) delete PL.cur; savePL();
   if(id === meId){ try{ sessionStorage.removeItem('halfball-player'); }catch(e){} meId = null; location.reload(); }
@@ -5497,9 +5548,9 @@ function showTab(t){
   settings.tab = t; saveSettings();
 }
 showTab('stats');   // the Shot tab is gone: its result line sits under the table
-$('reset').addEventListener('click', ()=>{   // all or nothing: your whole progression, Ladder and Flash together
-  const warn = `Reset your progress?\n\nYou'll start again at ${SHOOT_GRADES[0]} with no record: every shot and session, Ladder and Flash, is cleared. Flash and the bigger tables lock until you earn them back, and the lessons play again as you reach them. This can't be undone.`;
-  if(!confirm(warn)) return;
+$('reset').addEventListener('click', async ()=>{   // all or nothing: your whole progression, Ladder and Flash together
+  const warn = `You'll start again at ${SHOOT_GRADES[0]} with no record: every shot and session, Ladder and Flash, is cleared. Flash and the bigger tables lock until you earn them back, and the lessons play again as you reach them. This can't be undone.`;
+  if(!await ask({title: 'Reset your progress?', text: warn, ok: 'Reset', danger: true})) return;
   stats.log = []; stats.sessions = []; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; applyStyle();
   if(settings.tutSeen) for(const k in LESSONS) if(LESSONS[k].at > 0) delete settings.tutSeen[k];
   saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderPracticeChip();
@@ -6216,7 +6267,7 @@ $('plchip').addEventListener('click', e=>{ e.stopPropagation(); plOpen($('plmenu
 $('plmenu').addEventListener('click', e=>{
   e.stopPropagation(); const b = e.target.closest('button'); if(!b) return; plOpen(false);
   if(b.dataset.pl){ if(b.dataset.pl !== ME.id) playAs(b.dataset.pl); return; }
-  if(b.dataset.plact === 'rename'){ const v = (prompt('Player name', ME.name) || '').trim().slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); } }
+  if(b.dataset.plact === 'rename') ask({title: 'Rename player', value: ME.name, label: 'Player name', ok: 'Rename', from: $('plchip')}).then(r=>{ const v = (r || '').slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); } });
   else { showPlayers(); if(b.dataset.plact === 'new') $('plname').focus({preventScroll: true}); }
 });
 document.addEventListener('click', ()=>{ if(!$('plmenu').hidden) plOpen(false); });
@@ -6447,7 +6498,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 ['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
-  && ['playercover', 'stancecover', 'menu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover'].every(id=>!$(id) || $(id).hidden);
+  && ['playercover', 'stancecover', 'menu', 'tutmenu', 'prog', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask'].every(id=>!$(id) || $(id).hidden);
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
