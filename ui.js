@@ -222,7 +222,7 @@ export function lockBtn(b, lk, tip){
   b.disabled = false; b.classList.toggle('locked', lk); b.setAttribute('aria-disabled', lk ? 'true' : 'false'); b.removeAttribute('title');
   if(lk && tip){ b.dataset.tip = tip; b.setAttribute('aria-description', tip); } else { delete b.dataset.tip; b.removeAttribute('aria-description'); if(lockTip && lockTip.at === b) hideLockTip(); }
 }
-var lockTip = {el: null, at: null, timer: 0};   // var: syncPressed may run before this line does
+const lockTip = {el: null, at: null, timer: 0};
 function showLockTip(b, ms){
   if(!lockTip.el){ lockTip.el = document.createElement('div'); lockTip.el.className = 'locktip'; lockTip.el.setAttribute('role', 'tooltip'); lockTip.el.hidden = true; document.body.appendChild(lockTip.el); }
   const el = lockTip.el; el.textContent = b.dataset.tip; el.hidden = false; lockTip.at = b;
@@ -246,7 +246,7 @@ export function wireLockTips(){
   }
 }
 export function syncPressed(){
-  if(typeof lookPick === 'object' && lookPick) renderLookPicker();   // the Look picker and its dot follow every change (Settings, a new grade)
+  renderLookPicker();   // the Look picker and its dot follow every change (Settings, a new grade)
   tableBox.classList.toggle('walkable', walkOn());
   for(const sz of ['8', '9']){ const lk = !tableUnlocked(sz), b = document.querySelector(`[data-set="flashTable"][data-val="${sz}"]`); lockBtn(b, lk, `Unlocks at ${stepGrade(TABLE_AT[sz])}`); b.querySelector('.lock').hidden = !lk; }
   { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open; $('laddertablenote').textContent = `Until ${stepGrade(LADDER_PICK_AT)}, the Ladder plays on your grade's table.`;   // before S: the grade's table, shown as the pick; the others lock
@@ -457,7 +457,7 @@ export function wireRadio(){
 const LOOK_OPTS = {tstyle: [['bar', 'Bar'], ['club', 'Club'], ['pro', 'Pro']], ballSet: [['standard', 'Standard'], ['retro', 'Retro'], ['tv', 'TV'], ['blackout', 'Blackout'], ['disco', 'Disco']]};
 const lookNew = () => Object.keys(LOOK_OPTS).flatMap(k=>LOOK_OPTS[k].filter(([v])=>LOOK_AT[k][v] > 0 && lookOpen(k, v) && !(settings.lookSeen || []).includes(k + ':' + v)).map(([v])=>k + ':' + v));
 const LOOK_LOCK = '<span class="lock" aria-hidden="true"><svg viewBox="0 0 12 12"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>';
-var lookPick = {open: false, fresh: [], back: null};   // var: syncPressed may run before this line does
+const lookPick = {open: false, fresh: [], back: null};
 function lookSwatch(k, v){
   if(k === 'tstyle'){   // a little table: rails, cloth, diamonds
     const S = STYLES[v], dm = [16, 32, 48].map(x=>`<circle cx="${x}" cy="3" r=".9" fill="${S.diamond}"/><circle cx="${x}" cy="33" r=".9" fill="${S.diamond}"/>`).join('');
@@ -752,7 +752,7 @@ export function wireKeysCard(){
     else if(e.key === 'Tab'){ e.preventDefault(); (document.activeElement === $('keysok') ? $('keysbody') : $('keysok')).focus(); }
   }, true);
 }
-// ---------- What's new (the list, WHATS_NEW, is near the top): a dot on ? while there's something unseen, the card once ----------
+// ---------- What's new (the list, WHATS_NEW, is in whatsnew.js): a dot on ? while there's something unseen, the card once ----------
 const wnVer = e => '1.' + e.build;   // just the build it shipped in
 const wnUnseen = () => WHATS_NEW.filter(e=>e.build > settings.notesSeen);
 let wnFrom;   // set in wireWhatsNew()

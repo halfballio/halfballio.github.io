@@ -25,7 +25,7 @@ export function wireDevTools(){
 }
 // #dev: frames per second, the slowest frame, and what the drawing costs, every half second
 // FPS and timings under the table: on in #dev, or with Settings > Graphics > Show FPS
-const fpsOn = () => DEV || (typeof settings !== 'undefined' && settings.fps === '1');
+const fpsOn = () => DEV || settings.fps === '1';
 // it only runs while it's shown: an empty loop every frame keeps a phone from ever resting
 export let fpsStart = () => {};
 // ---------- performance numbers (shown on #dev) ----------
