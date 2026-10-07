@@ -1,5 +1,5 @@
 // The lessons, played on the real table step by step.
-import {syncStreakPill} from './main.js';
+import {syncStreakPill} from './ui.js';
 import {deal, endFlash, rcls, RICON, showSessIdle, updateControls} from './modes.js';
 import {animateShot} from './anim.js';
 import {draw, featherLoop, featherRaf, featherStart, NEAR, pivot, rigAlpha, VH, VW} from './view.js';

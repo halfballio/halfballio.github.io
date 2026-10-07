@@ -2,7 +2,7 @@
 // the network is too slow to answer (a phone on one bar): then the page opens from the cache straight away, the network's
 // answer still lands in the cache, and the next load is the new version.
 const CACHE = 'halfball-v1', FONTS = 'halfball-fonts';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon-32.png', './favicon.svg', './apple-touch-icon.png', './icon-192-maskable.png', './icon-512-maskable.png', './engine.js', './table3d.js', './music.js', './stats.js', './app.css', './geom.js', './whatsnew.js', './steps.js', './state.js', './perf.js', './audio.js', './grades.js', './deal.js', './shot.js', './view.js', './anim.js', './modes.js', './lessons.js', './main.js', './vendor/three.min.js', './shots.bin'];
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon-32.png', './favicon.svg', './apple-touch-icon.png', './icon-192-maskable.png', './icon-512-maskable.png', './engine.js', './table3d.js', './music.js', './stats.js', './app.css', './geom.js', './whatsnew.js', './steps.js', './state.js', './perf.js', './audio.js', './grades.js', './deal.js', './shot.js', './view.js', './anim.js', './modes.js', './lessons.js', './ui.js', './main.js', './vendor/three.min.js', './shots.bin'];
 const SLOW = 3500;   // ms to wait for the network before opening from the cache (only when there is a cached copy)
 let staleUntil = 0;  // after the page itself came from the cache, its files do too for a moment, so they're all one version
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).catch(()=>{})); self.skipWaiting(); });
