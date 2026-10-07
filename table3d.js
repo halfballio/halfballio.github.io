@@ -393,7 +393,7 @@ function make(canvas, opts = {}){   // opts.lite: a phone; the balls get a few l
   }
   // a table style (Settings): cloth, cushion and rail colours; the table is rebuilt in them on the next frame
   function setColors(c){ for(const k in c) if(k in COL) COL[k] = c[k]; tableKey = ''; }
-  return {build, setBalls, setDisco, discoMoving, setArrow, setZone, setMarker, setQuality, setColors, render, renderer};
+  return {build, setBalls, setDisco, discoMoving, setArrow, setZone, setMarker, setQuality, setColors, render};
 }
 root.Table3D = {make};
 })(typeof window !== 'undefined' ? window : this);

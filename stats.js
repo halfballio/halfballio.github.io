@@ -49,12 +49,6 @@ function fold(arch, entries, ctx){
   }
   return arch;
 }
-// finished-session records past their limit: counted, not kept
-function foldSessions(arch, recs){
-  arch.v = arch.v || ARCH_V; arch.done = arch.done || {};
-  for(const x of recs){ if(!x || typeof x !== 'object' || x.dev) continue; const D = arch.done[x.task] || (arch.done[x.task] = {n: 0, shots: 0, ok: 0, made: 0}); D.n++; D.shots += x.n | 0; D.ok += x.right | 0; D.made += x.made | 0; }
-  return arch;
-}
 const archOf = (ctx, task) => { const a = ctx.archive && ctx.archive.modes && ctx.archive.modes[task]; return a && a.n > 0 ? a : null; };
 
 // ---------- the digest: everything the tabs show, from one pass ----------
@@ -510,5 +504,5 @@ function wire(body){
     svg.addEventListener('focus', ()=>show(at));
   });
 }
-return {render, TABS, digest, fold, foldSessions};
+return {render, TABS, digest, fold};
 })();
