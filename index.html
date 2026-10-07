@@ -1543,7 +1543,6 @@ function boundsFor(refs){
   return refs.map((r,i)=>[Math.asin(1-fs[i])/RAD, Math.asin(1-fs[i+1])/RAD]);
 }
 BOUNDS = boundsFor(REFS);
-const VIEW_LABEL = {top:'Overhead', stand:'Standing', down:'Down on the ball'};
 const OB_COLORS = [['#f2b705','1'],['#1f4fbf','2'],['#d22b2b','3'],['#6b2fa0','4'],['#f07a12','5'],['#1d8a4a','6'],['#8a1f24','7'],['#151515','8'],
   ['#f2b705','9'],['#1f4fbf','10'],['#d22b2b','11'],['#6b2fa0','12'],['#f07a12','13'],['#1d8a4a','14'],['#8a1f24','15']];   // the whole rack: 9–15 are stripes
 let POCKETS = [];
@@ -1851,15 +1850,6 @@ if(stats.shoot && (stats.shoot.v | 0) < SHOOT_V){
 let shot = null, answered = false;
 
 // ---------- physics ----------
-// Collision-induced throw, medium speed, no spin: peaks ~2.5° near a 45° cut.
-// Collision-induced throw for a stun hit (no spin): friction drags the object ball a little along the cue ball's travel,
-// so it leaves at a smaller cut angle than the contact gives (it goes "fuller"), and you have to overcut to make up for it.
-// Rough fit to published measurements: rises fast, peaks near a half-ball hit, eases off on thin cuts; far more when slow.
-const SPEEDS = ['slow','medium','firm'];
-const SPEED_LABEL = {slow:'Slow', medium:'Medium', firm:'Firm'};
-const THROW_MAX = {slow:5, medium:3.5, firm:2};      // degrees, at the peak
-const ROLL_V = {slow:45, medium:75, firm:120};       // animation speed, inches per second
-function throwAt(speed, phi){ if(!speed || phi <= 0) return 0; const x = phi/32; return THROW_MAX[speed]*x*Math.exp(1-x); }
 // Throw comes out of the engine's ball-ball contact (friction while the balls slide against each other). This asks it how
 // many degrees a hit at cut phi throws, for a cue ball arriving at vc in/s with spin ratio spin (1 rolling, 0 stun).
 function throwAtContact(vc, phi, spin){
@@ -1913,11 +1903,6 @@ function pocketTol(P, u){
   return 1.3*((PK[0]-2.25)/2.25)*(1-0.35*a/45);
 }
 
-// Where the cue ball goes after a clean hit (stop shot: along the tangent line), and whether that path runs into a pocket.
-function cuePathEnd(gb, v, n){
-  const tan = sub(v, mul(n, dot(v, n))), tl = len(tan);
-  return tl > 0.05 ? rayToCushion(gb, mul(tan, 1/tl), 26*tl) : gb;
-}
 // Where the number sits on the object ball: fixed on the ball (it doesn't turn to face you), roughly toward
 // where you first stand so it starts out readable, tilted up a little.
 function spotToward(toEye){
@@ -1934,7 +1919,6 @@ function rotAxis(v, k, a){   // rotate v about unit axis k by angle a (Rodrigues
   const kx = [k[1]*v[2]-k[2]*v[1], k[2]*v[0]-k[0]*v[2], k[0]*v[1]-k[1]*v[0]];
   return [0,1,2].map(i=>v[i]*c + kx[i]*sn + k[i]*kd*(1-c));
 }
-function cueScratches(c){ return outcome(c, c.theta).scratch; }   // the right call sends the cue ball into a pocket
 // How far the object ball runs to the pocket, by the cut: thin cuts come up near the pocket, as they do in a game. How far off
 // the object ball goes for a given miss of the contact point grows as 1/cos of the cut, and players leave themselves fuller
 // angles for long shots, so a thin cut across the table into a far pocket hardly ever happens. The run is capped at
@@ -2020,7 +2004,6 @@ const AIDS = {
 };
 const ANY_AT = 8;                                            // B: cuts at any angle (the right call always pockets)
 const SHOT_SPEED = 'medium';   // pocket speed: throw as for a medium-soft hit                                  // one speed for every shot, at every grade (slow and medium come back with a rolling cue-ball path)
-const FAST_FLASH_AT = 10;                                    // A-: 0.75 s Flash
 const LEAN_AT = 7;                                           // the weak-spot lean starts once you read unaided (B-)
 const PTS_UP = 10, PT_RIGHT = 1, PT_WRONG = -2;
 const baseRun = () => !!(stats.active && stats.active.base && stats.active.task===settings.task);
@@ -2079,14 +2062,6 @@ function enforceLocks(){
   if(baseRun()) return;
   if(fastFlashLocked() && settings.flash==='750'){ settings.flash = '1500'; saveSettings(); }
 }
-// what reaching each grade brings (first time only for aids going away)
-const LADDER_UP = {1:'Guide line fades after 1.5 s', 2:'Guide line fades after 0.75 s', 3:'Guide line gone',
-  4:'Ghost ball fades after 1.5 s', 5:'Ghost ball fades after 0.75 s', 6:'Ghost ball gone',
-  7:'Ball line: read it from behind the cue ball', 8:'Any angle', 9:'Between fractions',
-  10:'0.75 s Flash unlocked', 11:'Shoot and Free play unlocked'};
-const LADDER_TEXT = ['Guide line, ghost ball and aim-line stance all on', 'Guide line fades after 1.5 s', 'Guide line fades after 0.75 s', 'Guide line gone',
-  'Ghost ball fades after 1.5 s', 'Ghost ball fades after 0.75 s', 'Ghost ball gone', 'Ball line: read it from behind the cue ball',
-  'Any angle', 'Between fractions: call the nearest', '0.75 s Flash', 'Top of Read: Shoot and Free play open'];
 // Testing: open the site with #dev and tap any grade in the progress ladder to jump there.
 const DEV = /#dev\b/.test(location.href);
 document.querySelector('.table-box').insertAdjacentHTML('afterend', `<div class="buildtag">${DEV_SITE ? '<b class="devtag">DEV</b> <b class="devtag unltag" id="unltag" title="Every grade, mode and look open; the lessons are skipped" hidden>Unlocked</b> ' : ''}<a href="mailto:${CONTACT}">Contact us</a> · <a href="${SOURCE}" target="_blank" rel="noopener">build ${VERSION}</a><span id="fpsmeter"></span></div>` );   // under the table, lined up with its left edge; always shown, so you can tell which build is live
@@ -2144,7 +2119,6 @@ function renderProgress(){
   }).reverse().join('') + (DEV ? '<li class="devnote"><span></span><small>Testing: tap a grade to jump there.</small></li>' : '');
   $('ladder').setAttribute('aria-description', DEV ? 'Testing: tap a grade to jump there.' : 'Tap a grade you\'ve passed to practise it, as long as you like. Practice shots don\'t count.');   // the hint, for screen readers only
 }
-const LADDER_DOWN = {8:'Cuts back on the fractions', 9:'Back to cuts the plain fraction pots', 10:'No more 0.75 s Flash'};
 // ==================== the Shoot half ====================
 // Halfball: the Shoot half. You aim and strike the cue ball yourself; the engine plays it out.
 
@@ -2282,7 +2256,6 @@ function shootAid(k){
 const diamond = () => Math.max(W, H)/8;
 const speedFromDiamonds = d => Math.sqrt(2*PE.C.rollDecel*d*diamond());
 const diamondsFromSpeed = V => V*V/(2*PE.C.rollDecel*diamond());
-const SPEED_MIN = 0.5, SPEED_MAX = 48;
 // ten whole-number speeds (keys 1–9, 0 for 10): each is how many diamonds a rolling cue ball hit that hard would travel
 const SPEED_LEVELS = [1, 2, 3, 4, 6, 8, 11, 15, 20, 28];
 const speedLevel = () => { const n = +settings.speedLevel, v = n >= 1 && n <= 10 ? Math.round(n) : 5; return coarseSpeed() ? nearestCoarse(v) : v; };
@@ -2357,7 +2330,6 @@ function nudgeTip(k){   // W up, S down, A left, D right, on the pad as you see 
 const COARSE = [3, 5, 8, 10], COARSE_F = {3:.25, 5:.5, 8:.75, 10:1}, COARSE_LBL = {3:'¼', 5:'½', 8:'¾', 10:'Full'};
 const coarseSpeed = () => true;
 const nearestCoarse = n => COARSE.reduce((b, c)=>Math.abs(c - n) < Math.abs(b - n) ? c : b, COARSE[0]);
-const speedLabel = n => coarseSpeed() ? COARSE_LBL[nearestCoarse(n)] + ' stroke' : String(n);
 const strokeFrac = n => coarseSpeed() ? COARSE_F[nearestCoarse(n)] : n/10;   // how much of your full stroke a speed uses
 function setSpeedLevel(n){
   if(coarseSpeed()){   // a one-step nudge moves to the next stroke that way; anything else snaps to the nearest
@@ -2368,7 +2340,6 @@ function setSpeedLevel(n){
   settings.speedLevel = Math.max(1, Math.min(10, n)); saveSettings(); renderShootControls();
   if(speedLevel() !== was) uiSound('tick', speedLevel()/10);   // a tick per step: drag, the ↑ ↓ keys and buttons
 }
-const fmtD = d => d < 10 ? (Math.round(d*2)/2).toString().replace('.5', '½').replace(/^0½$/, '½') : String(Math.round(d));
 
 // ---------- the stroke ----------
 // Before speed is yours it's the shot's ideal pocket speed; before spin is yours the tip is set for you.
@@ -2617,7 +2588,7 @@ function parseShipped(buf){
   }
   return {ver, steps};
 }
-if(typeof fetch === 'function') fetch('shots.bin', {cache: 'no-cache'}).then(r=>r.ok ? r.arrayBuffer() : null).then(buf=>{ if(buf) SHIPPED = parseShipped(buf); renderLibStatus(); }).catch(()=>{});
+if(typeof fetch === 'function') fetch('shots.bin', {cache: 'no-cache'}).then(r=>r.ok ? r.arrayBuffer() : null).then(buf=>{ if(buf) SHIPPED = parseShipped(buf); }).catch(()=>{});
 const shippedOk = () => !!(SHIPPED && SHIPPED.ver === libVer());
 const shippedCount = k => shippedOk() && SHIPPED.steps[k] ? SHIPPED.steps[k].cnt : 0;
 // your own: built on this device, kept in localStorage as the same 13-byte records
@@ -2635,7 +2606,6 @@ function libSave(){
   try{ localStorage.setItem(lsKey('halfball-shotlib'), JSON.stringify({ver: LIB.ver, fmt: 2, steps})); }catch(e){}
 }
 const mineCount = k => (libLoad().steps[k] || []).length;
-const libCount = () => LIB_STEPS.reduce((t, k)=>t + mineCount(k) + shippedCount(k), 0);
 const libFull = () => LIB_STEPS.every(k=>mineCount(k) + shippedCount(k) >= LIB_PER_OF(k));
 // Dealing from the library just picks: every rule (zones, rails, room for the hand at any height...) was settled when
 // the shots were made. The fraction it wants comes from your adaptive mix; a shot dealt in the last 60 isn't picked again.
@@ -2765,29 +2735,8 @@ function libGrowOne(){
 let libTimer = 0;
 function libIdle(){
   clearTimeout(libTimer);
-  if(libFull() || libBuilding || shippedOk()) return;   // the shipped library is enough: building more here would hold up the page
-  libTimer = setTimeout(()=>{ if(answered && !anim && !cueStroke && !look.k && !walkDrag && !tut.on){ libGrowOne(); renderLibStatus(); } libIdle(); }, 600);   // only while you're looking over a played shot, so it never stutters an aim
-}
-// Settings: rebuild it all now, with a progress bar
-let libBuilding = false, libWait = false;
-function libRebuild(){
-  if(libBuilding) return;
-  LIB = {ver: libVer(), steps: {}}; libSave(); libBuilding = true; renderLibStatus();   // your own library starts again; the shipped one stays
-  const step = () => {
-    if(!libBuilding) return;
-    const t0 = performance.now();
-    while(performance.now() - t0 < 40){ const g = libGrowOne(); if(g === null){ libBuilding = false; libWait = true; break; } if(!g || libFull()){ libBuilding = false; break; } }
-    renderLibStatus();
-    if(libBuilding) setTimeout(step, 0); else libIdle();
-  };
-  setTimeout(step, 0);
-}
-function renderLibStatus(){
-  const el = $('libstatus'); if(!el) return;
-  const n = libCount(), all = LIB_STEPS.reduce((t, k)=>t + LIB_PER_OF(k), 0);
-  el.textContent = libBuilding ? `Working out shots… ${n} / ${all}` : n >= all ? `${n} shots ready` : `${n} / ${all} shots (more are worked out while you play)`;
-  $('libfill').style.width = (100*n/all).toFixed(1) + '%';
-
+  if(libFull() || shippedOk()) return;   // the shipped library is enough: building more here would hold up the page
+  libTimer = setTimeout(()=>{ if(answered && !anim && !cueStroke && !look.k && !walkDrag && !tut.on) libGrowOne(); libIdle(); }, 600);   // only while you're looking over a played shot, so it never stutters an aim
 }
 // where a zone may go: at least 12" from the pocket the object ball goes in, off the object ball's starting spot, and on a
 // near-straight shot (under 8°) along the line of the shot, forward or back, not off to the side
@@ -3385,15 +3334,6 @@ function callAim(id){
   };
   if(c.phase === 'down' && c.k > 0) camStep(s, 'down', c.k, 0, 450, across); else across();
 }
-// Enter (or the chip) gets you down now instead of waiting out the standing time
-function goDown(){ return false; }   // you get down by calling a fraction now
-function goDownOld(){
-  const c = shot && shot.cam;
-  if(!c || !c.T || answered || !isShoot() || tut.on || look.target) return false;
-  if(c.phase === 'down' && c.up && c.k < 1){ c.up = false; renderRoutineChip(); riseCam(shot, 1, ()=>{ featherStart(c); featherLoop(shot); }); return true; }   // back down after a look
-  if(c.phase !== 'stand') return false;
-  c.t0 = performance.now() - c.T*1000; return true;
-}
 // The Shoot camera: standing on the ball line, standing behind your aim line, or down on your aim line, blended by the routine.
 function shootCam(s, view){
   const d = norm(sub(s.ob, s.cb)), aim = s.aimDir || d;   // ball line, then behind the aim line you called, then down on it
@@ -3435,16 +3375,6 @@ function setLook(on){
     if(look.k !== look.target) look.raf = requestAnimationFrame(tick);
   };
   look.raf = requestAnimationFrame(tick);
-}
-function riseCam(s, k1, done){   // move between standing behind the aim line (0) and down on it (1)
-  const c = s.cam, k0 = c.k, t0 = performance.now(), tw = c.tw = (c.tw || 0) + 1;
-  const tick = now => {
-    if(shot !== s || c.tw !== tw) return;
-    const u = Math.min(1, (now - t0)/450); c.k = k0 + (k1 - k0)*ease(u);
-    if(!look.k) draw(answered);
-    if(u < 1) requestAnimationFrame(tick); else if(done) done();
-  };
-  requestAnimationFrame(tick);
 }
 // a camera behind the cue ball looking along dir, tilted to keep the cue ball (and, standing, the pocket) in frame
 // You stand outside the table: standing to read a shot, your feet are on the floor behind the rail and your eyes are over them,
@@ -3602,7 +3532,6 @@ function tipLimitPath(c){   // a dot at every point you can strike: the centre, 
   return tipPoints(c).map(([x, y])=>`M${(x - .035).toFixed(3)} ${(-y).toFixed(3)}a.035 .035 0 1 0 .07 0a.035 .035 0 1 0 -.07 0`).join('');
 }
 function wireShootControls(){
-  $('routinechip').addEventListener('click', ()=>goDown());
   const bar = $('speedbar'), pad = $('tippad');
   ['click', 'pointerdown'].forEach(ev=>pad.addEventListener(ev, e=>e.stopPropagation()));   // on the table: a tap on the pad isn't a tap on the table
   const setSpeedFrom = ev => {
@@ -4440,7 +4369,7 @@ function perspBack(cam, s, reveal, segs, ring){
     const hull = convexHull(pts);
     if(hull.length>2){
       // depth: black at the bottom, the far inner wall catching a little light
-      const bc = cam.toCam([p.c[0], p.c[1], -0.4]), top = cam.toCam([p.c[0], p.c[1], 1.6]);
+      const top = cam.toCam([p.c[0], p.c[1], 1.6]);
       const gid = 'pk' + POCKETS.indexOf(p), ys = hull.map(q=>q[1]), yTop = Math.min(...ys), yBot = Math.max(...ys);
       o += `<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="${yTop.toFixed(1)}" x2="0" y2="${yBot.toFixed(1)}"><stop offset="0" stop-color="#121110"/><stop offset=".5" stop-color="#070707"/><stop offset="1" stop-color="#020202"/></linearGradient>`;
       o += `<path d="M${hull.map(q=>q[0].toFixed(1)+' '+q[1].toFixed(1)).join('L')}Z" fill="url(#${gid})"/>`;
@@ -5084,7 +5013,6 @@ function lean(e){          // +1 too thin (overcut), -1 too full (undercut), 0 r
 }
 function modeLog(){ return stats.log.filter(e=>taskOf(e)===settings.task && !e.gh); }   // shots taken with the ghost-ball aid aren't scored
 const statTask = () => settings.task==='flash' ? 'flash' : isDrill() ? 'practice' : settings.task==='run' ? 'run' : 'shoot';   // the Stats tab shows the mode you're in: Flash, Practice, Run-outs and the Ladder keep separate stats
-function statLog(){ return stats.log.filter(e=>taskOf(e)===statTask() && !e.gh); }
 
 // ---------- flash ----------
 let flashTimer = null;
@@ -5196,7 +5124,7 @@ function dealInner(){
   document.querySelectorAll('#answers button, #mods button').forEach(b=>{b.disabled=false;b.className='';});
   pend = {f:null, m:null};
   $('mods').hidden = !shot.phys;
-  const sc = $('speedchip'); sc.hidden = true;   // no speed shown for now: every shot is pocket speed if(shot.speed){ sc.textContent = SPEED_LABEL[shot.speed]; sc.className = 'speedchip ' + shot.speed; }
+  const sc = $('speedchip'); sc.hidden = true;   // no speed shown: every shot is pocket speed
   $('result').innerHTML = '';
   if(isPlace()) $('quick').innerHTML = `<div class="ql hint">${PLACE_HINT}</div>`; else if(tut.on) $('quick').innerHTML = ''; else pendCard();
   $('showright').hidden = true;
@@ -6113,7 +6041,6 @@ function shoot(){
 
 // ---------- stats & patterns ----------
 function pct(a,b){ return b ? Math.round(100*a/b) : 0; }
-function median(xs){ if(!xs.length) return 0; const a=[...xs].sort((x,y)=>x-y), m=a.length>>1; return a.length%2 ? a[m] : (a[m-1]+a[m])/2; }
 // Streaks live inside one session: a new session always starts from zero.
 function runs(L){
   let cur = 0, best = 0, sid;
@@ -6129,8 +6056,6 @@ function curStreak(){   // the streak you're on right now, in the session being 
   if(!last || !a || last.sid !== a.id) return 0;
   return runs(L).cur;
 }
-// the fractions a stats view shows: the core five, plus any eighth that has been dealt or called
-const statRefs = L => ALL.filter(r=>r.core || L.some(e=>e.a===r.id || e.p===r.id));
 function renderStats(){
   renderSession();
   if(SV.open) svRender();
@@ -6436,19 +6361,6 @@ function openMenu(v){ $('menu').hidden = !v; if(v) $('menuclose').focus({prevent
 
 // ---------- tutorial: played on the real table, step by step ----------
 const tut = {on:false, i:0, zb:0, zt:0, zRaf:0};   // zb: how far the camera is into the close-up (0..1), eased toward zt
-// B+: cuts that sit between two fractions, called with thick / center / thin
-const BSTEPS = [
-  {deg:35, mustMiss:30, aids:{stance:1, ghost:1, line:1}, next:true,
-   text:'You’re at <b>B+</b>. From here, some cuts don’t sit on a fraction. Here’s one.'},
-  {aids:{stance:1, ghost:1}, zoom:true, overlap:true, next:true,
-   text:'Up close: the ghost ball covers <b>a bit less than half</b> of the object ball. It’s nearest to <b>½</b>.'},
-  {aids:{stance:1, ghost:1}, demo:30, next:true,
-   text:'Hit it as a plain <b>½</b> and it goes a little full. Watch it miss.'},
-  {aids:{stance:1, ghost:1}, demo:'right', next:true,
-   text:'Take a touch less ball than ½ and it drops.'},
-  {finish:true, aids:{},
-   text:'You still just call the <b>nearest fraction</b>: ½ here is right.'},
-];
 // B-: throw
 const TSTEPS_THROW = [
   {deg:30, mustMiss:'look', aids:{stance:1, ghost:1, line:1}, next:true,
@@ -7297,7 +7209,7 @@ document.addEventListener('keydown', e=>{
   else if(isPlace() && !answered && (e.key==='ArrowLeft' || e.key==='ArrowRight')){ nudge(e.key==='ArrowLeft'?-1:1, e.shiftKey ? 6 : 1); e.preventDefault(); }
   else if(isShooting() && !answered && ctrl().speed && (e.key==='ArrowUp' || e.key==='ArrowDown')){ setSpeedLevel(speedLevel() + (e.key==='ArrowUp' ? 1 : -1)); e.preventDefault(); }
   else if(isShooting() && !answered && /^[wasdx]$/i.test(e.key) && !e.metaKey && !e.ctrlKey){ nudgeTip(e.key.toLowerCase()); e.preventDefault(); }
-  else if(e.key==='Enter'){ if(answered){ nextDeal(); e.preventDefault(); } else if(goDown()) e.preventDefault(); else if(isPlace() && shot && shot.place){ isShooting() ? takeShot() : shoot(); e.preventDefault(); } }
+  else if(e.key==='Enter'){ if(answered){ nextDeal(); e.preventDefault(); } else if(isPlace() && shot && shot.place){ isShooting() ? takeShot() : shoot(); e.preventDefault(); } }
 });
 
 if(!['stand','down'].includes(settings.view)) settings.view='stand';
@@ -7668,7 +7580,7 @@ if(!['stand','down'].includes(settings.flashView)) settings.flashView = 'stand';
 applyStyle();
 applyGfx();
 if(stats.shoot){ const top = SHOOT_GRADES.length - 1; stats.shoot.best = Math.min(stats.shoot.best ?? 0, top); stats.shoot.g = Math.min(Math.max(stats.shoot.g, stats.shoot.best), top); }   // S+ is gone: anyone there is at S
-setTimeout(()=>{ renderLibStatus(); libIdle(); }, 3000);   // start filling the shot library once the page has settled   // grades only go up now: back to your best
+setTimeout(libIdle, 3000);   // start filling the shot library once the page has settled   // grades only go up now: back to your best
 // ---------- mode setup: one sheet for Flash, Practice and Run-outs ----------
 // Opened from the mode's button and from the pill at the foot of the table. Every pick is saved as it's made; what changed
 // is applied when the sheet closes (a shot you've already played keeps its result, and the next one follows the new picks).
@@ -7856,7 +7768,6 @@ window.addEventListener('keydown', e=>{
   else if(e.key === 'Tab'){ e.preventDefault(); (document.activeElement === $('keysok') ? $('keysbody') : $('keysok')).focus(); }
 }, true);
 // ---------- What's new (the list, WHATS_NEW, is near the top): a dot on ? while there's something unseen, the card once ----------
-const wnDate = d => { const t = new Date(d + 'T12:00:00'); return isNaN(t) ? d : t.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}); };
 const wnVer = e => '1.' + e.build;   // just the build it shipped in
 const wnUnseen = () => WHATS_NEW.filter(e=>e.build > settings.notesSeen);
 let wnFrom = null, wnPoll = 0, wnInput = performance.now();
