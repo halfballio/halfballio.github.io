@@ -1462,7 +1462,7 @@ const SHOOT_GRADES = ['F','D-','D','D+','C-','C','C+','B-','B','B+','A-','A','A+
 // Saved grades were once on a 15-grade ladder whose C (your aim line) repeated C-. stats.shoot.v 2: on this ladder. Moving a
 // grade over keeps its skill step: the old C becomes the next step (any angle, the new C), everything above moves down one
 const SHOOT_V = 2, oldShootG = g => g >= 6 ? g - 1 : g;
-const BUILD = 519;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 520;   // one per commit to main (shown on the title screen and under the table)
 const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 const PL_MAX = 4, TEST = location.hash === '#test';   // the library tools run on the old keys, no picker
@@ -1587,6 +1587,9 @@ function saveSettings(){ if(restoring) return; try{ localStorage.setItem(lsKey(K
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 const WHATS_NEW = [
+  {build: 520, date: '2026-10-07', title: 'Fixes', items: [
+    'Bug fixes and small improvements.',
+  ]},
   {build: 519, date: '2026-10-06', title: 'Fixes', items: [
     'Bug fixes and small improvements.',
   ]},
