@@ -1,5 +1,6 @@
 // Dealing a shot: the dealer, the shot library (shots.bin), the extra balls at S, and Run-outs.
-import {aimFor, COARSE, cueStroke, cutForDir, deal, diamondsFromSpeed, forceDeg, forceFrac, idealDir, MPH, outcome, pendCard, playAim, pocketInView, rcardHTML, rebuildShot, renderModeChip, shotIdle, shotStroke, snapTip, storedTip, strikeOf, STROKE_MPH, tipPolar, tutDist, updateControls, viewBoxFor} from './main.js';
+import {deal, forceDeg, forceFrac, pendCard, pocketInView, rcardHTML, renderModeChip, shotIdle, tutDist, updateControls, viewBoxFor} from './main.js';
+import {aimFor, COARSE, cueStroke, cutForDir, diamondsFromSpeed, idealDir, MPH, outcome, playAim, rebuildShot, shotStroke, snapTip, storedTip, strikeOf, STROKE_MPH, tipPolar} from './shot.js';
 import {adaptiveOn, anyOn, ctrl, drillPicks, GEN, gradeTable, isDrill, isLadder, isRun, isShoot, ladderBest, leanK, longShare, progTable, shaftSq, shootLevel, SHOT_SPEED, tableUnlocked, throwNow} from './grades.js';
 import {look, S, save, sessTask, settings, stats, success, taskOf, tut} from './state.js';
 import {GRADE_STEP, SH, stepOf} from './steps.js';
