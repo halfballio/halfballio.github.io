@@ -5259,7 +5259,7 @@ function shotPlan(s, oc, T1, tOb, tCb, cbRail, jawHit){
   return [[T1, 'click', v], [T1 + tOb, oc.made ? 'drop' : jawHit ? 'jaw' : 'rail', v]];
 }
 
-// ---------- sessions ----------
+// ---------- the mode's open-ended run: shots and right calls ----------
 function sessionTick(ok, made){
   const a = stats.active; if(!a || a.task !== settings.task) return;
   a.n++; if(ok) a.right++; if(made) a.made++;
@@ -5685,8 +5685,7 @@ function applySetting(key, val){
   if(settings[key]===val || (key==='task' && val==='flash' && !flashUnlocked()) || (key==='task' && val==='practice' && !practiceUnlocked()) || (key==='task' && val==='run' && !runUnlocked()) || (key==='tablePick' && (!ladderPickOpen() || ladderTable()===val)) || (key==='flashTable' && (!tableUnlocked(val) || flashTableNow()===val)) || (LOOK_AT[key] && !lookOpen(key, val)) || (key==='shaft' && val === 'carbon' && !carbonUnlocked()) || (key==='ghost' && aidMode('ghost')!=='optional') || (key==='line' && aidMode('line')!=='optional') || (key==='cam' && aidMode('stance')!=='optional') || (key==='walk' && baseRun()) || (key==='flash' && val==='750' && fastFlashLocked())) return;
   settings[key] = val; saveSettings(); syncPressed();
   if(key==='task'){ setTimeout(renderModeChip, 0); setTimeout(syncStreakPill, 0); flashArmed = false; $('startcover').hidden = true; renderBadge(); renderStats(); renderRun(); }   // the Stats tab switches to that mode's own stats
-  if(key==='ghost' || key==='line'){ if(shot) draw(answered); }
-  else if(key==='streaks') syncStreakPill();
+  if(key==='streaks') syncStreakPill();
   else if(key==='gfxAA') location.reload();
   else if(key==='fps') fpsStart();
   else if(key.startsWith('gfx')){ applyGfx(); if(shot) draw(answered); }
@@ -5694,9 +5693,8 @@ function applySetting(key, val){
   else if(key==='tstyle' || key==='ballSet'){ applyStyle(); if(shot) draw(answered); }
   else if(key==='flashView'){ if(shot) draw(answered); }
   else if(key==='tablePick' || key==='flashTable'){ if(progTable() !== curTable) dealFresh(); }   // a new shot on the table you picked (when it's the mode you're in)
-  else if(key==='view' || key==='cam' || key.startsWith('ref') || key==='hand' || key==='glove' || key==='skin' || key==='bridge' || key==='shaft'){ if(shot) draw(answered); }   // same shot, new viewpoint
-  else if(key==='table' || key==='pockets'){ const keep = stats.active && stats.active.pending && !answered; if(!keep){ setTable(settings.table, settings.pockets); deal(); } }   // mid-shot in a session: applies from the next shot
-  else if(key==='mode' || key==='len' || key==='throw' || key==='full' || key==='task' || (key==='flash' && settings.task==='flash')) deal();   // a kept session shot stays (deal restores it)
+  else if(key.startsWith('ref') || key==='hand' || key==='bridge' || key==='shaft'){ if(shot) draw(answered); }   // same shot, new look
+  else if(key==='task' || (key==='flash' && settings.task==='flash')) deal();   // a kept shot stays (deal restores it)
   renderStats();
 }
 document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click', ()=>applySetting(b.dataset.set, b.dataset.val)));
