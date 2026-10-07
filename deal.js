@@ -1,5 +1,5 @@
 // Dealing a shot: the dealer, the shot library (shots.bin), the extra balls at S, and Run-outs.
-import {forceDeg, forceFrac, tutDist} from './main.js';
+import {forceDeg, forceFrac, tutDist} from './lessons.js';
 import {deal, pendCard, rcardHTML, renderModeChip, shotIdle, updateControls} from './modes.js';
 import {pocketInView, viewBoxFor} from './view.js';
 import {aimFor, COARSE, cueStroke, cutForDir, diamondsFromSpeed, idealDir, MPH, outcome, playAim, rebuildShot, shotStroke, snapTip, storedTip, strikeOf, STROKE_MPH, tipPolar} from './shot.js';

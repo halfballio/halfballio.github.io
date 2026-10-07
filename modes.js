@@ -1,5 +1,6 @@
 // The modes: Flash, the round (deal, result card, log), the open-ended run, and the mode setup sheets.
-import {hideLockTip, jumpingAhead, LESSONS, lockBtn, openProg, renderProgress, startTut, syncPressed, syncRefs, tstep, tutAnswer} from './main.js';
+import {hideLockTip, jumpingAhead, lockBtn, openProg, renderProgress, syncPressed, syncRefs} from './main.js';
+import {LESSONS, startTut, tstep, tutAnswer} from './lessons.js';
 import {animateShot} from './anim.js';
 import {draw, featherLoop, flashDown, rigAlpha, standUp} from './view.js';
 import {callAim, COARSE_LBL, cueStroke, nearestCoarse, obHit, outcome, renderRoutineChip, renderShootControls, rigHitMs, routineRaf, shotStroke, snapTip, speedLevel, startRoutine, strokeThen, takeShot, tipName} from './shot.js';

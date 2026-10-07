@@ -1,5 +1,6 @@
 // Drawing the table: the cameras, walking round the cue ball, the cue and bridge hand, the 3D table and its arrows.
-import {noPocket, renderRadio, tutAid, tutLayer, tutLook} from './main.js';
+import {renderRadio} from './main.js';
+import {noPocket, tutAid, tutLayer, tutLook} from './lessons.js';
 import {bridgeGeom, cueStroke, ease, levelForSpeed, overviewCam, PHONE_STAND_FOVS, shootCam, shotInFrame, shotStroke, standBackFor, standMin, strokeFrac, syncUpBtn} from './shot.js';
 import {CB_DOTS, cbSpin, renderRunPick, rotAxis, runPicking, stanceIn} from './deal.js';
 import {aidAlpha, isShooting, ladderBest, myShaft, shootAid, shootLevel, shootRoutine, stanceAim} from './grades.js';
