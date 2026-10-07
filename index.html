@@ -7068,27 +7068,6 @@ document.querySelectorAll('[data-stab]').forEach(b=>b.addEventListener('click', 
   ['you','table','sound','gfx'].forEach(k=>{ $('set-' + k).hidden = b.dataset.stab !== k; });
 }));
 $('showright').addEventListener('click', e=>{ e.stopPropagation(); replayRightNow(); });
-// a cheat: type b-s-w quickly to see this shot's answer: the fraction, the speed and the spin
-let tipBeforeCheat = null;
-function revealAnswer(){
-  const s = shot; if(!s || answered) return;
-  const tipLabel = tipName;
-  const z = s.zone, st = z ? {V: STROKE_MPH[z.lvl]*MPH, tip: z.tip} : shotStroke(s);
-  const frac = nearestRef(cutForDir(s, aimFor(s, st, shaftSq()))), lab = frac.id === 'full' ? 'Full' : frac.label;
-  const bits = [lab];
-  if(ctrl().speed) bits.push(COARSE_LBL[z ? z.lvl : levelForSpeed(strikeOf(s).V)] + ' stroke');
-  if(z && (ctrl().up || ctrl().side)) bits.push(tipLabel(z.tip));
-  notice(bits.join(' · '));
-}
-// typed keys: b-s-w quickly (under half a second between letters) shows the answer
-{ let typed = '', at = 0;
-  document.addEventListener('keydown', e=>{
-    if(e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
-    const now = performance.now(); typed = (now - at < 500 ? typed : '') + e.key.toLowerCase(); at = now;
-    if(e.key.toLowerCase() === 'b') tipBeforeCheat = settings.shotTip && settings.shotTip.slice();
-    if(typed.endsWith('bsw')){ typed = ''; const t0 = tipBeforeCheat; setTimeout(()=>{ if(t0){ settings.shotTip = t0; saveSettings(); renderShootControls(); } revealAnswer(); }, 0); return; }   // S and W moved the tip: put it back
-  }, true);
-}
 // every grade open at once, quietly (no level-up cards): the Efren Reyes player (below)
 function openEveryGrade(){
   const top = SHOOT_GRADES.length - 1, L = ensureShootLevel();
