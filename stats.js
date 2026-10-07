@@ -384,7 +384,7 @@ function tabShots(d){
     const zin = Z.filter(e=>e.z === 1).length;
     grid.push(card('Position: zone hit rate', `Shots with a target zone: cue ball pocketed the object ball and stopped in the zone · ${pct(zin, Z.length)}% of ${num(Z.length)}`,
       bars(types, {big: false}) + table(['Shot type', 'Shots', 'Pocketed', 'Scratch'], types.map(t=>[t.label, num(t.n), pc(t.made, t.n), pc(t.sc, t.n)]), 'Zone shots by type: pocketed and scratched')));
-  } else if(!d.practice) grid.push(card('Position: zone hit rate', 'Shots with a target zone', empty(`Zones start at ${G[9]} (follow)`, 'Each zone shot shows here by type: follow, stun, draw, two rails, english.')));
+  } else if(!d.practice) grid.push(card('Position: zone hit rate', 'Shots with a target zone', empty(`Zones start at ${G[d.ctx.zoneAt ?? 8]} (follow)`, 'Each zone shot shows here by type: follow, stun, draw, two rails, english.')));
   // speed
   const SV = d.L.filter(e=>typeof e.sv === 'number');
   if(SV.length){
@@ -400,7 +400,7 @@ function tabShots(d){
       if(W2.length) body += table(['Zone shots', 'Shots', 'In zone'], [['The stroke it wanted', num(mt.length), pc(mt.filter(e=>e.z === 1).length, mt.length)], ['Another stroke', num(mm.length), pc(mm.filter(e=>e.z === 1).length, mm.length)]], 'Matching the zone stroke');
     }
     grid.push(card('Speed', 'How hard you hit it, against the softest speed that pockets the ball (1×)', body));
-  } else grid.push(card('Speed', 'Your speed against outcomes', empty(`Speed is yours from ${G[7]}`, 'Each shot’s speed and result shows here.')));
+  } else grid.push(card('Speed', 'Your speed against outcomes', empty(`Speed is yours from ${G[d.ctx.speedAt ?? 6]}`, 'Each shot’s speed and result shows here.')));
   // scratches
   const scr = d.L.filter(e=>e.sc).length, P = d.L.filter(e=>e.sv != null || e.z != null || e.sc != null);
   grid.push(card('Scratches', 'Cue ball in a pocket', P.length ? `<div class="svkpis mini">${kpi(`${pct(scr, P.length)}%`, 'Scratch rate', `${num(scr)} of ${num(P.length)}`)}${kpi(num(d.L.slice(-100).filter(e=>e.sc).length), 'Scratches', 'last 100 shots')}</div>`

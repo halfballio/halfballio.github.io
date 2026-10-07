@@ -1410,9 +1410,9 @@ html.svopen,html.svopen body{overflow:hidden}
     <div class="panel">
       <div class="seg modes" role="group" aria-label="Mode">   <!-- the Ladder, Flash from C, Practice from B- -->
         <button id="task-sess">Ladder</button>
-        <button id="task-flash" data-set="task" data-val="flash">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg><span class="lock" id="flashlock" aria-label="unlocks at C+" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
+        <button id="task-flash" data-set="task" data-val="flash">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg><span class="lock" id="flashlock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-practice">Practice<span class="lock" id="practicelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
-        <button id="task-run" data-set="task" data-val="run">Run-outs<span class="lock" id="runlock" aria-label="unlocks at S" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
+        <button id="task-run" data-set="task" data-val="run">Run-outs<span class="lock" id="runlock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-free" hidden>Free play<span class="lock" id="freelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
       </div>
       <div class="seg trackseg" id="trackseg" role="group" aria-label="Which ladder" hidden>
@@ -6139,7 +6139,7 @@ function renderStats(){
 // ---------- the Stats view: over the table and panel on a desktop, the whole screen on a phone ----------
 const SV = {open: false, tab: 'overview', task: null, opener: null, pushed: false};
 const svTabs = () => window.HBStats ? HBStats.TABS : [];
-function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], archive: stats.archive || null, task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, gradeStep: GRADE_STEP, spinAt: gradeOf(SH.follow), hot: STREAK_HOT, shoot: stats.shoot, run: stats.run}; }
+function svCtx(){ return {log: stats.log, sessions: stats.sessions || [], archive: stats.archive || null, task: SV.task, refs: ALL, success, lean, grades: SHOOT_GRADES, gradeStep: GRADE_STEP, spinAt: gradeOf(SH.follow), zoneAt: gradeOf(ZONE_STEPS[0]), speedAt: gradeOf(SH.speed), hot: STREAK_HOT, shoot: stats.shoot, run: stats.run}; }
 function svRender(){
   if(!window.HBStats) return;
   const inArch = t => !!(stats.archive && stats.archive.modes && stats.archive.modes[t]);
@@ -6268,7 +6268,7 @@ function syncPressed(){
   if(typeof lookPick === 'object' && lookPick) renderLookPicker();   // the Look picker and its dot follow every change (Settings, a new grade)
   tableBox.classList.toggle('walkable', walkOn());
   for(const sz of ['8', '9']){ const lk = !tableUnlocked(sz), b = document.querySelector(`[data-set="flashTable"][data-val="${sz}"]`); lockBtn(b, lk, `Unlocks at ${stepGrade(TABLE_AT[sz])}`); b.querySelector('.lock').hidden = !lk; }
-  { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open;   // before S: the grade's table, shown as the pick; the others lock
+  { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open; $('laddertablenote').textContent = `Until ${stepGrade(LADDER_PICK_AT)}, the Ladder plays on your grade's table.`;   // before S: the grade's table, shown as the pick; the others lock
     document.querySelectorAll('[data-set="tablePick"]').forEach(b=>{ const lk = !open && b.dataset.val !== lt; lockBtn(b, lk, `Unlocks at ${stepGrade(LADDER_PICK_AT)}`); b.querySelector('.lock').hidden = !lk; }); }
   { const lk = !carbonUnlocked(), b = document.querySelector('[data-set="shaft"][data-val="carbon"]'); lockBtn(b, lk, `Unlocks at ${stepGrade(CARBON_AT)}`); $('shaftlock').hidden = !lk; }
   $('set-disco').hidden = !settings.discoGot;   // hidden until the disco cheat
@@ -6449,7 +6449,7 @@ const BSTEPS = [
   {finish:true, aids:{},
    text:'You still just call the <b>nearest fraction</b>: ½ here is right.'},
 ];
-// A-: throw
+// B-: throw
 const TSTEPS_THROW = [
   {deg:30, mustMiss:'look', aids:{stance:1, ghost:1, line:1}, next:true,
    text:'Here the cue ball is struck <b>soft, with stun</b>: a little below centre, so it arrives sliding, with no spin.'},
