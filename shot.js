@@ -1,5 +1,6 @@
 // Playing a shot: speed and tip, the stroke, the routine (read, step in, get down), the bridge, the controls, and taking the shot.
-import {finishRound, fracName, jumpingAhead, LESSONS, logEntry, pendCard, prepareNext, rcardHTML, sessionTick, shootRows, strokeName, syncPressed, tstep} from './main.js';
+import {jumpingAhead, LESSONS, syncPressed, tstep} from './main.js';
+import {finishRound, fracName, logEntry, pendCard, prepareNext, rcardHTML, sessionTick, shootRows, strokeName} from './modes.js';
 import {animateShot} from './anim.js';
 import {camFrom, draw, featherLoop, featherOff, featherRaf, featherStart, FOLLOW_THROUGH, NEAR, norm3, rigAlpha, rigCam, standUp, strokeBack, syncFocusBtn, VH, VIEWS, VW} from './view.js';
 import {bridgeLen, nearestRef, pocketSpeedFor, pocketTol, railBehind, runAfterShot, runFoul, stanceIn} from './deal.js';
