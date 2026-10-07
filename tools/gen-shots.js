@@ -14,36 +14,13 @@ const fs = require('fs'), path = require('path'), os = require('os');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const ROOT = path.resolve(__dirname, '..');
 
-function loadGame(seed){
-  const { JSDOM, VirtualConsole } = require('jsdom');
-  let html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  // inline the local scripts (no network in the headless page); three.js isn't needed: no WebGL here
-  html = html.replace(/<script src="([^"]+)"><\/script>/g, (m, src)=>{
-    if(/three/.test(src)) return '';
-    const f = path.join(ROOT, src.split('?')[0]);
-    return fs.existsSync(f) ? `<script>${fs.readFileSync(f, 'utf8')}</script>` : '';
-  });
-  const vc = new VirtualConsole();   // keep jsdom's "not implemented" noise out of the output
-  vc.on('jsdomError', ()=>{});
-  const dom = new JSDOM(html, {url: 'https://halfball.local/#test', runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc,
-    beforeParse(w){
-      w.matchMedia = () => ({matches: false, addEventListener(){}, removeEventListener(){}, addListener(){}, removeListener(){}});
-      w.fetch = () => Promise.reject(new Error('offline'));
-      w.HTMLCanvasElement.prototype.getContext = () => null;
-      w.scrollTo = () => {};
-      let x = seed >>> 0 || 1; w.Math.random = () => ((x = (x*1664525 + 1013904223) >>> 0) / 4294967296);   // each worker its own stream
-      w.localStorage.setItem('halfball-settings', JSON.stringify({sv: 2, sv3: 1, sv4: 1, sv5: 1, tut: 1, stanceSet: 1, tutSeen: {}, sound: '0', task: 'shoot', table: '9'}));
-      w.localStorage.setItem('halfball-stats', JSON.stringify({n: 0, c: 0, made: 0, streak: 0, best: 0, log: [], shoot: {g: 13, best: 13, pts: 0, v: 2}, sessions: []}));
-    }});
-  const w = dom.window;
-  if(!w.__lib) throw new Error('the game did not expose its library hooks (window.__lib)');
-  w.__lib.setTable('9');
-  return w;
-}
+const { loadGame, ensureVmModules } = require('./load-game');   // the game's modules, in a headless page
+ensureVmModules();
 
-if(!isMainThread){
+if(!isMainThread){ (async ()=>{
   // a worker: make records for the steps it's given, and send them back as they come
-  const w = loadGame(workerData.seed), L = w.__lib;
+  const w = await loadGame({seed: workerData.seed, settings: {table: '9'}, stats: {n: 0, c: 0, made: 0, streak: 0, best: 0}}), L = w.__lib;
+  L.setTable('9');
   parentPort.postMessage({ver: L.libVer()});
   const want = workerData.want;   // {step: count}
   const steps = Object.keys(want).map(Number);
@@ -65,14 +42,15 @@ if(!isMainThread){
     }
   }
   parentPort.postMessage({finished: true});
-  return;
+})(); return;
 }
 
 // ---------- the main thread ----------
+(async ()=>{
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
 const PER = +arg('per', 20000), PER_BASIC = +arg('per-basic', 5000), N = Math.max(1, +arg('workers', Math.max(1, os.cpus().length - 1))), OUT = path.resolve(ROOT, arg('out', 'shots.bin'));
 const ONLY = arg('only', '') ? arg('only').split(',').map(Number) : null;
-const probe = loadGame(1).__lib, STEPS = ONLY || probe.LIB_STEPS, VER = probe.libVer(), REC = probe.REC;
+const probe = (await loadGame({seed: 1, settings: {table: '9'}})).__lib, STEPS = ONLY || probe.LIB_STEPS, VER = probe.libVer(), REC = probe.REC;
 const target = k => probe.ZONE_STEPS.includes(k) ? PER : PER_BASIC;
 console.log(`shots: ${PER} per zone grade, ${PER_BASIC} per other grade (${STEPS.length} grades), ${N} workers\nversion: ${VER}`);
 
@@ -98,6 +76,7 @@ for(let i = 0; i < N; i++){
   });
   wk.on('error', e=>{ console.error('\nworker failed:', e); process.exit(1); });
 }
+})();
 function finish(){
   clearInterval(timer); report(true);
   // the sections: the ones just made, plus (with --only) every other one from the existing file

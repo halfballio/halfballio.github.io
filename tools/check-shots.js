@@ -3,15 +3,10 @@
 //   node tools/check-shots.js [--restamp]   (--restamp rewrites the file's version to the game's current one)
 'use strict';
 const fs = require('fs'), path = require('path'), ROOT = path.resolve(__dirname, '..');
-const { JSDOM, VirtualConsole } = require('jsdom');
-let html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').replace(/<script src="([^"]+)"><\/script>/g, (m, src)=>/three/.test(src) ? '' : `<script>${fs.readFileSync(path.join(ROOT, src), 'utf8')}</script>`);
-const vc = new VirtualConsole(); vc.on('jsdomError', ()=>{});
-const w = new JSDOM(html, {url: 'https://halfball.local/#test', runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc, beforeParse(w){
-  w.matchMedia = () => ({matches: false, addEventListener(){}, removeEventListener(){}}); w.fetch = () => Promise.reject(new Error('offline'));
-  w.HTMLCanvasElement.prototype.getContext = () => null; w.scrollTo = () => {};
-  w.localStorage.setItem('halfball-settings', JSON.stringify({sv: 2, sv3: 1, sv4: 1, sv5: 1, tut: 1, stanceSet: 1, tutSeen: {}, sound: '0', task: 'shoot'}));
-  w.localStorage.setItem('halfball-stats', JSON.stringify({log: [], shoot: {g: 13, best: 13, pts: 0, v: 2}, sessions: []}));
-}}).window, L = w.__lib;
+const { loadGame, ensureVmModules } = require('./load-game');
+ensureVmModules();
+(async ()=>{   // the game's modules load asynchronously (load-game.js)
+const w = await loadGame({seed: 1}), L = w.__lib;
 const file = path.join(ROOT, 'shots.bin');
 let buf = fs.readFileSync(file);
 if(process.argv.includes('--restamp')){
@@ -53,3 +48,4 @@ for(const k of L.LIB_STEPS){
 }
 console.log(bad ? `${bad} step(s) look wrong` : 'all steps deal from the library, on every table size');
 process.exit(bad ? 1 : 0);
+})();
