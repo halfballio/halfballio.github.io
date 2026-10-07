@@ -73,7 +73,6 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .gradebadge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:56px;height:40px;box-sizing:border-box;padding:0 10px;border-radius:var(--r);background:var(--navy);color:var(--gold);border:1px solid var(--navy-line);box-shadow:var(--shadow-1);transition:background var(--t-fast) var(--ease)}
 .gradebadge:hover{background:var(--navy-2)}
 .gradebadge b{font:700 22px/1 var(--display);letter-spacing:.02em}
-.gradebadge small{font:600 9px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--cream-2)}
 .bbar{width:40px;height:3px;border-radius:2px;background:rgba(242,234,216,.18);overflow:hidden}
 .bbar i{display:block;height:100%;width:0;background:var(--gold);border-radius:2px;transition:width .25s var(--ease)}
 .bbar i.neg{background:#ff8a7a}
@@ -333,8 +332,6 @@ html.touch .routinechip kbd{display:none}
 html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html.touch .ctlrow .speedbar .ckeys{display:flex}   /* keycaps follow how you play (html.touch / .kbd); speed's arrows are buttons either way */
 .modes button{font-size:15px;font-weight:600;min-height:40px;padding:8px 14px;display:inline-flex;align-items:center;justify-content:center}
 .quick{flex-direction:column;align-items:flex-start;gap:2px;min-height:66px}
-.tabpanel{display:flex;flex-direction:column;gap:12px;overflow-x:clip}   /* never scroll sideways */
-.tabpanel > section{border:0;padding-top:0}
 /* Run-outs: the rack so far (one dot a ball), and the run's summary once it ends */
 .runrow{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;min-height:44px;padding:8px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-1);font-size:13px;line-height:18px;color:var(--muted);font-variant-numeric:tabular-nums}
 .runrow b{color:var(--ink);font-weight:600}
@@ -497,10 +494,6 @@ header{position:relative}
 .srsay{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media (prefers-reduced-motion:reduce){.hdtoast{transform:translate(-50%,-50%)}}
 /* shot breakdown: one fixed-size box, scrolls inside if a long explanation ever overflows */
-.result{min-height:0}
-.result svg{width:100%;max-width:440px;height:auto;margin:0 auto;display:block}
-.resultpair{display:grid;grid-template-columns:6.6fr 3fr;gap:10px;align-items:start}
-.resultpair svg{max-width:none;border-radius:var(--r)}
 
 .replay[hidden]{display:none}
 .replay .replayicon{width:18px;height:18px;flex:none;display:block}
@@ -532,7 +525,6 @@ header{position:relative}
 .answers button.wrong::before{--mk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 3l6 6M9 3 3 9' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background:var(--bad)}
 button:focus-visible,[role="button"]:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 .sumcover :focus-visible,.coach :focus-visible,.stancecard :focus-visible,.table-box :focus-visible,.gradebadge:focus-visible{outline-color:var(--gold)}   /* on navy, the ring is gold */
-.result{display:block;padding-top:4px}
 .verdict{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:.02em;margin:0;line-height:1.1}
 .verdict.ok{color:var(--good)} .verdict.no{color:var(--bad)}
 .badge{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--body);padding:3px 10px;border-radius:999px;margin-top:6px}
@@ -603,7 +595,7 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .wrap{gap:8px}.buildtag{margin-top:4px}.main,.main.persp{gap:10px}   /* the mode switch a little higher */
   /* a lesson: the table and the fraction buttons stay together, the coach card under them, compact,
      its text scrolling inside so the whole card (and its Next) fits the screen with the toolbars showing */
-  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabpanel{order:1}
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright{order:1}
   .coach{padding:10px 12px;gap:6px}
   .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - (100vw - 32px)*2/3 - 332px));max-height:max(60px, calc(100dvh - (100vw - 32px)*2/3 - 332px))}
 }
@@ -643,7 +635,6 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .panel{min-height:0;display:flex;flex-direction:column;gap:16px;padding-bottom:10px}
   .q{margin-top:0;line-height:1.1}
   .q small{line-height:1.35}
-  .tabpanel{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 }
 /* Phones on their side: the desktop one-screen layout, table left and panel right, fitted to the short screen */
 @media (min-width:600px) and (max-height:500px) and (orientation:landscape){
@@ -661,8 +652,7 @@ kbd{font-family:var(--mono);font-size:11px;background:var(--chip);border:1px sol
   .q{font-size:17px}.q small{display:none}
   .quick{min-height:44px}
   .answers{gap:6px}.answers button{padding:7px 0 5px;font-size:24px;min-height:52px}
-  .tabpanel{flex:none;min-height:0;overflow-y:visible;overflow-x:clip}
-  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright,.panel > .tabpanel{order:1}   /* a lesson: the coach card under the fraction buttons */
+  .panel > #coach,.panel > #quick,.panel > #next,.panel > #showright{order:1}   /* a lesson: the coach card under the fraction buttons */
   .coach{padding:10px 12px;gap:6px}
   .coach p{font-size:14px;line-height:1.4;overflow-y:auto;overscroll-behavior:contain;max-height:max(60px, calc(100vh - 290px));max-height:max(60px, calc(100dvh - 290px))}
   .menu{padding:calc(56px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))}
@@ -1044,7 +1034,7 @@ html.svopen,html.svopen body{overflow:hidden}
     <div class="hright">
       <div class="plwrap" id="plwrap" hidden><button class="plchip" id="plchip" aria-haspopup="menu" aria-expanded="false" title="Switch player"><span id="plchipname"></span> ▾</button>
         <div class="plmenu" id="plmenu" role="menu" hidden></div></div>
-      <div class="badgewrap"><div class="gradebadge" id="badge" hidden role="button" tabindex="0" aria-label="Your grade: open progress"><small id="badgetrack">Read</small><b id="badgeg"></b><span class="bbar"><i id="badgefill"></i></span></div></div>
+      <div class="badgewrap"><div class="gradebadge" id="badge" hidden role="button" tabindex="0" aria-label="Your grade: open progress"><b id="badgeg"></b><span class="bbar"><i id="badgefill"></i></span></div></div>
       <button class="statsbtn" id="statsbtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="statsview" title="Stats"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Stats</span></button>
       <button class="cog helpbtn" id="help" aria-label="Help: lessons and what’s new" aria-haspopup="dialog" title="Help">?</button>
       <button class="cog" id="cog" aria-label="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M10.3 2.8h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9-2.6-.5v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
@@ -1312,7 +1302,6 @@ html.svopen,html.svopen body{overflow:hidden}
       <div class="runrow" id="runrow" hidden aria-live="polite"></div>   <!-- Run-outs: the rack so far, and the run's summary when it ends -->
       <button class="next" id="next" disabled>Next shot <kbd class="key" aria-hidden="true">Enter</kbd></button>
       <button class="sumdone showright" id="showright" hidden><svg class="replayicon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3.5 13.5a8.5 8.5 0 1 0 2.4-7.4L3 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 9.2v6.6l5.4-3.3z" fill="currentColor"/></svg>Replay the right shot <kbd class="key" aria-hidden="true">Shift</kbd></button>
-      <div class="tabpanel" role="tabpanel" id="tab-shot" hidden><div class="result" id="result"></div></div>
 
     </div>
     <section class="statsview" id="statsview" role="dialog" aria-modal="true" aria-labelledby="sv-title" hidden>
@@ -1498,7 +1487,7 @@ function statsGrade(s){
 // brought up) would carry over and open the game scrolled far down. Again once the keyboard has gone and the page has settled.
 function toTop(){
   const a = document.activeElement; if(a && a !== document.body && a.blur) a.blur();
-  const top = () => { try{ window.scrollTo(0, 0); }catch(e){} [document.scrollingElement, document.documentElement, document.body, ...document.querySelectorAll('#playercover, .sumcover, .panel, .tabpanel')].forEach(el=>{ if(el) el.scrollTop = 0; }); };
+  const top = () => { try{ window.scrollTo(0, 0); }catch(e){} [document.scrollingElement, document.documentElement, document.body, ...document.querySelectorAll('#playercover, .sumcover, .panel')].forEach(el=>{ if(el) el.scrollTop = 0; }); };
   top(); requestAnimationFrame(top); setTimeout(top, 350);
 }
 let plPick = null;   // set while the game waits behind the title screen: a pick starts it right here, no reload
@@ -1734,15 +1723,13 @@ function nearestRef(theta){
   return best;
 }
 
-const FULL_SHARE = 1, FULL_SHARE_LATE = 1;   // full-ball shots come up as often as each cut
 // no ⅛ at the follow, stun and draw grades: with barely any contact, the spin hardly changes where the cue ball goes
 const NO_EIGHTH = () => [SH.follow, SH.stun, SH.draw];
 function bucketWeights(step = isShoot() ? zoneStep(shootLevel()) : null){   // step: the zone step being dealt (at S, the one this shot drew)
   if(forceFrac) return REFS.map(r=>r.id===forceFrac ? 1 : 0);
   if(isDrill() && GEN.g == null && !tut.on){ const fr = drillPicks().fr; return REFS.map(r=>fr.includes(r.id) ? 1 : 0); }   // Practice: only the fractions you picked
-  const w = REFS.map(()=>1);
+  const w = REFS.map(()=>1);   // full-ball shots come up as often as each cut
   if(isShoot() && NO_EIGHTH().includes(step)) w[REFS.findIndex(r=>r.id === '18')] = 0;
-  w[0] = settings.full!=='1' ? 0 : isShooting() && shootLevel() > SH.throw ? FULL_SHARE_LATE : FULL_SHARE;
   return w;
 }
 function weightedIndex(w){
@@ -1917,7 +1904,7 @@ function setGradeForTesting(i){
   stats.shoot = {g: i, best: i, pts: 0, v: SHOOT_V}; settings.flashTable = gradeTable(stepOf(i)); if(stepOf(i) < LADDER_PICK_AT) settings.tablePick = null; saveSettings(); save(); showSessIdle(); renderBadge(true); renderProgress(); dealFresh();
 }
 function renderProgress(){
-  const sh = true, L = ensureShootLevel(), GR = SHOOT_GRADES, TX = SHOOT_TEXT;
+  const L = ensureShootLevel(), GR = SHOOT_GRADES, TX = SHOOT_TEXT;
   const ea = t => String(t).replace(/<[^>]*>/g, '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));   // an unlock's what/where, for its chip's description
   const g = L ? L.g : 0, best = L ? Math.max(L.best ?? 0, L.g) : 0, pts = L ? L.pts : 0;
   $('proghead').textContent = 'Progress';
@@ -2063,20 +2050,15 @@ function shootAid(k){
 }
 
 // ---------- speed ----------
-// Speed is set in diamonds: how far a rolling cue ball struck that hard would roll (a diamond is an eighth of the table's length).
+// Diamonds: how far a rolling cue ball struck that hard would roll (a diamond is an eighth of the table's length).
 const diamond = () => Math.max(W, H)/8;
-const speedFromDiamonds = d => Math.sqrt(2*PE.C.rollDecel*d*diamond());
 const diamondsFromSpeed = V => V*V/(2*PE.C.rollDecel*diamond());
-// ten whole-number speeds (keys 1–9, 0 for 10): each is how many diamonds a rolling cue ball hit that hard would travel
-const SPEED_LEVELS = [1, 2, 3, 4, 6, 8, 11, 15, 20, 28];
-const speedLevel = () => { const n = +settings.speedLevel, v = n >= 1 && n <= 10 ? Math.round(n) : 5; return coarseSpeed() ? nearestCoarse(v) : v; };
+const speedLevel = () => { const n = +settings.speedLevel, v = n >= 1 && n <= 10 ? Math.round(n) : 5; return nearestCoarse(v); };
 // The four strokes as cue ball speeds, from typical published speeds: ¼ a touch shot (1.5 mph, under a table length),
 // ½ a lag (3.5 mph, about 2 lengths), ¾ medium (7 mph, about 3 lengths), the full stroke a power shot (20 mph, about 5 lengths;
 // eased to 15 mph, about 4 lengths, for now).
 const MPH = 17.6, STROKE_MPH = {3:1.5, 5:3.5, 8:7, 10:15};   // full stroke eased from a 20 mph power shot to 15 for now
-function speedSetting(){ return SPEED_LEVELS[speedLevel() - 1]; }
-const levelForSpeed = V => coarseSpeed() ? COARSE.reduce((b, c)=>Math.abs(Math.log(STROKE_MPH[c]*MPH/V)) < Math.abs(Math.log(STROKE_MPH[b]*MPH/V)) ? c : b, COARSE[0]) : levelForSpeedFine(V);
-const levelForSpeedFine = V => { const d = diamondsFromSpeed(V); let best = 1; SPEED_LEVELS.forEach((x, i)=>{ if(Math.abs(Math.log(x/d)) < Math.abs(Math.log(SPEED_LEVELS[best-1]/d))) best = i + 1; }); return best; };
+const levelForSpeed = V => COARSE.reduce((b, c)=>Math.abs(Math.log(STROKE_MPH[c]*MPH/V)) < Math.abs(Math.log(STROKE_MPH[b]*MPH/V)) ? c : b, COARSE[0]);
 // The tip moves in half-tip steps: half a 12.5 mm tip is 6.25 mm, about 0.22 of the ball's radius. Two steps (a full tip)
 // each way, and never past half the radius from the centre (the usual miscue limit).
 // The tip, as a pool player says it: how many pips out from centre (a pip is half a 12.5 mm tip, 6.25 mm), and where
@@ -2137,16 +2119,13 @@ function nudgeTip(k){   // W up, S down, A left, D right, on the pad as you see 
   if(!best) return;
   settings.shotTip = best; saveSettings(); renderShootControls(); uiSound('tick', (best[1] + 1)/2);
 }
-// Speed is four strokes: ¼, ½, ¾ and the full stroke (the finer 1–10 is off for now).
+// Speed is four strokes: ¼, ½, ¾ and the full stroke.
 const COARSE = [3, 5, 8, 10], COARSE_F = {3:.25, 5:.5, 8:.75, 10:1}, COARSE_LBL = {3:'¼', 5:'½', 8:'¾', 10:'Full'};
-const coarseSpeed = () => true;
 const nearestCoarse = n => COARSE.reduce((b, c)=>Math.abs(c - n) < Math.abs(b - n) ? c : b, COARSE[0]);
-const strokeFrac = n => coarseSpeed() ? COARSE_F[nearestCoarse(n)] : n/10;   // how much of your full stroke a speed uses
+const strokeFrac = n => COARSE_F[nearestCoarse(n)];   // how much of your full stroke a speed uses
 function setSpeedLevel(n){
-  if(coarseSpeed()){   // a one-step nudge moves to the next stroke that way; anything else snaps to the nearest
-    const cur = nearestCoarse(speedLevel());
-    n = Math.abs(n - speedLevel()) === 1 ? (n > speedLevel() ? COARSE.find(c=>c > cur) ?? cur : [...COARSE].reverse().find(c=>c < cur) ?? cur) : nearestCoarse(n);
-  }
+  const cur = nearestCoarse(speedLevel());   // a one-step nudge moves to the next stroke that way; anything else snaps to the nearest
+  n = Math.abs(n - speedLevel()) === 1 ? (n > speedLevel() ? COARSE.find(c=>c > cur) ?? cur : [...COARSE].reverse().find(c=>c < cur) ?? cur) : nearestCoarse(n);
   const was = speedLevel();
   settings.speedLevel = Math.max(1, Math.min(10, n)); saveSettings(); renderShootControls();
   if(speedLevel() !== was) uiSound('tick', speedLevel()/10);   // a tick per step: drag, the ↑ ↓ keys and buttons
@@ -2157,7 +2136,7 @@ function setSpeedLevel(n){
 function shotStroke(s){
   if(settings.task === 'flash' && !tut.on){ const i = strikeOf(s); return {V: i.V, tip: [0, i.b]}; }   // Flash: the shot's own stroke, pocket speed
   const c = ctrl(), g = shootLevel(), ideal = strikeOf(s);
-  const V = c.speed ? (coarseSpeed() ? STROKE_MPH[speedLevel()]*MPH : speedFromDiamonds(speedSetting())) : ideal.V;
+  const V = c.speed ? STROKE_MPH[speedLevel()]*MPH : ideal.V;
   let tip = g === SH.throw && !isDrill() ? [0, -.35] : [0, ideal.b];   // the throw step plays soft stun for you: that's where throw shows most
   if(c.up || c.side) tip = snapTip(settings.shotTip || [0, 0], c);
   if(GEN.g == null && s.gb){ const f = bridgeGeom(s, bridgeAim(s)).tyMin; if(f > -1) tip = tipFloor(tip, c, f); }   // a rail bridge: the cue can't reach low on the ball
@@ -3310,7 +3289,7 @@ function renderShootControls(){
   const n = rp ? levelForSpeed(rp.V) : tl && tut.ctl ? tut.ctl.lvl : speedLevel();
   const t = (rp ? rp.tip : tl ? (tut.ctl ? tut.ctl.tip : [0, 0]) : shot ? shotStroke(shot).tip : [0, 0]) || [0, 0];   // a lesson can open before its first shot is dealt
   paintCtl(t, n/10);
-  if(c.speed) $('speedval').textContent = coarseSpeed() ? COARSE_LBL[n] : String(n);
+  if(c.speed) $('speedval').textContent = COARSE_LBL[n];
   if(c.up || c.side){
     $('tiplimit').setAttribute('d', tipLimitPath(c));
     { const fl = shot && GEN.g == null && shot.gb ? bridgeGeom(shot, bridgeAim(shot)).tyMin : -1, tf = $('tipfloor');   // a rail bridge: the low part of the ball is out of reach
@@ -3516,7 +3495,6 @@ function takeShot(id){
   const rightShot = !full && rows.some(r=>r.k === 'Stroke' || r.k === 'Spin') ? rightShotLine(s, rs, ideal) : '';
   $('quick').innerHTML = rcardHTML(head, full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no', rows, '', rightShot);
   $('showright').hidden = full;   // under Next shot: play it the right way
-  $('result').innerHTML = `<div class="resultpair">${overlapSVG(s)}${tipSVG(s)}</div>`;
   const hitT = (obHit(run.sim.events) || {}).t ?? 0;
   const obT = run.sim.events.find(e=>e.ids && e.ids[0]==='o' && e.t > hitT && (e.type==='cushion' || e.type==='jaw' || e.type==='pocket'));
   const upAt = Math.min(obT ? obT.t*1000 + 120 : Infinity, rigHitMs(s, run, dir));   // you come up as the object ball gets there, not when everything stops,
@@ -3575,7 +3553,6 @@ function renderBadge(pop){
   el.hidden = !L; if(!L) return;
   const g = L.g, pts = L.pts;
   $('badgeg').textContent = G[g];
-  $('badgetrack').hidden = true;
   const f = $('badgefill'); f.style.width = (Math.min(1, Math.abs(pts)/PTS_UP)*100) + '%'; f.classList.toggle('neg', pts < 0);
   el.title = `Grade ${G[g]}` + (g < G.length-1 ? ` · ${Math.max(0,pts)} of ${PTS_UP} to ${G[g+1]}` : '');
   if(pop){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
@@ -4773,19 +4750,6 @@ function spotBase(sp){
 }
 let layerHTML = {}, vbDirty = true;
 
-function overlapSVG(s){
-  const right = [-s.v[1], s.v[0]];
-  const lat = 2*dot(s.n, right);      // OB centre offset from ghost-ball centre, in ball radii
-  let name = s.answer.id==='full' ? 'Full ball' : s.answer.label+' ball';
-  return `<svg viewBox="-3.3 -2.45 6.6 4.9" aria-label="Shooter's view of the overlap: ${name}">
-    <rect x="-3.3" y="-2.45" width="6.6" height="4.9" rx=".35" fill="#1f5f96"/>
-    <text x="0" y="-1.72" font-size=".56" text-anchor="middle" fill="#ffffff" font-family="Barlow Condensed, sans-serif" font-weight="700" letter-spacing=".01">${name}</text>
-    <circle cx="${f2(lat)}" cy=".15" r="1" fill="${ballCol(s)}"/>
-    <circle cx="0" cy=".15" r="1" fill="#ffffff" fill-opacity=".35" stroke="#ffffff" stroke-width=".06" stroke-dasharray=".18 .12"/>
-    <line x1="0" y1="-1.3" x2="0" y2="1.6" stroke="#ffffff" stroke-opacity=".7" stroke-width=".04"/>
-    <text x="0" y="2.1" font-size=".26" text-anchor="middle" fill="#ffffff" fill-opacity=".7" font-family="IBM Plex Sans, sans-serif" letter-spacing=".04">AIM LINE</text>
-  </svg>`;
-}
 
 // ---------- modes ----------
 const taskOf = e => e.t || 'call';
@@ -4835,7 +4799,7 @@ function rcardHTML(head, cls, rows, aside, cap){
     + `<div class="rrows">${rows.map(r=>`<div class="rrow${r.wide ? ' wide' : ''}"><span class="rk">${r.k}</span><span class="rval">${val(r)}</span></div>`).join('')}</div></div>`;
 }
 const fracName = r => r.id === 'full' ? 'Full' : r.label;
-const strokeName = n => coarseSpeed() ? COARSE_LBL[nearestCoarse(n)] : String(n);
+const strokeName = n => COARSE_LBL[nearestCoarse(n)];
 // a called shot's rows: the call, your stroke once speed is yours, your spin once there's a zone and spin is yours, and the ball
 function shootRows(s){
   const c = ctrl(), rows = [{k: 'Call', v: null}];
@@ -4904,7 +4868,6 @@ function dealInner(){
   if(shootRoutine() && !shot.calling) startRoutine(); else { cancelAnimationFrame(routineRaf); renderRoutineChip(); }
   renderRun();
   document.querySelectorAll('#answers button').forEach(b=>{b.disabled=false;b.className='';});
-  $('result').innerHTML = '';
   if(tut.on) $('quick').innerHTML = ''; else pendCard();
   $('showright').hidden = true;
   tableBox.classList.remove('tappable');
@@ -4963,7 +4926,6 @@ function finishRound(){
   updateControls();
   $('next').focus({preventScroll:true});
 }
-const lbl = r => r.id==='full' ? 'full' : r.label;
 
 // ---------- sounds: the table in a small room, mallet tones in a hall, dry clicks for buttons ----------
 // iPhone and iPad: the 'ambient' audio session, chosen on purpose. The game's sounds and its music follow the ring/silent
@@ -5359,16 +5321,6 @@ function answer(id){
 
   const f = 1 - Math.sin(shot.theta*RAD);
   const over = contact > shot.theta;
-  let msg, cls;
-  if(ok){ msg = tip ? 'Right call.' : pick(['Good read.','On the money.','That’s it.','Clean.']); cls='ok'; }
-  else if(oc.made){ msg = `Wrong fraction, but it still drops.`; cls='ok'; }
-  else { msg = over ? 'Too thin.' : 'Too full.'; cls='no'; }
-  const exactLine = Math.abs(f - shot.answer.f) > .02
-    ? `Cut angle <b>${shot.theta.toFixed(1)}°</b>, a <b>${f.toFixed(2)}</b>-ball hit. Nearest reference: ${lbl(shot.answer)}.`
-    : `Cut angle <b>${shot.theta.toFixed(1)}°</b>, a ${lbl(shot.answer)}-ball hit.`;
-  const adjust = over ? 'fuller' : 'thinner';
-  const tipText = tip ? `Tip: a pure ${lbl(picked)} misses by ${Math.abs(oc.lat).toFixed(1)}″. Hit it a touch ${adjust}.` : '';
-  showResult(msg, cls, counted, oc.lat, over, exactLine, tipText);
   const rightCall = fracName(shot.answer);
   const rows = readRows().map(r=>
       r.k === 'Call' ? {...r, v: fracName(picked), good: ok ? true : oc.made ? 'also' : false, right: ok ? '' : rightCall}
@@ -5409,7 +5361,6 @@ function rayToCushion(p, dir, maxLen){
   t = Math.max(0, Math.min(t, maxLen ?? Infinity));
   return add(p, mul(dir, t));
 }
-const CUE_TIP = [0, .4];   // where the tip strikes, in radii from centre (x right, y up): natural roll
 const matVec = (M, v) => M.map(row=>row[0]*v[0] + row[1]*v[1] + row[2]*v[2]);
 // the object-ball speed that gets it to a pocket d inches away arriving at about POCKET_ARRIVE in/s ("pocket speed")
 function pocketSpeedFor(d){
@@ -5559,23 +5510,6 @@ function finishAnim(){
   a.done(performance.now() - a.t0);
 }
 
-function showResult(){
-  $('result').innerHTML = `<div class="resultpair">${overlapSVG(shot)}${tipSVG(shot)}</div>`;   // the diagrams speak for themselves
-}
-// where the cue tip struck the cue ball, seen from behind it
-function tipSVG(s){
-  const tip = s.tip || CUE_TIP, lab = !tip[0] && !tip[1] ? 'Centre' : !tip[0] && Math.abs(tip[1] - .4) < .01 ? 'Rolling' : !tip[0] && tip[1] < 0 ? 'Stun' : '';
-  return `<svg viewBox="-1.5 -2.45 3 4.9" aria-label="Cue tip: ${lab || 'offset'}">
-    <rect x="-1.5" y="-2.45" width="3" height="4.9" rx=".35" fill="#1f5f96"/>
-    <text x="0" y="-1.72" font-size=".56" text-anchor="middle" fill="#ffffff" font-family="Barlow Condensed, sans-serif" font-weight="700">${lab}</text>
-    <defs><radialGradient id="tipg" cx="40%" cy="36%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#efe9d8"/><stop offset="1" stop-color="#cfc6ae"/></radialGradient></defs>
-    <circle cx="0" cy=".15" r="1" fill="url(#tipg)"/>
-    <line x1="-1" y1=".15" x2="1" y2=".15" stroke="#10283d" stroke-opacity=".25" stroke-width=".03"/>
-    <line x1="0" y1="-.85" x2="0" y2="1.15" stroke="#10283d" stroke-opacity=".25" stroke-width=".03"/>
-    <circle cx="${tip[0]}" cy="${(.15 - tip[1]).toFixed(2)}" r=".2" fill="#1b6fd1" fill-opacity=".85" stroke="#fff" stroke-width=".05"/>
-    <text x="0" y="2.1" font-size=".26" text-anchor="middle" fill="#ffffff" fill-opacity=".7" font-family="IBM Plex Sans, sans-serif" letter-spacing=".04">CUE TIP</text>
-  </svg>`;
-}
 
 const svgEl = $('table');
 
@@ -6070,7 +6004,7 @@ function freshCall(){   // same shot, ready to be called again
   if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
   answered = false; shot.pick = null; shot.final = null; shot.anim = null; shot.t0 = performance.now();
   document.querySelectorAll('#answers button').forEach(b=>{ b.disabled = false; b.className = ''; });
-  $('result').innerHTML = ''; $('quick').innerHTML = ''; $('showright').hidden = true;
+  $('quick').innerHTML = ''; $('showright').hidden = true;
   tableBox.classList.remove('tappable');
 }
 function zoomTo(target){
