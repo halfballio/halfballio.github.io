@@ -2730,7 +2730,7 @@ function addExtras(s){
 //   (balls 1..N, the lowest on the table is always the one to hit).
 // Every shot is called as on the ladder, with every stroke and spin you have. The called ball must be the first the cue ball
 // touches (else a foul) and must drop in the called pocket (else a miss); anything else that drops on a legal shot stays
-// down and counts. A miss, a scratch, a foul, a hook (no clear path to the one ball allowed) or no shot left ends the run; clearing the rack is a full run. Nothing here
+// down and counts. A miss, a scratch, a foul, a hook (another ball in the way of every shot on the balls allowed) or no shot left ends the run; clearing the rack is a full run. Nothing here
 // moves the ladder's grade or points.
 const RUN_DEF = {tb: '9', n: 3, pat: 'plan', area: 'full', order: 'any'};
 const RUN_PAT = {plan: 'Planned', auto: 'Any order'}, RUN_ORDER = {any: 'Open', eight: '8-ball last', rot: 'Rotation'};
@@ -2810,19 +2810,28 @@ function runPick(cb, balls, allowed){
   }
   return null;
 }
-// Hooked: the one ball the rules allow has no clear straight line from the cue ball to any part of it (every contact, full to the
-// thinnest, has another ball across the cue ball's path, the same blocker check runPick uses), and kicks and banks aren't played here.
-function runHooked(cb, balls){
-  const allowed = runAllowed(balls); if(!cb || allowed.length !== 1) return null;
-  const b = balls.find(x=>x.n === allowed[0]), others = balls.filter(x=>x !== b), d = sub(cb, b.p), D = len(d);
-  if(!b || !others.length || D < 2*R + 1) return null;
-  const a0 = Math.atan2(d[1], d[0]);
-  for(let k = -44; k <= 44; k++){   // the contact points across the face of the ball toward the cue ball, every 2°
-    const a = a0 + k*2*RAD, g = add(b.p, [2*R*Math.cos(a), 2*R*Math.sin(a)]);
-    if(g[0] < R || g[0] > W - R || g[1] < R || g[1] > H - R) continue;
-    if(!others.some(x=>segDist(x.p, cb, g) < 2*R)) return null;   // a clear line to this contact: not hooked
+// Before every shot: is any ball the rules allow makeable from here? A ball is makeable into a pocket when the cut is one you can
+// call (the same limits as the picker: not frozen, the ghost ball on the table, no thinner than RUN_CALL_CUT, the cue ball in reach)
+// and both straight paths are clear: the cue ball to the ghost ball, and the ball to the pocket (the same blocker check runPick uses,
+// with a little cloth to spare, RUN_GAP). Kicks and banks aren't played here. Returns null when some ball is on; else {n, by} when another ball
+// (by) sits across the cue ball's path to n: hooked; else {n: null}: no shot left.
+function runStuck(cb, balls){
+  const allowed = runAllowed(balls); if(!cb || !allowed.length) return null;
+  let hook = null;
+  for(const n of allowed){
+    const b = balls.find(x=>x.n === n); if(!b) continue;
+    const others = balls.filter(x=>x !== b);
+    if(len(sub(b.p, cb)) < 2*R + 1) continue;   // frozen to the cue ball: no hit on it
+    for(const P of POCKETS){
+      const s = runShot(cb, b, P, others);
+      if(s.theta > RUN_CALL_CUT || s.gb[0] < R || s.gb[0] > W - R || s.gb[1] < R || s.gb[1] > H - R) continue;
+      if(runReach(s) > reachMax()) continue;
+      const block = others.filter(x=>segDist(x.p, cb, s.gb) < 2*R + RUN_GAP);
+      if(!block.length){ if(!others.some(x=>segDist(x.p, s.ob, s.T) < 2*R + RUN_GAP)) return null; continue; }   // a clear shot: on
+      if(!hook){ const by = block.reduce((m, x)=>len(sub(x.p, cb)) < len(sub(m.p, cb)) ? x : m); hook = {n, by: by.n}; }
+    }
   }
-  return b.n;
+  return hook || {n: null};
 }
 function newRack(){
   const set = runPicks(), T = engineTable(), pad = R + 2;
@@ -2962,7 +2971,7 @@ function runAfterShot(s, run, foul){
   if(!clean) why = run.scratch ? 'scratch' : foul ? 'foul' : 'miss';
   else if(RUN.set.order === 'eight' && balls.length && !balls.some(b=>b.n === 8)) why = 'eight';   // the 8 went down with balls still up
   else if(!balls.length) why = 'clear';
-  else if((RUN.hook = runHooked(RUN.cb, balls)) != null) why = 'hooked';
+  else if((RUN.hook = runStuck(RUN.cb, balls))) why = RUN.hook.n != null ? 'hooked' : 'noshot';   // every pattern, every rule: nothing makeable ends it
   else if(RUN.set.pat === 'auto'){ const p = runPick(RUN.cb, balls, runAllowed(balls)); RUN.pick = p ? {n: p.n, Pi: p.Pi} : null; if(!p) why = 'noshot'; }
   else { RUN.pick = null; RUN.call = null; }   // the plan's next, from where the cue ball lies
   if(why) runOver(why);
@@ -2983,7 +2992,7 @@ function renderRun(){   // the row under the result card: the rack so far, or th
     el.innerHTML = `<span class="runhead">${dots}<span><b>Ball ${RUN.potted + 1} of ${RUN.n0}</b> · ${RUN.potted} run${next != null ? ` · the ${next} next` : ''}${plan}${RUN.off ? ' · ' + runOffNote().toLowerCase() : ''}${change}</span></span>${aside}`;
   } else {
     const full = RUN.why === 'clear';
-    el.innerHTML = `<span class="runhead">${dots}<span><span class="runverd ${full ? 'ok' : 'no'}">${full ? 'Full run' : 'Run over'}</span><br><b>${RUN.potted} of ${RUN.n0}</b> balls · ${RUN.why === 'hooked' ? `Hooked: no clear path to the ${RUN.hook} ball.` : RUN_WHY[RUN.why]}${RUN.off ? ' · ' + runOffNote() : ''}</span></span>${aside}`;
+    el.innerHTML = `<span class="runhead">${dots}<span><span class="runverd ${full ? 'ok' : 'no'}">${full ? 'Full run' : 'Run over'}</span><br><b>${RUN.potted} of ${RUN.n0}</b> balls · ${RUN.why === 'hooked' && RUN.hook ? `Hooked: the ${RUN.hook.by} is in the way of the ${RUN.hook.n}.` : RUN_WHY[RUN.why]}${RUN.off ? ' · ' + runOffNote() : ''}</span></span>${aside}`;
   }
   renderRunPick();
 }
@@ -3881,7 +3890,7 @@ function tableSVG(s, reveal){
     const cueEnd = add(gb, mul(v, 7));
     const pe = pocketEdge(ob, P, s.T);
     o += `<line x1="${f2(ob[0])}" y1="${f2(ob[1])}" x2="${f2(pe[0])}" y2="${f2(pe[1])}" stroke="#ffd34d" stroke-width=".3" stroke-dasharray="1 .7"/>`;
-    if(s.pick && s.pick.far){
+    if(s.pick && s.pick.far && !s.noHit){
       const pk = s.pick, col = pk.made ? NEAR_MISS_OK : MISS, end = add(ob, mul(pk.u2, s.L+3));
       o += `<line x1="${f2(ob[0])}" y1="${f2(ob[1])}" x2="${f2(end[0])}" y2="${f2(end[1])}" stroke="${col}" stroke-width=".3" stroke-dasharray="1 .7"/>`;
       o += `<circle cx="${f2(pk.g2[0])}" cy="${f2(pk.g2[1])}" r="${R}" fill="none" stroke="${col}" stroke-width=".2" stroke-dasharray=".5 .35"/>`;
@@ -4211,13 +4220,13 @@ function perspDyn(cam, s, reveal){
     o += `<path d="${segD(cam,[s.ob[0],s.ob[1],.03],[pe[0],pe[1],.03])}" stroke="#ffd34d" stroke-width="${DASH_W}" stroke-linecap="round" stroke-dasharray="3 4"/>`;
   }
   // the correct path to the pocket draws itself from contact on, as if the object ball were rolling along it
-  if(refOn('refPath') && (reveal || (s.anim && s.anim.run > 0))){
+  if(refOn('refPath') && !s.noHit && (reveal || (s.anim && s.anim.run > 0))){
     const pe = pocketEdge(s.ob, s.P, s.T), full = len(sub(pe, s.ob)), k = reveal && !s.anim ? 1 : Math.min(1, s.anim.run/full);   // grows at the object ball's speed, stops at the hole's edge
     const end = add(s.ob, mul(sub(pe, s.ob), k));
     if(k > 0.002) o += `<path d="${segD(cam,[s.ob[0],s.ob[1],.03],[end[0],end[1],.03])}" stroke="#ffd34d" stroke-width="${DASH_W}" stroke-linecap="round" stroke-dasharray="3 4"/>`;
   }
   if(reveal && refOn('refGhost')){
-    if(s.pick && s.pick.far){
+    if(s.pick && s.pick.far && !s.noHit){   // your call's line and contact: only when the cue ball really struck the object ball
       const pk = s.pick, col = pk.made ? NEAR_MISS_OK : MISS, stop = s.final && s.final.stop;
       const into = pk.u2 ? dot(sub(s.P.t, s.ob), pk.u2) : 0;   // lines end at the cushion, or in the pocket if it drops
       const pts = s.final && s.final.obPath ? s.final.obPath : stop ? [s.ob, stop] : !pk.u2 ? [s.ob] : pk.made ? [s.ob, add(s.ob, mul(pk.u2, into))] : [s.ob, rayToCushion(s.ob, pk.u2)];   // the path it really ran   // a miss: the whole path it ran, cushions and all
@@ -4232,7 +4241,9 @@ function perspDyn(cam, s, reveal){
   const trail = s.anim ? s.anim.trail : (reveal && s.final ? s.final.trail : null);
   if(trail && refOn('refTrail')){
     o += dashedLine(cam, trail.cb, '#f4efe0', .6, '2 4');
-    if(trail.ob && trail.obCol !== '#ffd34d') o += dashedLine(cam, trail.ob, trail.obCol, .9, '3 4');   // on a right call the yellow line already grows along it
+    const moved = P => P && P.length > 1 && len(sub(P[P.length-1], P[0])) > 0.05;
+    if(trail.ob && (s.noHit ? moved(trail.ob) : trail.obCol !== '#ffd34d')) o += dashedLine(cam, trail.ob, s.noHit ? '#f4efe0' : trail.obCol, .9, '3 4');   // on a right call the yellow line already grows along it (not when the cue ball never struck it)
+    if(s.noHit && trail.x) for(const P of trail.x) if(moved(P)) o += dashedLine(cam, P, '#f4efe0', .6, '3 4');   // the cue ball hit another ball first: what really moved
   }
 
   // the aim-line aid: a line on the cloth from the cue ball along the shot line to the ghost ball (may be fading away)
@@ -4259,8 +4270,8 @@ function perspDyn(cam, s, reveal){
   if(refOn('refMiss') && A && A.obGhost) items.push({p: A.obGhost.p, kind:'ob', ghost: true, z: A.obGhost.z, shadow: A.obGhost.shadow, pocket: s.P});
   const gA = replayBare(s) ? 0 : aidAlpha('ghost');   // the ghost-ball aid, before you answer (it may be fading away)
   // once the balls meet, the ghost ball shows where your call actually made contact (on a miss that's not the ideal spot)
-  const hit = (A && contact) || (reveal && !A), yours = hit && s.pick && s.pick.far;
-  if(refOn('refGhost') ? (A ? (contact || gA > 0) : (reveal || gA > 0)) : (!A && !reveal && gA > 0)) items.push({p: yours ? s.pick.g2 : hit ? s.gb : (s.gbLook || s.gb), kind:'ghost', a: hit ? Math.max(refA, yours ? 0 : gA) : gA});
+  const hit = !s.noHit && ((A && contact) || (reveal && !A)), yours = hit && s.pick && s.pick.far;   // (no contact with it: no contact point drawn)
+  if(refOn('refGhost') && !s.noHit ? (A ? (contact || gA > 0) : (reveal || gA > 0)) : (!A && !reveal && gA > 0)) items.push({p: yours ? s.pick.g2 : hit ? s.gb : (s.gbLook || s.gb), kind:'ghost', a: hit ? Math.max(refA, yours ? 0 : gA) : gA});
   items.forEach(it=>{it.c = cam.toCam([it.p[0],it.p[1],it.z ?? R]);});
   items.sort((a,b)=>b.c[2]-a.c[2]);
   G3BALLS = [];
@@ -5468,6 +5479,8 @@ function animateShot(oc, done, obCol, pre, rightPre){   // rightPre: the right c
   // the shot, played out by the engine with both balls' paths kept: what you see is exactly what was judged
   const run = pre || outcome(s, oc.phiC ?? s.theta, true), sim = run.sim, Pc = sim.paths.c, Po = sim.paths.o;
   const hit = obHit(sim.events), T1 = hit ? hit.t : Pc[Pc.length-1].t;
+  const firstC = sim.events.find(e=>e.type === 'ball' && e.ids.includes('c'));
+  s.noHit = !(firstC && firstC.ids.includes('o'));   // the cue ball hit another ball first, or nothing: nothing as if the object ball were struck is drawn
   // the right call played out: the yellow line grows along it, and on a miss a see-through object ball rolls it
   const isRight = rightPre ? false : !!pre || Math.abs((oc.phiC ?? s.theta) - s.theta) < 1e-9;
   const right = rightPre || (isRight ? run : outcome(s, s.theta, true)), Pr = right.sim.paths.o;
@@ -5513,18 +5526,20 @@ function animateShot(oc, done, obCol, pre, rightPre){   // rightPre: the right c
     const c = ballAt(Pc, t, run.cbIn), o = ballAt(Po, t, run.obIn);
     const extra = xs.map(([x, P, inE])=>({x, ...(P ? ballAt(P, t, inE) : {p: x.p, z: R, shadow: 1, M: null, pocket: null})}));   // S: the other balls, as the engine rolled them
     let obGhost = null;
-    if(!isRight && t >= rT1){ const g = ballAt(Pr, t, right.obIn); if(g.p) obGhost = {p: g.p, z: g.z, shadow: g.shadow}; }
+    if(!isRight && !s.noHit && t >= rT1){ const g = ballAt(Pr, t, right.obIn); if(g.p) obGhost = {p: g.p, z: g.z, shadow: g.shadow}; }
     s.anim = {tHit: Math.max(0, t - T1), obGhost, extra, cb: c.p, cbZ: c.z, cbShadow: c.shadow, cbPocket: c.pocket, spin: {M: c.M},
       ob: o.p, obScale: 1, obZ: o.z, obShadow: o.shadow, obPocket: o.pocket, obM: o.M, run: runAt(t),
-      trail: {cb: [...cTrail.filter(q=>q.t <= t).map(q=>q.p), ...(c.p ? [c.p] : [])], ob: t < T1 ? null : [...oTrail.filter(q=>q.t <= t).map(q=>q.p), ...(o.p ? [o.p] : [])], obCol}};
+      trail: {cb: [...cTrail.filter(q=>q.t <= t).map(q=>q.p), ...(c.p ? [c.p] : [])], ob: t < T1 ? null : [...oTrail.filter(q=>q.t <= t).map(q=>q.p), ...(o.p ? [o.p] : [])], obCol,
+        x: xTrails.map(P=>P.filter(q=>q.t <= t).map(q=>q.p))}};
     draw(false);
     if(now - t0 < total) anim.raf = requestAnimationFrame(frame); else finishAnim();
   };
   const cEnd = Pc[Pc.length-1], oEnd = Po[Po.length-1];
   const xs = (s.extra || []).map(x=>[x, sim.paths[x.id], sim.events.find(e=>e.type==='pocket' && e.ids[0]===x.id)]);
+  const xTrails = xs.filter(([x, P])=>P && len(sub(P[P.length-1].p, P[0].p)) > 0.05).map(([x, P])=>thin(P));   // the other balls that moved
   const xEnd = xs.map(([x, P, inE])=>({x, p: inE ? null : P ? P[P.length-1].p : x.p, z: R, shadow: 1, M: P ? P[P.length-1].M : null}));
   s.final = {obPath: oTrail.map(q=>q.p), cb: run.cbIn ? null : cEnd.p, spin: {M: cEnd.M}, ob: run.obIn ? null : oEnd.p, obM: oEnd.M, stop: null,
-    trail: {cb: cTrail.map(q=>q.p)}, extra: xEnd};
+    trail: {cb: cTrail.map(q=>q.p), ob: s.noHit && oTrail.length > 1 && len(sub(oTrail[oTrail.length-1].p, oTrail[0].p)) > 0.05 ? oTrail.map(q=>q.p) : null, obCol, x: xTrails.map(P=>P.map(q=>q.p))}, extra: xEnd};
   anim = {done, t0, total, bus, raf: requestAnimationFrame(frame)};
 }
 function finishAnim(){
