@@ -4916,6 +4916,11 @@ function updateControls(){
 
 let laterT = 0;
 function laterSave(){ clearTimeout(laterT); laterT = setTimeout(()=>{ save(); renderStats(); }, 30); }   // after the answer has painted
+// Kept for the shot log and settings checks: the aids are always off now (no ladder grade brings them back), no shot is ever
+// 'practice' by aid, and a baseline run only exists in old saves.
+function aidMode(key){ return 'off'; }
+function practiceAid(){ return false; }
+function baseRun(){ return !!(stats.active && stats.active.base && stats.active.task === settings.task); }
 function logEntry(extra){   // ts: the minute it was played (minutes since 1970), so the Stats view can group sittings
   const act = stats.active && stats.active.task===settings.task ? stats.active.id : undefined;
   stats.log.push({sid:act, t:settings.task, a:shot.answer.id, s:shot.side, v:settings.view,
