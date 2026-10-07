@@ -2089,7 +2089,7 @@ const LADDER_TEXT = ['Guide line, ghost ball and aim-line stance all on', 'Guide
   'Any angle', 'Between fractions: call the nearest', '0.75 s Flash', 'Top of Read: Shoot and Free play open'];
 // Testing: open the site with #dev and tap any grade in the progress ladder to jump there.
 const DEV = /#dev\b/.test(location.href);
-document.querySelector('.table-box').insertAdjacentHTML('afterend', `<div class="buildtag">${DEV_SITE ? '<b class="devtag">DEV</b> <b class="devtag unltag" id="unltag" title="Every grade, mode and look open; the lessons are skipped" hidden>Unlocked</b> ' : ''}<a href="mailto:${CONTACT}">Contact us</a> · <a href="${SOURCE}" target="_blank" rel="noopener">build ${VERSION}</a><span id="fpsmeter"></span></div>` );   // under the table, lined up with its left edge; always shown, so you can tell which build is live
+document.querySelector('.table-box').insertAdjacentHTML('afterend', `<div class="buildtag">${DEV_SITE ? '<b class="devtag">DEV</b> ' : ''}<b class="devtag unltag" id="unltag" title="Every grade, mode and look open; the lessons are skipped" hidden>Unlocked</b><b class="devtag unltag" id="discotag" title="The Disco ball set, its light show and its music" hidden>Disco</b><a href="mailto:${CONTACT}">Contact us</a> · <a href="${SOURCE}" target="_blank" rel="noopener">build ${VERSION}</a><span id="fpsmeter"></span></div>` );   // under the table, lined up with its left edge; always shown, so you can tell which build is live
 // #dev: frames per second, the slowest frame, and what the drawing costs, every half second
 // FPS and timings under the table: on in #dev, or with Settings > Graphics > Show FPS
 const fpsOn = () => DEV || (typeof settings !== 'undefined' && settings.fps === '1');
@@ -6271,7 +6271,7 @@ function syncPressed(){
   { const open = ladderPickOpen(), lt = ladderTable(); $('laddertablenote').hidden = open; $('laddertablenote').textContent = `Until ${stepGrade(LADDER_PICK_AT)}, the Ladder plays on your grade's table.`;   // before S: the grade's table, shown as the pick; the others lock
     document.querySelectorAll('[data-set="tablePick"]').forEach(b=>{ const lk = !open && b.dataset.val !== lt; lockBtn(b, lk, `Unlocks at ${stepGrade(LADDER_PICK_AT)}`); b.querySelector('.lock').hidden = !lk; }); }
   { const lk = !carbonUnlocked(), b = document.querySelector('[data-set="shaft"][data-val="carbon"]'); lockBtn(b, lk, `Unlocks at ${stepGrade(CARBON_AT)}`); $('shaftlock').hidden = !lk; }
-  $('set-disco').hidden = !settings.discoGot;   // hidden until the disco cheat
+  $('set-disco').hidden = !settings.discoGot;   // hidden until the Disco Stu player
   for(const k of ['tstyle', 'ballSet']) document.querySelectorAll(`[data-set="${k}"]`).forEach(b=>{ const lk = !lookOpen(k, b.dataset.val); lockBtn(b, lk, `Unlocks at ${stepGrade(LOOK_AT[k][b.dataset.val])}`); const s = b.querySelector('.lock'); if(s) s.hidden = !lk; });
   const lockFlash = !flashUnlocked();
   lockBtn($('task-flash'), lockFlash, `Unlocks at ${stepGrade(FLASH_AT)}`); $('flashlock').hidden = !lockFlash;
@@ -7080,25 +7080,16 @@ function revealAnswer(){
   if(z && (ctrl().up || ctrl().side)) bits.push(tipLabel(z.tip));
   notice(bits.join(' · '));
 }
-// a cheat: type t-i-n-c-l quickly (under half a second between letters) and every grade opens
+// typed keys: b-s-w quickly (under half a second between letters) shows the answer
 { let typed = '', at = 0;
   document.addEventListener('keydown', e=>{
     if(e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
     const now = performance.now(); typed = (now - at < 500 ? typed : '') + e.key.toLowerCase(); at = now;
     if(e.key.toLowerCase() === 'b') tipBeforeCheat = settings.shotTip && settings.shotTip.slice();
     if(typed.endsWith('bsw')){ typed = ''; const t0 = tipBeforeCheat; setTimeout(()=>{ if(t0){ settings.shotTip = t0; saveSettings(); renderShootControls(); } revealAnswer(); }, 0); return; }   // S and W moved the tip: put it back
-    if(typed.endsWith('disco')){   // another: d-i-s-c-o opens the hidden Disco balls, and puts them on the table
-      typed = ''; settings.discoGot = 1; settings.ballSet = 'disco'; saveSettings();
-      applyStyle(); syncPressed(); if(shot && !anim) draw(answered);
-      notice('Disco balls unlocked.'); return;
-    }
-    if(!typed.endsWith('tincl')) return;
-    typed = '';
-    openEveryGrade();
-    notice('All grades unlocked');
   }, true);
 }
-// every grade open at once, quietly (no level-up cards): the tincl cheat, and the test player on the test copy (below)
+// every grade open at once, quietly (no level-up cards): the Efren Reyes player (below)
 function openEveryGrade(){
   const top = SHOOT_GRADES.length - 1, L = ensureShootLevel();
   L.g = L.best = top; L.pts = 0; settings.practice = null;
@@ -7108,11 +7099,30 @@ function openEveryGrade(){
   enforceLocks(); syncPressed(); renderShootControls(); renderStats();   // every lock opens at once: Flash, tables, looks, shaft (menus included, even if open)
   if(!anim) dealFresh();
 }
-// The test copy only (DEV_SITE, under /dev/): a player named "Efren Reyes" (any case or spacing) has every grade, mode and
-// look open and skips every first-run step (stance card on defaults, the tour, the lessons, the What's new card), so
-// everything can be tried on a phone. The lessons, the tour and What's new stay under ?. A card says so once, and an
-// "Unlocked" tag by DEV stays while you play as them. On the live site the name is just a name: none of this runs there.
-const isTestPlayer = name => DEV_SITE === true && String(name || '').trim().replace(/\s+/g, ' ').toLowerCase() === 'efren reyes';
+// Special players: a name (any case or spacing) in NAMED gives that player something extra. Each entry has a tag (shown
+// under the table while you play as them), a card shown once, and what it does. Add a character with one more entry.
+//  "Efren Reyes": every grade, mode and look open, and every first-run step skipped (stance card on defaults, the tour,
+//    the lessons, the What's new card). The lessons, the tour and What's new stay under ?.
+//  "Disco Stu": the hidden Disco ball set, put on the table (its light show and tunes follow from the set).
+const nameKey = name => String(name || '').trim().replace(/\s+/g, ' ').toLowerCase();
+const NAMED = {
+  'efren reyes': {tag: 'unltag', seen: 'unlockedSeen', skips: true,
+    title: 'Everything unlocked', text: 'This player has every grade, mode and look open, and skips the lessons. The lessons and the tour are still under ?.',
+    label: 'everything unlocked', apply(){
+      const L = ensureShootLevel(), top = SHOOT_GRADES.length - 1;
+      if(!(L.g === top && L.best === top && settings.shaftGot === '1')) openEveryGrade();
+      else if(!anim && shot && shot.bare) dealFresh();
+    }},
+  'disco stu': {tag: 'discotag', seen: 'discoSeen',
+    title: 'Disco mode', text: 'This player has the Disco ball set, its light show and its music. You can switch sets any time with the Look button.',
+    label: 'Disco mode', apply(){
+      if(settings.discoGot) return;   // only the first time: after that the set is theirs to change
+      settings.discoGot = 1; settings.ballSet = 'disco'; saveSettings();
+      applyStyle(); syncPressed(); if(shot && !anim) draw(answered);
+    }},
+};
+const namedOf = name => NAMED[nameKey(name)] || null;
+const isTestPlayer = name => !!(namedOf(name) || {}).skips;
 function testPlayerSkips(){   // the first-run steps marked done (before the first deal, so no lesson starts)
   if(!isTestPlayer(ME.name)) return false;
   settings.stanceSet = 1; settings.tourSeen = 1; settings.tut = 1;
@@ -7121,23 +7131,25 @@ function testPlayerSkips(){   // the first-run steps marked done (before the fir
   saveSettings(); return true;
 }
 function renderTestMark(){
-  const on = isTestPlayer(ME.name), t = $('unltag'); if(t) t.hidden = !on;
-  if(on) $('plchip').setAttribute('aria-label', `${ME.name}, everything unlocked: switch player`); else $('plchip').removeAttribute('aria-label');
+  const n = namedOf(ME.name);
+  Object.values(NAMED).forEach(c=>{ const t = $(c.tag); if(t) t.hidden = c !== n; });
+  if(n) $('plchip').setAttribute('aria-label', `${ME.name}, ${n.label}: switch player`); else $('plchip').removeAttribute('aria-label');
 }
 function testPlayerCheck(){
   renderTestMark();
-  if(!isTestPlayer(ME.name)) return;
-  testPlayerSkips();
-  if(tour.on){ tour.first = false; endTour(); }   // renamed mid-way through the first run: off the tour, the stance card or a lesson
-  if(!$('stancecover').hidden){ $('stancecover').hidden = true; if(shot) shot.bare = false; }
-  if(callLock) lockCalls(false);
-  if(tut.on) endTut();
-  const L = ensureShootLevel(), top = SHOOT_GRADES.length - 1;
-  if(!(L.g === top && L.best === top && settings.shaftGot === '1')) openEveryGrade();
-  else if(!anim && shot && shot.bare) dealFresh();
-  if(!settings.unlockedSeen){   // once: what this player is
-    settings.unlockedSeen = 1; saveSettings();
-    ask({title: 'Everything unlocked', text: 'This player has every grade, mode and look open, and skips the lessons. It’s a special test mode. The lessons and the tour are still under ?.', ok: 'OK', cancel: null});
+  const n = namedOf(ME.name);
+  if(!n) return;
+  if(n.skips){
+    testPlayerSkips();
+    if(tour.on){ tour.first = false; endTour(); }   // renamed mid-way through the first run: off the tour, the stance card or a lesson
+    if(!$('stancecover').hidden){ $('stancecover').hidden = true; if(shot) shot.bare = false; }
+    if(callLock) lockCalls(false);
+    if(tut.on) endTut();
+  }
+  n.apply();
+  if(!settings[n.seen]){   // once: what this player is
+    settings[n.seen] = 1; saveSettings();
+    ask({title: n.title, text: n.text, ok: 'OK', cancel: null});
   }
 }
 $('radio').addEventListener('click', e=>{ e.stopPropagation(); applySetting('music', STATIONS[(STATIONS.indexOf(settings.music) + 1) % STATIONS.length]); });
@@ -7831,7 +7843,7 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, look: ()=>({k: look.k, target: look.target}), walk: ()=>walk, shotAt: (cb, b, Pi, others)=>runShot(cb, b, POCKETS[Pi], others), rig: (s, view)=>{ s.cam = {phase: 'down', k: 1, T: 1, downAt: performance.now()}; const cam = shootCam(s, view || 'down'), u = bridgeAim(s), st = shotStroke(s); return {E: cam.E, f: cam.f, u, tip: st.tip, bg: bridgeGeom(s, u, st.tip[1]), svg: cueRig(cam, s)}; }, done: runPlanDone, undo: runUndoPlan, change: runChange, back: runChangeBack, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
   camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), confetti: (n, f)=>confetti($('hlogo'), n, f), cheerLive: ()=>!!cheerFx || !!cheerQ};
-if(!TEST) testPlayerSkips();   // the test copy's test player: no stance card, tour, lessons or What's new card (defaults stand)
+if(!TEST) testPlayerSkips();   // the Efren Reyes player: no stance card, tour, lessons or What's new card (defaults stand)
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
 deal();
 if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
@@ -7911,7 +7923,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
   && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'flashsheet', 'runsheet', 'plmenu', 'cover', 'sesscover', 'sessidlecover', 'endcover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
-if(!TEST) testPlayerCheck();   // the test copy's test player (a new one, or one renamed on an earlier visit)
+if(!TEST) testPlayerCheck();   // a special player (a new one, or one renamed on an earlier visit)
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
