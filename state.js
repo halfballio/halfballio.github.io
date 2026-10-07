@@ -1,5 +1,6 @@
 // Players and their saved settings and stats, the shared mutable state (S), the shot log helpers, and Back up / Restore.
-import {isDrill, plOpen, renderPlMenu, renderStats} from './main.js';
+import {plOpen, renderPlMenu, renderStats} from './main.js';
+import {isDrill} from './grades.js';
 import {notesTop} from './whatsnew.js';
 import {$, ALL, idx} from './geom.js';
 
