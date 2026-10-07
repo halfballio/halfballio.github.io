@@ -256,7 +256,6 @@ header h1 .hlogo{margin-left:20px}   /* the logo stands on the same line as the 
 .table-box.tappable{cursor:pointer}
 .table-box.walkable svg{touch-action:none;cursor:grab}
 .table-box.walkable svg:active{cursor:grabbing}
-.table-box.placing svg{touch-action:none;cursor:crosshair}
 .modes{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%}
 .trackseg{display:grid;grid-template-columns:1fr 1fr;width:100%;margin-top:6px}
 .routinechip{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:3;background:rgba(15,34,51,.88);color:var(--cream);font:600 13px var(--body);min-height:32px;padding:5px 14px;border-radius:999px;border:1px solid var(--navy-line);box-shadow:var(--shadow-2);cursor:pointer}
@@ -323,8 +322,6 @@ html.touch .routinechip kbd{display:none}
 .speedtrack{position:relative;width:16px;height:min(26vh,170px);min-height:96px;border-radius:9px;background:rgba(15,34,51,.6);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(242,234,216,.38),0 2px 6px rgba(0,0,0,.35)}
 .speedtrack i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(var(--gold-hi),#dc9a1e)}
 .speedbar b{font:600 13px var(--body);color:var(--cream);text-shadow:0 1px 2px #000;font-variant-numeric:tabular-nums}
-.freebtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
-.freebtns small{width:100%;text-align:center;color:var(--muted);font-size:12px}
 .shootctl{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;align-items:center;margin:8px 0}
 .tippad{display:flex;flex-direction:column;align-items:center;gap:3px;touch-action:none}.tippad[hidden]{display:none}
 .tippad svg{width:84px;height:84px;cursor:crosshair;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
@@ -490,7 +487,7 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .rcard:not(.pend) .rverd,.rcard:not(.pend) .rval{animation:rin var(--t) var(--ease) both}
 @keyframes rin{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.rcard .rverd,.rcard .rval{animation:none!important}}
-.shootctl:not(:has(> :not([hidden]))){display:none}   /* nothing in it (no free-play buttons): no empty gap above the result */
+.shootctl:not(:has(> :not([hidden]))){display:none}   /* nothing in it: no empty gap above the result */
 @media (max-width:760px){   /* phones: no box, the rows in two columns (long ones across both), so table, fractions and Next still fit */
   .rcard{background:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;padding:6px 0 0}
   .rhead{min-height:22px;padding:0;margin-bottom:3px;border:0}
@@ -504,9 +501,6 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
   .rcap{margin:0 0 3px;font-size:12.5px}
   .rr small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* the arrow and the green say it; "right" stays for screen readers */
 }
-.nudge{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.nudge button{font:600 15px var(--body);min-height:44px;padding:12px 0;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1);cursor:pointer}
-.nudge button:disabled{opacity:.4;cursor:default}
 #scoremode{margin:4px 0 -8px}
 .opt{display:flex;align-items:center;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
 .opt .seg button{padding:4px 10px;text-transform:none;letter-spacing:0}
@@ -1413,7 +1407,6 @@ html.svopen,html.svopen body{overflow:hidden}
         <button id="task-flash" data-set="task" data-val="flash">Flash<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M7 .8 2.2 6.9h3.3L4.6 11.2 9.8 5H6.4z" fill="currentColor"/></svg><span class="lock" id="flashlock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-practice">Practice<span class="lock" id="practicelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
         <button id="task-run" data-set="task" data-val="run">Run-outs<span class="lock" id="runlock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
-        <button id="task-free" hidden>Free play<span class="lock" id="freelock" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.8" rx="1.2" fill="currentColor"/><path d="M3.9 5.2V3.8a2.1 2.1 0 0 1 4.2 0v1.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span></button>
       </div>
       <div class="seg trackseg" id="trackseg" role="group" aria-label="Which ladder" hidden>
         <button id="track-read">Read</button><button id="track-shoot">Shoot</button>
@@ -1423,7 +1416,6 @@ html.svopen,html.svopen body{overflow:hidden}
         <p id="coachtext"></p>
         <div class="coachbtns"><button class="link" id="coachskip">Skip tutorial</button><span class="coachnav"><button class="coachback" id="coachback">Back</button><button class="startbtn" id="coachnext">Next</button></span></div>
       </div>
-      <p class="q" id="question" hidden>How full do you hit the object ball?<small id="modehint"></small></p>
       <div class="sessrow" id="sessrow" hidden>
         <div class="sesslive" id="sesslive" hidden>
           <span id="sesstext"></span><div class="sesstrack"><i id="sessfill"></i></div><button class="link" id="sessend">End</button>
@@ -1431,12 +1423,7 @@ html.svopen,html.svopen body{overflow:hidden}
       </div>
       <div class="answers" id="answers"></div>
       <div class="mods" id="mods" hidden></div>
-      <div class="nudge" id="nudge" hidden>
-        <button id="nudge-l" aria-label="Move ghost ball left">◀ Left</button>
-        <button id="nudge-r" aria-label="Move ghost ball right">Right ▶</button>
-      </div>
       <div class="shootctl" id="shootctl" hidden>
-        <div class="freebtns" id="freebtns" hidden><button class="sumdone" id="freereset">Reset balls</button><button class="sumdone" id="freenew">New layout</button><small>Drag a ball to move it · tap a pocket to aim for it</small></div>
       </div>
       <div class="quick" id="quick" aria-live="polite"></div>
       <div class="runrow" id="runrow" hidden aria-live="polite"></div>   <!-- Run-outs: the rack so far, and the run's summary when it ends -->
@@ -1857,7 +1844,6 @@ function throwAtContact(vc, phi, spin){
   const n = [Math.sin(phi*RAD), Math.cos(phi*RAD)], r = PE.collide([0,1], vc, spin, n);
   return Math.acos(Math.min(1, dot(r.obDir, n)))/RAD;
 }
-function throwFor(s, phi){ return throwAtContact(contactSpeed(s), phi, s.stroke === 'stun' ? 0 : 1); }
 const MU_G = 108;                                     // sliding friction μ·g, in/s² (μ ≈ 0.28: a medium cloth, not a fast one)
 const A_ROLL = 6;                                     // rolling resistance, in/s²
 const POCKET_ARRIVE = 14;                             // pocket speed: how fast the object ball is still going as it drops, in/s
@@ -2050,7 +2036,7 @@ function aidAlpha(key){
 }
 const stanceAim = () => aidAlpha('stance') > 0;
 const throwNow = () => tut.on && tut.lesson === 'throw';   // throw is taught in the Shoot ladder; dealt shots roll
-const anyOn = () => !tut.on && (isDrill() && GEN.g == null ? drillPicks().ang === 'any' : isShooting() ? shootLevel() >= SH.any && (isFree() || adaptiveOn()) : adaptiveOn() && level()!==null && level() >= ANY_AT);   // on the ladder from its own step; Flash always
+const anyOn = () => !tut.on && (isDrill() && GEN.g == null ? drillPicks().ang === 'any' : isShooting() ? shootLevel() >= SH.any && adaptiveOn() : adaptiveOn() && level()!==null && level() >= ANY_AT);   // on the ladder from its own step; Flash always
 const fastFlashLocked = () => ladderBest() < FAST_FLASH_GRADE;
 const AID_SET = {ghost:['ghost','0'], line:['line','0'], stance:['cam','line']};
 function aidsOffBelow(from, to){   // aids whose grade you've just reached for the first time start off
@@ -2165,14 +2151,13 @@ function tableUp(before, to){
   return sz;
 }
 const ladderBest = () => stats.shoot ? stepOf(Math.max(stats.shoot.g, stats.shoot.best ?? 0)) : 0;   // the step of your best grade: every unlock goes by it
-const FLASH_AT = SH.any, FREE_AT = SH.any, FAST_FLASH_GRADE = SH.all;   // Flash opens at C (any angle), at 1.5 s; 0.75 s Flash at S; Free play with any angle too (off for now)
+const FLASH_AT = SH.any, FAST_FLASH_GRADE = SH.all;   // Flash opens at C (any angle), at 1.5 s; 0.75 s Flash at S
 const flashUnlocked = () => DEV || ladderBest() >= FLASH_AT;
 // your shaft: maple to start; the low-deflection carbon shaft opens at S (and you're switched to it the first time you get there)
 const CARBON_AT = SH.all;
 const carbonUnlocked = () => DEV || ladderBest() >= CARBON_AT;
 const myShaft = () => settings.shaft === 'carbon' && carbonUnlocked() ? 'carbon' : 'maple';
 const shaftSq = () => PE.SHAFTS[myShaft()];   // your cue's squirt (per ball radius of side): your own shots and the right call play with it
-const freeUnlocked = () => DEV || ladderBest() >= FREE_AT;
 // Practice: unscored, and you pick what comes up (fractions, angle, side, distance, table), played down on the shot as
 // on the Ladder, with the stroke and spin your best grade has opened. Opens at B- (Throw).
 const PRACTICE_AT = SH.throw;
@@ -2199,16 +2184,15 @@ const RUN_AT = SH.all;
 const runUnlocked = () => DEV || ladderBest() >= RUN_AT;
 const isShoot = () => settings.task === 'shoot' || isDrill();   // played down on the shot, from the ball line (the Ladder and Practice)
 const isLadder = () => settings.task === 'shoot';
-const isFree = () => settings.task === 'free';
 const isRun = () => settings.task === 'run';
-const isShooting = () => isShoot() || isFree() || isRun();
+const isShooting = () => isShoot() || isRun();
 const shootRoutine = () => isShoot() || isRun();   // the ladder's routine (read standing, call to get down, shoot): the Ladder, Practice and Run-outs
 function ensureShootLevel(){ if(!stats.shoot) stats.shoot = {g:0, best:0, pts:0, v:SHOOT_V}; return stats.shoot; }
 // You can go back to any grade you've passed and practise it as long as you like: those shots aren't scored.
 const practicing = () => isLadder() && settings.practice != null && stats.shoot && +settings.practice < stats.shoot.g;
 const GEN = {g: null, bucket: null};   // while the shot library is being built: the step it's building for
 // the step being played (not the grade index: see GRADE_STEP)
-const shootLevel = () => GEN.g != null ? GEN.g : isRun() ? SH.all : isFree() ? ladderBest() : isDrill() ? drillLevel() : practicing() ? stepOf(+settings.practice) : stepOf(stats.shoot ? stats.shoot.g : 0);   // Run-outs play as S: every control
+const shootLevel = () => GEN.g != null ? GEN.g : isRun() ? SH.all : isDrill() ? drillLevel() : practicing() ? stepOf(+settings.practice) : stepOf(stats.shoot ? stats.shoot.g : 0);   // Run-outs play as S: every control
 function setPractice(i){
   const g = stats.shoot ? stats.shoot.g : 0;
   settings.practice = i != null && i < g ? i : null; saveSettings();
@@ -2246,7 +2230,6 @@ const ctrl = () => { const c = ctrlAt(shootLevel()); if(!isDrill() || GEN.g != n
   const d = drillPicks(), sp = d.spin === 'mine'; return {speed: c.speed && d.stroke === 'mine', up: c.up && sp, down: c.down && sp, side: c.side && sp}; };   // Practice: what you picked, of what's open
 // the aids while you aim (the right ghost ball, the guide line to it, the object ball's path to the pocket)
 function shootAid(k){
-  if(isFree()) return false;
   const g = shootLevel();
   return k === 'path' ? g < SH.noPath : k === 'line' ? g < SH.noLine : k === 'ghost' ? g < SH.noGhost : false;
 }
@@ -2347,7 +2330,7 @@ function shotStroke(s){
   if(settings.task === 'flash' && !tut.on){ const i = strikeOf(s); return {V: i.V, tip: [0, i.b]}; }   // Flash: the shot's own stroke, pocket speed
   const c = ctrl(), g = shootLevel(), ideal = strikeOf(s);
   const V = c.speed ? (coarseSpeed() ? STROKE_MPH[speedLevel()]*MPH : speedFromDiamonds(speedSetting())) : ideal.V;
-  let tip = g === SH.throw && !isFree() && !isDrill() ? [0, -.35] : [0, ideal.b];   // the throw step plays soft stun for you: that's where throw shows most
+  let tip = g === SH.throw && !isDrill() ? [0, -.35] : [0, ideal.b];   // the throw step plays soft stun for you: that's where throw shows most
   if(c.up || c.side) tip = snapTip(settings.shotTip || [0, 0], c);
   if(GEN.g == null && s.gb){ const f = bridgeGeom(s, bridgeAim(s)).tyMin; if(f > -1) tip = tipFloor(tip, c, f); }   // a rail bridge: the cue can't reach low on the ball
   return {V, tip};
@@ -2761,7 +2744,7 @@ function shootDeal(){
   const g = shootLevel(), tried = [];
   let last = null;
   for(let a = 0; a < 5; a++){
-    const step = isFree() ? null : zoneStep(g);
+    const step = zoneStep(g);
     const bucket = GEN.bucket != null ? GEN.bucket : pickBucket(step, tried);   // the fraction, fixed for all the tries (the library builder asks for each in turn)
     const s = shootDealStep(g, step, bucket);
     if(s && (s.zone || !step || GEN.g != null)) return s;   // (the library builder takes what it gets: makeRec rejects a shot with no zone)
@@ -2807,7 +2790,7 @@ function shootDealStep(g, step, bucket){
   const t0 = performance.now(), late = () => GEN.g == null && performance.now() - t0 > 220;   // dealing has a budget (not when building the library): past it, the extra checks are skipped
   const TRIES = step === SH.full ? 90 : step === SH.cushion ? 80 : 40;   // two-, three- and four-rail routes take more finding
   const key = step || (g <= SH.throw ? g : null);
-  if(GEN.g == null && key != null && !isFree()){ const L = fromLibrary(key, bucket); if(L) return finishDeal(L); }   // a stored shot, if the library has one
+  if(GEN.g == null && key != null){ const L = fromLibrary(key, bucket); if(L) return finishDeal(L); }   // a stored shot, if the library has one
   if(step && GEN.g == null && REFS[bucket] && REFS[bucket].id === '18') return null;   // live, a ⅛ cut never finds a zone: another fraction (see above)
   for(let tries = 0; tries < TRIES + (step ? 40 : 0); tries++){
     const s = dealShot(bucket);   // leaning on your weak spots
@@ -2815,7 +2798,7 @@ function shootDealStep(g, step, bucket){
     if(!handRoom(s) && tries < TRIES - 4) continue;   // your bridge hand has to fit on the cloth behind the cue ball (no rail bridges yet)
     best = best || s;
     if(diamondsFromSpeed(strikeOf(s).V) > 24) continue;   // no shots that need a near-break stroke just to reach the pocket
-    if(g === SH.throw && !isFree()){
+    if(g === SH.throw){
       // throw: struck soft with stun, so the object ball goes a little fuller than it looks. Any-angle shots as usual (the
       // fraction mix stays even); throw simply moves some of them to a thinner call
       if(s.L < 18) continue;
@@ -3495,7 +3478,6 @@ function renderShootControls(){
   $('answers').classList.toggle('replaying', lit);
   if(!on){ $('tippad').hidden = true; $('speedbar').hidden = true; return; }
   $('speedbar').hidden = !c.speed;
-  $('freebtns').hidden = !isFree() || !!tl;
   $('tippad').hidden = !(c.up || c.side);
   const n = rp ? levelForSpeed(rp.V) : tl && tut.ctl ? tut.ctl.lvl : speedLevel();
   const t = (rp ? rp.tip : tl ? (tut.ctl ? tut.ctl.tip : [0, 0]) : shot ? shotStroke(shot).tip : [0, 0]) || [0, 0];   // a lesson can open before its first shot is dealt
@@ -3562,8 +3544,6 @@ function wireShootControls(){
   pad.addEventListener('pointerdown', ev=>{ if(answered || (tut.on && tut.ctl)) return; tDrag = true; try{ pad.setPointerCapture(ev.pointerId); }catch(e){} pad.classList.toggle('held', fingerish(ev)); setTipFrom(ev); showLoupe(); ev.preventDefault(); ev.stopPropagation(); });
   pad.addEventListener('pointermove', ev=>{ if(tDrag){ setTipFrom(ev); showLoupe(); } });
   ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t, ()=>{ tDrag = false; pad.classList.remove('held'); }));
-  $('freereset').addEventListener('click', ()=>{ if(anim) finishAnim(); freeReset(); $('quick').innerHTML = ''; $('result').innerHTML = ''; $('showright').hidden = true; tableBox.classList.remove('tappable'); });
-  $('freenew').addEventListener('click', ()=>{ if(anim) finishAnim(); deal(); });
 }
 
 // ---------- taking the shot ----------
@@ -3741,8 +3721,6 @@ function strokeThen(s, x0, play){
   requestAnimationFrame(tick);
 }
 // Free play: put the layout back, or a new one
-let freeLayout = null;
-function freeReset(){ if(!freeLayout) return; shot = unpackShot(freeLayout); shot.t0 = performance.now(); answered = false; shot.anim = shot.final = shot.pick = null; draw(false); updateControls(); }
 
 // ---------- Free play: move the balls ----------
 // rebuild everything a shot derives from where the balls are and which pocket it's going to
@@ -4096,11 +4074,6 @@ function tableSVG(s, reveal){
       o += `<g font-family="IBM Plex Mono, monospace" font-size="2.1" font-weight="500" text-anchor="middle" dominant-baseline="middle"><rect x="${f2(lp[0]-3.6)}" y="${f2(lp[1]-1.6)}" width="7.2" height="3.2" rx=".8" fill="#0b1a26" fill-opacity=".85"/><text x="${f2(lp[0])}" y="${f2(lp[1]+.1)}" fill="#ffd34d">${theta.toFixed(1)}°</text></g>`;
     }
   }
-  if(!reveal && s.place){
-    const e2 = add(s.place, mul(norm(sub(s.place, s.cb)), 6));
-    o += `<line x1="${f2(s.cb[0])}" y1="${f2(s.cb[1])}" x2="${f2(e2[0])}" y2="${f2(e2[1])}" stroke="#fff" stroke-opacity=".55" stroke-width=".2"/>`;
-    o += `<circle cx="${f2(s.place[0])}" cy="${f2(s.place[1])}" r="${R}" fill="#fff" fill-opacity=".3" stroke="#fff" stroke-width=".22"/>`;
-  }
   const ball = (p, fill, num) => {
     let b = `<circle cx="${f2(p[0]+.25)}" cy="${f2(p[1]+.3)}" r="${R}" fill="#000" fill-opacity=".28"/>`;
     b += `<circle cx="${f2(p[0])}" cy="${f2(p[1])}" r="${R}" fill="${fill}"/>`;
@@ -4433,10 +4406,6 @@ function perspDyn(cam, s, reveal){
     const e = rayToCushion(s.gb, s.v, 7);
     if(!s.final) o += `<path d="${segD(cam,[s.cb[0],s.cb[1],R],[e[0],e[1],R])}" stroke="#fff" stroke-opacity=".85" stroke-width="1.2"/>`;   // after an animation the dotted trail replaces it
   }
-  if(!reveal && s.place){
-    const e2 = rayToCushion(s.place, norm(sub(s.place, s.cb)), 6);
-    o += `<path d="${segD(cam,[s.cb[0],s.cb[1],R],[e2[0],e2[1],R])}" stroke="#fff" stroke-opacity=".6" stroke-width="1.05"/>`;
-  }
   // trails: where the balls have travelled (during the animation, and the cue ball's path afterwards)
   const trail = s.anim ? s.anim.trail : (reveal && s.final ? s.final.trail : null);
   if(trail && refOn('refTrail')){
@@ -4470,7 +4439,6 @@ function perspDyn(cam, s, reveal){
   // once the balls meet, the ghost ball shows where your call actually made contact (on a miss that's not the ideal spot)
   const hit = (A && contact) || (reveal && !A), yours = hit && s.pick && s.pick.far;
   if(refOn('refGhost') ? (A ? (contact || gA > 0) : (reveal || gA > 0)) : (!A && !reveal && gA > 0)) items.push({p: yours ? s.pick.g2 : hit ? s.gb : (s.gbLook || s.gb), kind:'ghost', a: hit ? Math.max(refA, yours ? 0 : gA) : gA});
-  if(!reveal && s.place) items.push({p:s.place, kind:'user'});
   items.forEach(it=>{it.c = cam.toCam([it.p[0],it.p[1],it.z ?? R]);});
   items.sort((a,b)=>b.c[2]-a.c[2]);
   G3BALLS = [];
@@ -4486,7 +4454,6 @@ function perspDyn(cam, s, reveal){
     if(r < 0.3) continue;
     if(it.kind==='refcb'){ const ra = it.a ?? 1; o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#f4efe0" fill-opacity="${(.22*ra).toFixed(3)}" stroke="#f4efe0" stroke-opacity="${(.8*ra).toFixed(3)}" stroke-width=".75" stroke-dasharray="3.5 2.5"/>`; continue; }
     if(it.kind==='refob'){ o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${ballCol(s)}" fill-opacity=".32" stroke="${ballCol(s)}" stroke-opacity=".85" stroke-width="1"/>`; continue; }
-    if(it.kind==='user'){ o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff" fill-opacity=".3" stroke="#fff" stroke-width="1.2"/>`; continue; }
     if(it.kind==='callghost'){ o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${s.pick.made ? NEAR_MISS_OK : MISS}" stroke-width=".75" stroke-dasharray="3.5 2.5"/>`; continue; }
     if(it.kind==='obmark'){ o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#ffd34d" fill-opacity="${(.14*it.a).toFixed(3)}" stroke="#ffd34d" stroke-opacity="${(.9*it.a).toFixed(3)}" stroke-width=".75" stroke-dasharray="3.5 2.5"/>`; continue; }
     if(it.kind==='ghost'){ o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff" fill-opacity="${(.22*(it.a ?? 1)).toFixed(3)}" stroke="#fff" stroke-opacity="${(it.a ?? 1).toFixed(3)}" stroke-width=".75" stroke-dasharray="3.5 2.5"/>`; continue; }
@@ -4998,10 +4965,9 @@ function overlapSVG(s){
 }
 
 // ---------- modes ----------
-const MODE_LABEL = {call:'Sessions', sess:'Read', shoot:'Ladder', free:'Free play', flash:'Flash', place:'Ghost ball', practice:'Practice', run:'Run-outs'};
+const MODE_LABEL = {sess:'Read', shoot:'Ladder', flash:'Flash', practice:'Practice', run:'Run-outs'};
 const taskOf = e => e.t || 'call';
 const sessTask = t => t==='sess' || t==='flash' || t==='shoot';   // played as 50- or 100-shot sessions (Free play isn't)
-const isPlace = () => settings.task==='place';   // (aiming by dragging the ghost ball is off for now: you call the fraction)
 const viaAlt = e => !!e.aa && e.p===e.aa && e.pm===e.aam;
 function success(e){ return taskOf(e)==='shoot' || taskOf(e)==='practice' || taskOf(e)==='run' ? e.ok===1 : taskOf(e)==='place' ? !!e.m : (e.p===e.a && (!e.am || e.pm===e.am)) || viaAlt(e); }
 function lean(e){          // +1 too thin (overcut), -1 too full (undercut), 0 right
@@ -5060,17 +5026,15 @@ function shootRows(s){
 const readRows = () => [{k: 'Call', v: null}, {k: 'Cut', v: null}, {k: 'Ball', v: null, wide: true}];
 const aidAside = () => practiceAid() ? 'Aid on · not scored' : '';
 function pendCard(){   // the card before the call
-  if(!shot || answered || tut.on || isPlace()) return;
+  if(!shot || answered || tut.on) return;
   if(shot.calling && isRun() && RUN) return void ($('quick').innerHTML = runPickCard());   // Run-outs: the ball and pocket first
   $('quick').innerHTML = isShooting() ? rcardHTML(null, '', shootRows(shot)) : rcardHTML(null, '', readRows(), aidAside());
 }
-const PLACE_HINT = `Tap or drag around the object ball to set the ghost ball. Fine-tune with the arrows, then Shoot.${kt(' Keys <kbd>←</kbd> <kbd>→</kbd> nudge, <kbd>Enter</kbd> shoots.', '')}`;
-const QUESTION = {sess:'How full do you hit the object ball?', call:'How full do you hit the object ball?', flash:'How full do you hit the object ball?', place:'Where does the ghost ball go?', shoot:'How full do you hit the object ball?', free:'How full do you hit the object ball?', practice:'How full do you hit the object ball?', run:'How full do you hit the object ball?'};
 const tableBox = document.querySelector('.table-box');
 
 function packShot(s){
   const o = {...s, P: POCKETS.indexOf(s.P), answer: s.answer.id, tb: curTable, seenAt: Date.now()};
-  delete o.pick; delete o.anim; delete o.final; delete o.t0; delete o.place; delete o.rig;
+  delete o.pick; delete o.anim; delete o.final; delete o.t0; delete o.rig;
   return o;
 }
 function unpackShot(o){
@@ -5117,7 +5081,6 @@ function dealInner(){
   }
   scheduleFades();
   answered = false;
-  if(isFree()) freeLayout = packShot(shot);
   draw(false);
   if(shootRoutine() && !shot.calling) startRoutine(); else { cancelAnimationFrame(routineRaf); renderRoutineChip(); }
   renderRun();
@@ -5126,10 +5089,9 @@ function dealInner(){
   $('mods').hidden = !shot.phys;
   const sc = $('speedchip'); sc.hidden = true;   // no speed shown: every shot is pocket speed
   $('result').innerHTML = '';
-  if(isPlace()) $('quick').innerHTML = `<div class="ql hint">${PLACE_HINT}</div>`; else if(tut.on) $('quick').innerHTML = ''; else pendCard();
+  if(tut.on) $('quick').innerHTML = ''; else pendCard();
   $('showright').hidden = true;
   tableBox.classList.remove('tappable');
-  tableBox.classList.toggle('placing', isPlace());
   updateControls();
   if(settings.task==='flash' && stats.active && stats.active.task==='flash'){   // the flash timer only runs inside a session
     if(!flashArmed) showStart();   // first, the start screen: standing or down on the shot, then Start
@@ -5175,14 +5137,10 @@ function startFlashMode(){
   if(shot) draw(answered);   // the shot under the card was drawn from the view picked last time: redraw it from the one just picked
 }
 function updateControls(){
-  const place = isPlace(), nb = $('next');
+  const nb = $('next');
   renderShootControls();
-  $('answers').hidden = place;
-  $('nudge').hidden = !place || answered;
-  $('nudge').querySelectorAll('button').forEach(b=>b.disabled = !shot || !shot.place);
-  if(place && !answered){ nb.textContent = 'Shoot'; nb.disabled = !shot || !shot.place; }
-  else { nb.innerHTML = `${isRun() && RUN && RUN.over ? 'Next rack' : 'Next shot'} <kbd class="key" aria-hidden="true">Enter</kbd>`; nb.disabled = !answered; }
-  $('question').firstChild.textContent = QUESTION[settings.task];
+  $('answers').hidden = false;
+  nb.innerHTML = `${isRun() && RUN && RUN.over ? 'Next rack' : 'Next shot'} <kbd class="key" aria-hidden="true">Enter</kbd>`; nb.disabled = !answered;
   if(shot && shot.calling && !answered) document.querySelectorAll('#answers button').forEach(b=>b.disabled = true);   // Run-outs: the fraction comes once the shot is called
 }
 
@@ -5191,14 +5149,13 @@ function laterSave(){ clearTimeout(laterT); laterT = setTimeout(()=>{ save(); re
 function logEntry(extra){   // ts: the minute it was played (minutes since 1970), so the Stats view can group sittings
   const act = stats.active && stats.active.task===settings.task ? stats.active.id : undefined;
   stats.log.push({sid:act, t:settings.task, a:shot.answer.id, s:shot.side, v:settings.view,
-    c: settings.view==='top' ? '-' : (isPlace() ? 'line' : stanceAim() ? 'aim' : 'line'),
+    c: settings.view==='top' ? '-' : stanceAim() ? 'aim' : 'line',
     md:shot.any ? 'any' : 'ref', ...(shot.phys ? {am: shot.mod, sp: shot.speed, tw: +shot.throwDeg.toFixed(1), ...(shot.alt ? {aa: shot.alt.id, aam: shot.alt.mod} : {})} : {}), th:settings.throw, ln:shot.len, ts: Math.round(Date.now()/60000), rp:shot.replays||0, wk: shot.walked ? 1 : 0, dc:Math.round(len(sub(shot.ob,shot.cb))), dp:Math.round(shot.L), ag:+shot.theta.toFixed(1), pt:shot.P.side?'s':'c', gh: practiceAid() ? 1 : 0, fa: ['ghost','line','stance'].filter(k=>['on','fade'].includes(aidMode(k))).join('') || undefined, tb:settings.table, pk:settings.pockets, ...extra});
   trimLog();
   laterSave();
 }
 function finishRound(){
   tableBox.classList.add('tappable');
-  tableBox.classList.remove('placing');
   updateControls();
   $('next').focus({preventScroll:true});
 }
@@ -5648,7 +5605,7 @@ function lockCalls(v){
   callLock = v; ['answers', 'mods'].forEach(id=>$(id).classList.toggle('locked', v));
   document.querySelectorAll('#answers button, #mods button').forEach(b=>{ b.disabled = v; });
 }
-const canCall = () => !callLock && !answered && shot && !shot.calling && !isPlace() && !anim && $('sessidlecover').hidden && $('endcover').hidden;
+const canCall = () => !callLock && !answered && shot && !shot.calling && !anim && $('sessidlecover').hidden && $('endcover').hidden;
 function markPend(){
   document.querySelectorAll('#answers button').forEach(b=>b.classList.toggle('sel', b.dataset.id===pend.f));
   document.querySelectorAll('#mods button').forEach(b=>b.classList.toggle('sel', b.dataset.mod===pend.m));
@@ -5934,110 +5891,8 @@ function tipSVG(s){
   </svg>`;
 }
 
-// ---------- ghost-ball placement ----------
 const svgEl = $('table');
-function worldFromEvent(ev){
-  const pt = svgEl.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
-  const q = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-  if(settings.view==='top') return [q.x, q.y];
-  return lastCam ? lastCam.unproject(q.x, q.y, R) : null;
-}
-function placeAt(p){
-  if(!p) return;
-  const d = sub(p, shot.ob);
-  if(len(d) < 1e-6) return;
-  shot.place = clampGhost(norm(d));
-  draw(false); updateControls();
-}
-// Keep the ghost ball on the cue-ball side of the object ball (at most 80° around from the cue ball).
-function clampGhost(dir){
-  const toCB = norm(sub(shot.cb, shot.ob));
-  let ang = Math.atan2(toCB[0]*dir[1]-toCB[1]*dir[0], dot(toCB,dir));
-  const lim = 80*RAD;
-  if(Math.abs(ang) > lim) ang = Math.sign(ang)*lim;
-  return add(shot.ob, mul(rot(toCB, ang), 2*R));
-}
-function nudge(dir, mult){       // dir +1 = right, -1 = left, as seen from behind the cue ball; a fine step, mult for bigger ones
-  if(!shot || !shot.place || answered) return;
-  const w = norm(sub(shot.ob, shot.cb)), right = [-w[1], w[0]];
-  const a = sub(shot.place, shot.ob);
-  for(const sg of [1,-1]){
-    const cand = clampGhost(norm(rot(a, sg*0.0035*(mult || 1))));
-    if(Math.sign(dot(sub(cand, shot.place), right)) === dir){ shot.place = cand; break; }
-  }
-  draw(false);
-}
-let dragging = false;
-svgEl.addEventListener('pointerdown', ev=>{
-  if(!(isPlace() || isFree()) || answered || !shot) return;
-  if(isShooting()){
-    const hitAt = screenNear(ev);
-    if(isFree()){
-      if(hitAt.cb < 1.4){ freeDrag = 'cb'; dragging = true; try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); return; }
-      if(hitAt.ob < 1.0){ freeDrag = 'ob'; dragging = true; try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); return; }
-      if(hitAt.pocket){ shot.P = hitAt.pocket; rebuildShot(shot); freeLayout = packShot(shot); draw(false); return; }
-    }
-    return;   // aiming by dragging is off for now: anywhere else is looking around
-  }
-  freeDrag = null;
-  dragging = true;
-  try{ svgEl.setPointerCapture(ev.pointerId); }catch(e){}
-  placeAt(worldFromEvent(ev));
-  ev.preventDefault();
-});
-svgEl.addEventListener('pointermove', ev=>{
-  if(!dragging) return;
-  if(freeDrag){ const p = worldFromEvent(ev); if(!p) return; const q = [Math.max(R, Math.min(W-R, p[0])), Math.max(R, Math.min(H-R, p[1]))];
-    const other = freeDrag === 'cb' ? shot.ob : shot.cb; if(len(sub(q, other)) < 2*R + .05) return;
-    shot[freeDrag] = q; rebuildShot(shot); freeLayout = packShot(shot); draw(false); return; }
-  placeAt(worldFromEvent(ev));
-});
-let freeDrag = null;
-// how close a pointer is to each ball, in ball radii on screen, and which pocket it's on (if any)
-function screenNear(ev){
-  const pt = svgEl.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
-  const q = pt.matrixTransform(svgEl.getScreenCTM().inverse()), cam = lastCam, out = {cb: 99, ob: 99, pocket: null};
-  if(!cam || settings.view === 'top') return out;
-  const d = P3 => { const c = cam.toCam(P3); if(c[2] < NEAR) return 99; const [x, y] = cam.proj(c); return Math.hypot(x - q.x, y - q.y)/(cam.focal*R/c[2]); };
-  out.cb = d([shot.cb[0], shot.cb[1], R]); out.ob = d([shot.ob[0], shot.ob[1], R]);
-  for(const P of POCKETS){ const E = engineTable().pockets[POCKETS.indexOf(P)]; if(d([E.hole[0], E.hole[1], 1.6]) < E.holeR/R*1.2) out.pocket = P; }
-  return out;
-}
-['pointerup','pointercancel'].forEach(t=>svgEl.addEventListener(t, ()=>{ dragging = false; freeDrag = null; }));
 
-function outcomeFromGhost(s, g){
-  const v2 = norm(sub(g, s.cb)), n2 = norm(sub(s.ob, g));
-  const cr = v2[0]*n2[1]-v2[1]*n2[0];
-  const phi = Math.atan2(Math.abs(cr), dot(v2,n2))/RAD;
-  const u2 = rot(n2, -Math.sign(cr)*throwFor(s, phi)*RAD);
-  const err = Math.atan2(s.u[0]*u2[1]-s.u[1]*u2[0], dot(s.u,u2));
-  const lat = s.L*Math.sin(err);
-  const trueSide = Math.sign(s.v[0]*s.n[1]-s.v[1]*s.n[0]);
-  const signed = (Math.sign(cr)===trueSide || phi < 0.01) ? phi : -phi;   // negative = past full, on the wrong side
-  const reachable = phi < 88;
-  return {u2, lat, phi, e: signed - s.theta, made: reachable && Math.abs(lat) <= s.tol, reachable};
-}
-function shoot(){
-  if(answered || !shot || !shot.place) return;
-  answered = true;
-  const oc = outcomeFromGhost(shot, shot.place);
-  shot.pick = {g2: shot.place, u2: oc.u2, made: oc.made, far: Math.abs(oc.e) > 0.3};
-  logEntry({e: +oc.e.toFixed(2), m: oc.made?1:0});
-  draw(true);
-  const over = oc.e > 0;
-  const wrongSide = oc.e < -shot.theta - 1 && oc.phi > 2;
-  const msg = !oc.reachable ? 'The cue ball can’t reach that spot.'
-    : wrongSide ? 'Wrong side of the ball. That cuts it the other way.'
-    : oc.made ? (Math.abs(oc.e) < 0.6 ? 'Dead center.' : 'In.') : (over ? 'Too thin.' : 'Too full.');
-  const cls = oc.made ? 'ok' : 'no';
-  const fu = 1 - Math.sin(Math.min(90,Math.abs(oc.phi))*RAD), f = 1 - Math.sin(shot.theta*RAD);
-  const first = `Your ghost ball: <b>${oc.phi.toFixed(1)}°</b> (${fu.toFixed(2)} ball). Needed: <b>${shot.theta.toFixed(1)}°</b> (${f.toFixed(2)} ball, nearest ${lbl(shot.answer)}). You were <b>${Math.abs(oc.e).toFixed(1)}°</b> ${over?'thin':'full'}.`;
-  showResult(msg, cls, oc.made, oc.lat, over, first);
-  $('quick').innerHTML = `<div class="ql"><b class="${cls}">${oc.made ? 'Pocketed' : 'Missed'}</b>`
-    + (oc.made ? '' : `<span class="out">${over?'Too thin':'Too full'}, by ${Math.abs(oc.lat).toFixed(1)}″</span>`)
-    + `<span>off by ${Math.abs(oc.e).toFixed(1)}°</span></div><div class="ql tap">Tap the table for the next shot</div>`;
-  finishRound();
-}
 
 // ---------- stats & patterns ----------
 function pct(a,b){ return b ? Math.round(100*a/b) : 0; }
@@ -6147,10 +6002,6 @@ function openStats(v, opts = {}){
 })();
 
 // ---------- controls ----------
-const HINTS = {
-  ref: 'Every shot sits within about a degree of one reference fraction.',
-  any: 'Any cut up to 66°. Call the nearest reference, then check whether it drops.',
-};
 // the little radio on the table: tap to change station (Off, Parlor, Smoke, Felt)
 const STATIONS = ['off', 'parlor', 'smoke', 'felt'], STATION_NAME = {off: 'Off', parlor: 'Parlor', smoke: 'Smoke', felt: 'Felt'};
 function renderRadio(){
@@ -6212,9 +6063,6 @@ function syncPressed(){
   $('track-read').setAttribute('aria-pressed', settings.task==='sess'); $('track-shoot').setAttribute('aria-pressed', settings.task==='shoot');
   document.querySelectorAll('[data-set]').forEach(b=>{ if(BASE_LOCKED.includes(b.dataset.set)) b.disabled = baseRun(); });
   lockBtn($('flash-750'), fastFlashLocked(), `Unlocks at ${stepGrade(FAST_FLASH_GRADE)}`); $('fastlock').hidden = !fastFlashLocked();
-  $('modehint').textContent = isPlace()
-    ? (settings.view!=='top' && settings.cam==='aim' ? 'Ghost ball mode always uses the ball line, since the aim line would give it away.' : 'Set the ghost ball where the cue ball must be at contact.')
-    : HINTS[settings.mode];
 }
 function applySetting(key, val){
   if(tut.on && key==='task') return;
@@ -6255,8 +6103,6 @@ $('mods').innerHTML = MODS.map(m=>`<button data-mod="${m.id}" id="mod-${m.id}" a
 $('mods').addEventListener('pointerdown', e=>{ if(e.button !== 0) return; const b=e.target.closest('button'); if(b && !b.disabled){ e.preventDefault(); pickMod(b.dataset.mod); } });
 $('mods').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b && e.detail === 0) pickMod(b.dataset.mod); });
 $('answers').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b && e.detail === 0) pickFrac(b.dataset.id); });   // keyboard activation (Enter/Space on a focused button)
-$('nudge-l').addEventListener('click', ()=>nudge(-1));
-$('nudge-r').addEventListener('click', ()=>nudge(1));
 // Next shot: always straight to a new shot. A running animation is simply dropped (the shot still counts).
 let jumpingAhead = false;
 // Next shot: a quick blink through the dark room, not a hard cut (about 0.35 s)
@@ -6281,12 +6127,11 @@ function nextShot(){
   if(anim){ jumpingAhead = true; try{ finishAnim(); } finally { jumpingAhead = false; } }
   if($('sesscover').hidden) nextDeal();
 }
-$('next').addEventListener('click', ()=>{ if(isPlace() && !answered) (isShooting() ? takeShot() : shoot()); else nextShot(); });
+$('next').addEventListener('click', ()=>nextShot());
 let walkDrag = null, walkRaf = 0, walkEndedAt = 0;
-function walkOn(){ return ['call','sess','shoot','free','practice','run'].includes(settings.task) && !baseRun(); }   // always on, except during the baseline
+function walkOn(){ return ['sess','shoot','practice','run'].includes(settings.task) && !baseRun(); }   // always on, except during the baseline
 function walkRedraw(){ if(walkRaf || anim) return; walkRaf = requestAnimationFrame(()=>{ walkRaf = 0; if(shot) draw(answered); }); }   // while a shot runs, its own frames redraw
 svgEl.addEventListener('pointerdown', ev=>{
-  if(dragging) return;   // aiming or moving a ball, not looking around
   if(!walkOn() || !shot || runPicking() || !$('sesscover').hidden || !$('startcover').hidden || !$('sessidlecover').hidden) return;
   // a drag across the full width of the table swings you half way round the cue ball
   document.body.classList.add('dragging'); try{ getSelection().removeAllRanges(); }catch(e){}
@@ -6352,7 +6197,7 @@ $('reset').addEventListener('click', async ()=>{   // all or nothing: your whole
   stats.log = []; stats.sessions = []; delete stats.archive; delete stats.run; RUN = null; delete stats.level; delete stats.shoot; stats.active = null; settings.practice = null; settings.tablePick = null; settings.flashTable = '7'; settings.tstyle = 'bar'; settings.ballSet = 'standard'; delete settings.lookSeen; applyStyle();
   if(settings.tutSeen) for(const k in LESSONS) if(LESSONS[k].at > 0) delete settings.tutSeen[k];
   saveSettings(); enforceLocks(); renderBadge(true); renderProgress(); renderModeChip();
-  if(!flashUnlocked() && settings.task==='flash' || !freeUnlocked() && settings.task==='free' || !practiceUnlocked() && isDrill() || !runUnlocked() && settings.task==='run') applySetting('task','shoot');
+  if(!flashUnlocked() && settings.task==='flash' || !practiceUnlocked() && isDrill() || !runUnlocked() && settings.task==='run') applySetting('task','shoot');
   showSessIdle(); syncPressed(); save(); renderStats(); syncStreakPill(); if(!answered && !anim) deal(); });
 document.querySelectorAll('.sesschip').forEach(b=>b.addEventListener('click', ()=>startSession(+b.dataset.sess)));
 $('sessend').addEventListener('click', endSession);
@@ -6822,7 +6667,7 @@ function startTut(lesson){
   endFlash(); $('sesscover').hidden = true; $('endcover').hidden = true; $('startcover').hidden = true;
   tut.on = true; tut.i = 0; tut.shots = []; tut.started = tut.started0 = false; tut.lesson = LESSONS[lesson] ? lesson : 'shoot';
   cancelAnimationFrame(routineRaf); renderRoutineChip(); renderShootControls();
-  $('coach').hidden = false; $('question').hidden = true; $('sessrow').hidden = true;
+  $('coach').hidden = false; $('sessrow').hidden = true;
   showSessIdle(); runStep();
   $('coach').scrollIntoView({block:'nearest'});
 }
@@ -7205,11 +7050,10 @@ document.addEventListener('keydown', e=>{
   if(callLock) return;   // a new player before the first lesson: keys 1–5 and Enter have nothing to call
   const k = parseInt(e.key,10);
   if(tut.on && !tstep().ask) return;   // nothing to call on this step: the fraction keys do nothing
-  if(!isPlace() && k>=1 && k<=REFS.length && !answered){ pickFrac(REFS[k-1].id); e.preventDefault(); }
-  else if(isPlace() && !answered && (e.key==='ArrowLeft' || e.key==='ArrowRight')){ nudge(e.key==='ArrowLeft'?-1:1, e.shiftKey ? 6 : 1); e.preventDefault(); }
+  if(k>=1 && k<=REFS.length && !answered){ pickFrac(REFS[k-1].id); e.preventDefault(); }
   else if(isShooting() && !answered && ctrl().speed && (e.key==='ArrowUp' || e.key==='ArrowDown')){ setSpeedLevel(speedLevel() + (e.key==='ArrowUp' ? 1 : -1)); e.preventDefault(); }
   else if(isShooting() && !answered && /^[wasdx]$/i.test(e.key) && !e.metaKey && !e.ctrlKey){ nudgeTip(e.key.toLowerCase()); e.preventDefault(); }
-  else if(e.key==='Enter'){ if(answered){ nextDeal(); e.preventDefault(); } else if(isPlace() && shot && shot.place){ isShooting() ? takeShot() : shoot(); e.preventDefault(); } }
+  else if(e.key==='Enter'){ if(answered){ nextDeal(); e.preventDefault(); } }
 });
 
 if(!['stand','down'].includes(settings.view)) settings.view='stand';
@@ -7719,8 +7563,8 @@ if(!settings.sv) settings.sv=2;
 settings.full = '1';   // full-ball shots always come up (rarely): no longer a setting
 settings.view = 'stand';   // the view isn't a setting any more: you start standing, and the routine takes you down
 if(settings.task==='call') settings.task = 'sess';   // Freeplay and Sessions merged: Freeplay is now played in sessions
-if(settings.task === 'free') settings.task = 'shoot';   // Free play is off for now
-if(!['flash','shoot','free','practice','run'].includes(settings.task) || (settings.task==='free' && !freeUnlocked()) || (settings.task==='flash' && !flashUnlocked()) || (settings.task==='practice' && !practiceUnlocked()) || (settings.task==='run' && !runUnlocked())) settings.task = 'shoot';   // one ladder: Sessions are shooting
+if(settings.task === 'free') settings.task = 'shoot';   // Free play was retired
+if(!['flash','shoot','practice','run'].includes(settings.task) || (settings.task==='flash' && !flashUnlocked()) || (settings.task==='practice' && !practiceUnlocked()) || (settings.task==='run' && !runUnlocked())) settings.task = 'shoot';   // one ladder: Sessions are shooting
 if(!settings.sv4){ stats.log.forEach(e=>{ if((e.t||'call')==='call') e.t = 'sess'; }); settings.sv4 = 1; save(); }   // old Freeplay shots join the new Freeplay
 if(stats.log.some(e=>e.t==='aim' || e.t==='tt')){ stats.log = stats.log.filter(e=>e.t!=='aim' && e.t!=='tt'); save(); }   // Aim and Thick/Thin were tried and dropped
 // one-time move: sessions played before Sessions became its own mode now belong to it
