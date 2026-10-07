@@ -76,7 +76,6 @@ for(let i = 0; i < N; i++){
   });
   wk.on('error', e=>{ console.error('\nworker failed:', e); process.exit(1); });
 }
-})();
 function finish(){
   clearInterval(timer); report(true);
   // the sections: the ones just made, plus (with --only) every other one from the existing file
@@ -97,3 +96,4 @@ function finish(){
   console.log(`\nwrote ${path.relative(ROOT, OUT)}: ${(buf.length/1024).toFixed(0)} KB, ${STEPS.map(k=>`${k}:${recs[k].length} (${miss[k]} rejected)`).join(', ')}, ${Math.round((Date.now() - t0)/1000)} s`);
   process.exit(0);
 }
+})();
