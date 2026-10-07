@@ -1,5 +1,6 @@
 // The ladder: grades and skill steps, what each one opens, the adaptive lean on weak spots, and what you control at each step.
-import {applySetting, LOOK_AT, LOOK_NAME, openDrill, openLookPicker, openMenu, tutAid} from './main.js';
+import {applySetting, openDrill, openLookPicker, openMenu, tutAid} from './main.js';
+import {LOOK_AT, LOOK_NAME} from './view.js';
 import {runPicks} from './deal.js';
 import {DEV} from './perf.js';
 import {saveSettings, sessTask, settings, SHOOT_GRADES, SHOOT_V, stats, success, taskOf, tut} from './state.js';

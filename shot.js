@@ -1,5 +1,6 @@
 // Playing a shot: speed and tip, the stroke, the routine (read, step in, get down), the bridge, the controls, and taking the shot.
-import {animateShot, camFrom, draw, featherLoop, featherOff, featherRaf, featherStart, finishRound, FOLLOW_THROUGH, fracName, jumpingAhead, LESSONS, logEntry, NEAR, norm3, pendCard, prepareNext, rcardHTML, rigAlpha, rigCam, sessionTick, shootRows, standUp, strokeBack, strokeName, syncFocusBtn, syncPressed, tstep, VH, VIEWS, VW} from './main.js';
+import {animateShot, finishRound, fracName, jumpingAhead, LESSONS, logEntry, pendCard, prepareNext, rcardHTML, sessionTick, shootRows, strokeName, syncPressed, tstep} from './main.js';
+import {camFrom, draw, featherLoop, featherOff, featherRaf, featherStart, FOLLOW_THROUGH, NEAR, norm3, rigAlpha, rigCam, standUp, strokeBack, syncFocusBtn, VH, VIEWS, VW} from './view.js';
 import {bridgeLen, nearestRef, pocketSpeedFor, pocketTol, railBehind, runAfterShot, runFoul, stanceIn} from './deal.js';
 import {CARBON_AT, ctrl, ctrlAt, drillPicks, enforceLocks, ensureShootLevel, FOCUS_AT, GEN, isDrill, isLadder, isRun, isShoot, isShooting, NO_TIMER, practicing, PT_RIGHT, PT_WRONG, PTS_UP, shaftSq, SHOOT_UP, shootLevel, shootRoutine, standTime, tableUp, unlIcon, unlocksBetween} from './grades.js';
 import {cheer, playSound, showStreak, uiSound} from './audio.js';
