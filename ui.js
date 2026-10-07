@@ -499,7 +499,15 @@ export function openLookPicker(focus){
   lookPick.fresh = lookNew(); lookPick.back = document.activeElement; lookPick.open = true;
   settings.lookSeen = [...new Set([...(settings.lookSeen || []), ...lookPick.fresh])]; saveSettings();   // seen now: the dot goes
   $('stylemenu').hidden = false; $('stylebtn').setAttribute('aria-expanded', 'true');
-  renderLookPicker(); lookFocus(focus);
+  renderLookPicker(); placeLookPicker(); lookFocus(focus);
+}
+// on a desktop the card opens beside the Look button, on the table; on a phone it is a sheet along the bottom (CSS)
+function placeLookPicker(){
+  const m = $('stylemenu'), c = m.querySelector('.stylecard'); if(!c) return;
+  if(!matchMedia('(min-width: 761px)').matches){ c.style.marginLeft = c.style.marginTop = ''; return; }
+  const b = $('stylebtn').getBoundingClientRect(), p = getComputedStyle(m);
+  c.style.marginLeft = Math.max(0, b.right + 12 - parseFloat(p.paddingLeft)) + 'px';
+  c.style.marginTop = Math.max(0, b.top - parseFloat(p.paddingTop)) + 'px';
 }
 function lookFocus(focus){
   const g = $('stylebody').querySelector(`[data-look="${focus === 'ballSet' ? 'ballSet' : 'tstyle'}"]`), b = g && (g.querySelector('[aria-checked="true"]') || g.querySelector('[role=radio]'));
@@ -540,6 +548,7 @@ export function wireLookPicker(){
     } else if(cur && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); lookChoose(cur); }
   }, true);
   window.addEventListener('keyup', e=>{ if(lookPick.open) e.stopPropagation(); }, true);
+  window.addEventListener('resize', ()=>{ if(lookPick.open) placeLookPicker(); });
   window.openLookPicker = openLookPicker;   // reachable from anywhere (the level-up card's Try it)
   renderRadio();
   $('ladder').addEventListener('click', e=>{
