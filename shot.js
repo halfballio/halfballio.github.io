@@ -4,7 +4,7 @@ import {LESSONS, tstep} from './lessons.js';
 import {finishRound, fracName, logEntry, pendCard, prepareNext, rcardHTML, sessionTick, shootRows, strokeName} from './modes.js';
 import {animateShot} from './anim.js';
 import {camFrom, draw, featherLoop, featherOff, featherRaf, featherStart, FOLLOW_THROUGH, NEAR, norm3, rigAlpha, rigCam, standUp, strokeBack, syncFocusBtn, VH, VIEWS, VW} from './view.js';
-import {bridgeLen, nearestRef, pocketSpeedFor, pocketTol, railBehind, runAfterShot, runFoul, stanceIn} from './deal.js';
+import {bridgeLen, nearestRef, pocketSpeedFor, pocketTol, railBehind, reachMax, runAfterShot, runFoul, stanceIn} from './deal.js';
 import {CARBON_AT, ctrl, ctrlAt, drillPicks, enforceLocks, ensureShootLevel, FOCUS_AT, GEN, isDrill, isLadder, isRun, isShoot, isShooting, NO_TIMER, practicing, PT_RIGHT, PT_WRONG, PTS_UP, shaftSq, SHOOT_UP, shootLevel, shootRoutine, standTime, tableUp, unlIcon, unlocksBetween} from './grades.js';
 import {cheer, playSound, showStreak, tableSounds, uiSound} from './audio.js';
 import {curStreak, look, S, saveSettings, settings, SHOOT_GRADES, stats, STREAK_HOT, tut} from './state.js';
@@ -224,7 +224,7 @@ export function shootCam(s, view){
   const stand = camAlong(s, d, VIEWS.stand), standAim = camAlong(s, aim, VIEWS.stand), down = camAlong(s, aim, VIEWS.down);
   const c = s.cam || {phase:'stand', k:0};
   const mix = (A, B, k) => camFrom(A.E.map((x, i)=>x + (B.E[i]-x)*k), norm3(A.f.map((x, i)=>x + (B.f[i]-x)*k)), A.hfov + (B.hfov - A.hfov)*k);
-  const base = c.phase === 'step' ? standOut(mix(stand, standAim, c.k)) : c.phase === 'shift' ? (c.fromCam ? mix(c.fromCam, standAim, c.k) : standOut(mix(camAlong(s, c.fromAim || d, VIEWS.stand), standAim, c.k))) : c.phase === 'down' ? bendCam(standAim, down, c.k, aim) : view === 'down' && !c.T ? camAlong(s, d, VIEWS.down) : stand;
+  const base = c.phase === 'step' ? standOut(s, mix(stand, standAim, c.k)) : c.phase === 'shift' ? (c.fromCam ? mix(c.fromCam, standAim, c.k) : standOut(s, mix(camAlong(s, c.fromAim || d, VIEWS.stand), standAim, c.k))) : c.phase === 'down' ? bendCam(standAim, down, c.k, aim) : view === 'down' && !c.T ? camAlong(s, d, VIEWS.down) : stand;
   return look.k > 0 ? mix(base, overviewCam(s), ease(look.k)) : base;
 }
 export function overviewCam(s){
@@ -276,14 +276,18 @@ export const standMin = (s, dir, p = s.cb) => outerDist(p, [-dir[0], -dir[1]]);
 // no more than about 60° below your eyes (a foot and a half or so, more for a tall player), instead of having it under your chin.
 const standRead = () => (VIEWS.stand.h - R)*0.58;
 // The slider (`back`) is how far behind that closest spot you stand: 0 is right at the rail's outer edge, every inch steps you
-// back, wherever the cue ball is. Your eyes are never inside the rail's outline.
-export const standBackFor = (s, dir, back) => Math.max(standRead(), standMin(s, dir)) + back;
+// back, wherever the cue ball is. Your eyes stay outside the rail's outline, unless the line back to it runs further than you
+// could reach the cue ball from (a shallow line along a rail can run to the far end of the table; a run's cue ball may be
+// reached from a side rail): from that far the cut flattens out and can't be read, so you lean in over the rail instead.
+// The cap is the dealer's reach from your height (reachMax) plus a stretch over the rail, measured from the cue ball.
+export const standCap = () => reachMax() + 6 + railOut();
+export const standBackFor = (s, dir, back) => Math.max(standRead(), Math.min(standMin(s, dir), standCap())) + back;
 // A standing eye blended between two lines (stepping over to your aim line) can cut across a corner of the rail: push it
-// back out along the way you're looking, to the rail's outer edge.
-function standOut(cam){
+// back out along the way you're looking, to the rail's outer edge (but no further than the cap, as standBackFor).
+function standOut(s, cam){
   const E = cam.E, o = railOut(), f = [cam.f[0], cam.f[1]], fl = len(f);
   if(!(E[0] > -o && E[0] < W + o && E[1] > -o && E[1] < H + o) || fl < 1e-6) return cam;
-  const t = outerDist(E, [-f[0]/fl, -f[1]/fl]);
+  const t = Math.min(outerDist(E, [-f[0]/fl, -f[1]/fl]), Math.max(0, standCap() + VIEWS.stand.back - len(sub([E[0], E[1]], s.cb))));
   return camFrom([E[0] - f[0]/fl*t, E[1] - f[1]/fl*t, E[2]], cam.f, cam.hfov);
 }
 function bendCam(A, B, k, dir){   // from standing (A) to down (B) on the same line: the eye pivots about your hips

@@ -1,7 +1,7 @@
 // Drawing the table: the cameras, walking round the cue ball, the cue and bridge hand, the 3D table and its arrows.
 import {renderRadio} from './ui.js';
 import {noPocket, tutAid, tutLayer, tutLook} from './lessons.js';
-import {bridgeGeom, cueStroke, ease, levelForSpeed, overviewCam, PHONE_STAND_FOVS, shootCam, shotInFrame, shotStroke, standBackFor, standMin, strokeFrac, syncUpBtn} from './shot.js';
+import {bridgeGeom, cueStroke, ease, levelForSpeed, overviewCam, PHONE_STAND_FOVS, shootCam, shotInFrame, shotStroke, standBackFor, standCap, standMin, strokeFrac, syncUpBtn} from './shot.js';
 import {CB_DOTS, cbSpin, renderRunPick, rotAxis, runPicking, stanceIn} from './deal.js';
 import {aidAlpha, isShooting, ladderBest, myShaft, shootAid, shootLevel, shootRoutine, stanceAim} from './grades.js';
 import {DEV, PERF} from './perf.js';
@@ -219,7 +219,7 @@ function walkCam(s, view){
   const el = Math.max(3*RAD, Math.min(80*RAD, el0 + (S.walk.el||0) * S.walk.blend));
   let rel = rot(mul(r0, dist*Math.cos(el)/hd), a);
   if(!(s.cam && s.cam.phase === 'down' && s.cam.k > .5)){   // walking around, you stay outside the table
-    const hr = len(rel), need = standMin(s, mul(rel, -1/hr), P);
+    const hr = len(rel), need = Math.min(standMin(s, mul(rel, -1/hr), P), standCap() + VIEWS.stand.back);   // outside the rail, up to the cap (standBackFor)
     if(hr < need) rel = mul(rel, need/hr);
   }
   const E = [P[0] + rel[0], P[1] + rel[1], R + dist*Math.sin(el)];
