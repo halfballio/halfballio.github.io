@@ -6,7 +6,7 @@ import {animateShot} from './anim.js';
 import {camFrom, draw, featherLoop, featherOff, featherRaf, featherStart, FOLLOW_THROUGH, NEAR, norm3, rigAlpha, rigCam, standUp, strokeBack, syncFocusBtn, VH, VIEWS, VW} from './view.js';
 import {bridgeLen, nearestRef, pocketSpeedFor, pocketTol, railBehind, runAfterShot, runFoul, stanceIn} from './deal.js';
 import {CARBON_AT, ctrl, ctrlAt, drillPicks, enforceLocks, ensureShootLevel, FOCUS_AT, GEN, isDrill, isLadder, isRun, isShoot, isShooting, NO_TIMER, practicing, PT_RIGHT, PT_WRONG, PTS_UP, shaftSq, SHOOT_UP, shootLevel, shootRoutine, standTime, tableUp, unlIcon, unlocksBetween} from './grades.js';
-import {cheer, playSound, showStreak, tableSounds, uiSound} from './audio.js';
+import {cheer, playSound, showStreak, uiSound} from './audio.js';
 import {curStreak, look, S, saveSettings, settings, SHOOT_GRADES, stats, STREAK_HOT, tut} from './state.js';
 import {gradeOf, SH, stepOf} from './steps.js';
 import {$, add, ALL, dot, engineTable, H, IS_PHONE, len, MISS, mul, norm, PE, POCKETS, R, RAD, rot, sub, TIP_STEP, W} from './geom.js';
@@ -601,21 +601,18 @@ export function takeShot(id){
   // The stroke: the bridge stays put and speed comes from how much of your stroke you use, from a tenth (speed 1)
   // up to the full stroke (speed 10: the tip comes back to just short of the bridge hand). Same tempo every time,
   // so a longer stroke is a faster one, and the same follow-through whatever the speed.
-  strokeThen(s, feather0, play, stroke.V);
+  strokeThen(s, feather0, play);
 }
 // the final stroke, then play: the call doesn't cut the practice stroke short: it finishes, the cue rests at the ball for a beat
 // (as long as the pause at the back), then the backswing. x0: where the practice stroke was when you called
-export function strokeThen(s, x0, play, V = strikeOf(s).V){   // V: the cue ball's speed off the tip, for the strike's sound
+export function strokeThen(s, x0, play){
   s.follow = FOLLOW_THROUGH;
   const now0 = performance.now(), TP = 180, rc = rigCam(s), fb = Math.max(.1, (rc && rc.fBack) || strokeBack(s));
   const ft = x0 < -.05 ? Math.max(120, 520*Math.abs(x0)/fb) : 0;   // the practice stroke comes forward to the ball from where it is
   const st = cueStroke = {s, x0, t1: now0, ft, t0: now0 + ft + TP, from: 0, back: strokeBack(s), tb: 420, tp: TP, tf: 220};
   const tick = now => {
     if(S.shot !== s){ cueStroke = null; return; }
-    if(now - st.t0 >= st.tb + st.tp + st.tf){ cueStroke = null; play(); return; }
-    // the strike's sound is scheduled as the forward stroke begins, so the output's latency can be taken off it (as the
-    // contact's is): scheduled at the strike itself it would land one latency late
-    if(!st.cued && now - st.t0 >= st.tb + st.tp){ st.cued = s.cued = true; tableSounds([[(st.t0 + st.tb + st.tp + st.tf - now)/1000, 'cue', Math.max(.35, Math.min(1, .3 + V/50))]], s.duck); }
+    if(now - st.t0 >= st.tb + st.tp + st.tf){ cueStroke = null; s.struck = true; play(); return; }   // struck: the shot follows a stroke (animateShot)
     draw(false); requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

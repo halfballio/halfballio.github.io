@@ -328,6 +328,7 @@ export function tableSounds(plan, vol){
     return bus;
   }catch(e){ return null; }
 }
+export function soundLead(){ if(settings.sound === '0') return 0; try{ audioCtx(); return (actx.outputLatency || actx.baseLatency || 0) + 0.015; }catch(e){ return 0; } }   // seconds the output adds, as tableSounds takes off
 export function cutSounds(bus){ if(!bus || !actx) return; try{ bus.gain.setTargetAtTime(0, actx.currentTime, 0.01); setTimeout(()=>{ try{ bus.disconnect(); }catch(e){} }, 250); }catch(e){} }
 const SPEED_VOL = {slow:.7, medium:1, firm:1.25};
 // the sounds of a shot: two only, the contact and then what the object ball does (pocket, jaw or rail)

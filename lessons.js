@@ -350,7 +350,7 @@ function tutCoachPlay(live, done){
     strokeThen(s, x0, ()=>{ if(S.shot !== s || !tut.on) return;
       animateShot({made: pl.run.made}, ()=>{ draw(true); tutBend('up', 600); if(done) done(); }, pl.run.made ? '#ffd34d' : MISS, pl.run);
       const up = rigHitMs(s, pl.run, pl.dir); if(isFinite(up)) setTimeout(()=>{ if(S.shot === s && s.cam && s.cam.k > 0) tutBend('up', 450); }, up);
-    }, pl.V);
+    });
   }, 1900); }));
 }
 // A lesson shot called wrong: the step stays. Your shot plays out, the note says what it was, then the right one is played
@@ -522,7 +522,7 @@ function tutTry(id){
     if(S.shot !== s || !tut.on) return;
     animateShot({made: run.made}, ()=>{ draw(true); tutBend('up', 600); if(!good) tutShowRight(st, right); }, ok && run.made ? '#ffd34d' : MISS, run);
     const up = rigHitMs(s, run, dir); if(isFinite(up)) setTimeout(()=>{ if(S.shot === s && s.cam && s.cam.k > 0) tutBend('up', 450); }, up);   // out of a ball's way
-  }, stroke.V);
+  });
 }
 export function tutAnswer(id){
   const st = tstep();
