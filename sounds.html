@@ -488,6 +488,10 @@ const CUR = (()=>{
       [[0,0,.15],[.13,4,.15],[.26,7,.15],[.39,12,.34],[.78,7,.15],[.93,12,1.5],[.93,16,1.5],[.93,19,1.5]]
         .forEach(([t,n,d])=>tone(o, semis(C,n), t, d, n > 12 ? 0.55 : 0.9));
     }
+    else if(kind === 'leveldown'){
+      const o = audioOut(0.2);
+      [[0,7,.22],[.2,3,.22],[.4,0,.7]].forEach(([t,n,d])=>tone(o, semis(392,n), t, d, 0.8));
+    }
     else if(kind === 'streakEnd'){
       const o = audioOut(0.22);
       [12, 7, 3, 0].forEach((n,i)=>tone(o, semis(440, n), i*0.09, i===3 ? 0.55 : 0.22, 0.85, i===3 ? semis(440,-2) : 0));
@@ -680,6 +684,10 @@ const NEW = (()=>{
       mallet(o, t0 + 0.44, semis(C, 7), 0.22, 2.2);
       padSwell(o, t0 + 0.2, [130.81, 196, 329.63, 493.88, 587.33], 3.2, 0.05);
     }
+    else if(kind === 'leveldown'){
+      const o = fbOut(0.45), t0 = c.currentTime + 0.01;
+      [[0, 587.33], [0.16, 440], [0.32, 349.23]].forEach(([dt, f], i)=>mallet(o, t0 + dt, f, 0.3, i === 2 ? 1.3 : 0.7, true));
+    }
   }
 
   // ---------- buttons: quiet, dry ticks ----------
@@ -734,6 +742,7 @@ const ROWS = {
     {name: 'Streak', note: 'Each right call from six in a row. It rises as the streak grows.', streak: true, play: S=>S.playSound('streak', streakN)},
     {name: 'Streak over', note: 'A streak of six or more ends.', play: S=>S.playSound('streakEnd')},
     {name: 'Grade up', note: 'You move up a grade.', play: S=>S.playSound('levelup')},
+    {name: 'Grade down', note: 'You drop a grade.', play: S=>S.playSound('leveldown')},
   ],
   ui: [
     {name: 'Button', note: 'Any ordinary button.', play: S=>S.uiSound('tap')},

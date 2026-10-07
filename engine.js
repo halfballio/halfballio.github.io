@@ -305,6 +305,6 @@ function collide(dir, vc, spin, n){
   return {obDir: v2.norm(b.v), obSpeed: v2.len(b.v), cbV: a.v, cbW: a.w, obW: b.w};
 }
 
-const api = {G, C, SQUIRT, SHAFTS, makeTable, simulate, strike, arrive, strikeFor, collide, matRot, I3};
+const api = {R, G, C, SQUIRT, SHAFTS, makeTable, simulate, strike, arrive, strikeFor, collide, matRot, I3, muBall};
 if(typeof module !== 'undefined' && module.exports) module.exports = api; else root.PoolEngine = api;
 })(typeof window !== 'undefined' ? window : this);
