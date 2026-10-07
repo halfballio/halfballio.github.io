@@ -3739,7 +3739,7 @@ const BALL_SETS = {
              rough:.07, clear:1, shine:[34, 29, 34, .9, .3], numFont:NUM_SANS, numWeight:600, numScale:1.08, spot:1.1, ring:0, stripeW:.38},   // clear-coated: a small, bright highlight and bigger numbers
   retro:    {white:'#ece0c4', c:{1:'#d9a92a', 2:'#2b4a8a', 3:'#b03a2e', 4:'#5a3a7a', 5:'#cf6f2a', 6:'#2f6b45', 7:'#6e2a24'},   // older, softer colours on ivory
              rough:.46, clear:0, shine:[38, 36, 66, .3, 0], numFont:'Georgia, "Times New Roman", serif', numWeight:700, numScale:.9, spot:1, ring:1, stripeW:.44},   // satin: a soft, broad sheen; serif numbers in a thin ring; wider stripes
-  disco:    {white:'#f4efe0', rough:.06, clear:1, holo:1, shine:[34, 29, 34, .9, .3], numFont:NUM_SANS, numWeight:600, numScale:1, spot:1.06, ring:0, stripeW:.38},   // hidden (the disco cheat): the Standard colours under a rainbow sheen that shifts as you move
+  disco:    {white:'#f4efe0', rough:.06, clear:1, holo:1, shine:[34, 29, 34, .9, .3], numFont:NUM_SANS, numWeight:600, numScale:1, spot:1.06, ring:0, stripeW:.38},   // hidden (the Disco Stu easter egg): the Standard colours under a rainbow sheen that shifts as you move
   blackout: {white:'#24262a', rough:.18, clear:0, shine:[35, 32, 45, .55, 0], numFont:NUM_COND, numWeight:700, numScale:1, spot:1, ring:0, stripeW:.38},   // a very dark grey, not pure black, so the shading still reads as a ball; stripes on black instead of white
 };
 for(const k in BALL_SETS) BALL_SETS[k].key = k;
@@ -6456,25 +6456,25 @@ const NAMED = {
     }},
 };
 const namedOf = name => NAMED[nameKey(name)] || null;
-const isTestPlayer = name => !!(namedOf(name) || {}).skips;
-function testPlayerSkips(){   // the first-run steps marked done (before the first deal, so no lesson starts)
-  if(!isTestPlayer(ME.name)) return false;
+const isEasterEgg = name => !!(namedOf(name) || {}).skips;
+function easterEggSkips(){   // the first-run steps marked done (before the first deal, so no lesson starts)
+  if(!isEasterEgg(ME.name)) return false;
   settings.stanceSet = 1; settings.tourSeen = 1; settings.tut = 1;
   settings.tutSeen = Object.fromEntries(Object.keys(LESSONS).map(k=>[k, 1]));
   settings.notesSeen = Math.max(+settings.notesSeen || 0, notesTop);
   saveSettings(); return true;
 }
-function renderTestMark(){
+function renderEasterEggMark(){
   const n = namedOf(ME.name);
   Object.values(NAMED).forEach(c=>{ const t = $(c.tag); if(t) t.hidden = c !== n; });
   if(n) $('plchip').setAttribute('aria-label', `${ME.name}, ${n.label}: switch player`); else $('plchip').removeAttribute('aria-label');
 }
-function testPlayerCheck(){
-  renderTestMark();
+function easterEggCheck(){
+  renderEasterEggMark();
   const n = namedOf(ME.name);
   if(!n) return;
   if(n.skips){
-    testPlayerSkips();
+    easterEggSkips();
     if(tour.on){ tour.first = false; endTour(); }   // renamed mid-way through the first run: off the tour, the stance card or a lesson
     if(!$('stancecover').hidden){ $('stancecover').hidden = true; if(shot) shot.bare = false; }
     if(callLock) lockCalls(false);
@@ -6687,7 +6687,7 @@ $('plmenu').addEventListener('click', e=>{
   e.stopPropagation(); const b = e.target.closest('button'); if(!b) return; plOpen(false);
   if(b.dataset.pl){ if(b.dataset.pl !== ME.id) playAs(b.dataset.pl); return; }
   if(b.dataset.plact === 'backup'){ openBackup($('plchip')); return; }
-  if(b.dataset.plact === 'rename') ask({title: 'Rename player', value: ME.name, label: 'Player name', ok: 'Rename', from: $('plchip')}).then(r=>{ const v = (r || '').slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); testPlayerCheck(); } });
+  if(b.dataset.plact === 'rename') ask({title: 'Rename player', value: ME.name, label: 'Player name', ok: 'Rename', from: $('plchip')}).then(r=>{ const v = (r || '').slice(0, 16), p = PL.list.find(q=>q.id === ME.id); if(v && p){ p.name = ME.name = v; savePL(); renderPlMenu(); easterEggCheck(); } });
   else { showPlayers(); if(b.dataset.plact === 'new') $('plname').focus({preventScroll: true}); }
 });
 document.addEventListener('click', ()=>{ if(!$('plmenu').hidden) plOpen(false); });
@@ -7163,7 +7163,7 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   run: {state: ()=>RUN, newRack: ()=>{ newRack(); return RUN; }, pick: runPick, picks: runPicks, setRun, stage: ()=>runStage(), tapBall: runTapBall, tapPocket: runTapPocket, quit: runQuit, right: ()=>rightIdFor(shot), after: runAfterShot, look: ()=>({k: look.k, target: look.target}), walk: ()=>walk, shotAt: (cb, b, Pi, others)=>runShot(cb, b, POCKETS[Pi], others), rig: (s, view)=>{ s.cam = {phase: 'down', k: 1, T: 1, downAt: performance.now()}; const cam = shootCam(s, view || 'down'), u = bridgeAim(s), st = shotStroke(s); return {E: cam.E, f: cam.f, u, tip: st.tip, bg: bridgeGeom(s, u, st.tip[1]), svg: cueRig(cam, s)}; }, done: runPlanDone, undo: runUndoPlan, change: runChange, back: runChangeBack, check: runCallCheck, allowed: ()=>runAllowed(RUN.balls), target: ()=>runTarget(), shot: ()=>shot, answered: ()=>answered, deal: ()=>{ deal(); return shot; }, take: id=>{ takeShot(id); return shot; }, finish: ()=>{ if(anim) finishAnim(); return !cueStroke && !anim; }, settings, stats, applySetting, runFoul},
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
   camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ VH = h; }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), confetti: (n, f)=>confetti($('hlogo'), n, f), cheerLive: ()=>!!cheerFx || !!cheerQ};
-if(!TEST) testPlayerSkips();   // the Efren Reyes player: no stance card, tour, lessons or What's new card (defaults stand)
+if(!TEST) easterEggSkips();   // the Efren Reyes easter egg: no stance card, tour, lessons or What's new card (defaults stand)
 if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
 deal();
 if(!$('stancecover').hidden && shot){ shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
@@ -7242,7 +7242,7 @@ window.addEventListener('keydown', e=>{   // while it's up, keys stay in the car
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !anim && !cueStroke && shot && !answered && !shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (shot.t0 || 0) > 1200
   && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'flashsheet', 'runsheet', 'plmenu', 'cover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
-if(!TEST) testPlayerCheck();   // a special player (a new one, or one renamed on an earlier visit)
+if(!TEST) easterEggCheck();   // a special player (a new one, or one renamed on an earlier visit)
 if(!TEST){
   wnSync();
   if(wnUnseen().length) wnPoll = setInterval(()=>{ if(wnCalm()) openWhatsNew(true); }, 1000);
