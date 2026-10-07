@@ -1,7 +1,9 @@
 // The ladder: grades and skill steps, what each one opens, the adaptive lean on weak spots, and what you control at each step.
-import {applySetting, LOOK_AT, LOOK_NAME, openDrill, openLookPicker, openMenu, runPicks, tutAid} from './main.js';
+import {applySetting, LOOK_AT, LOOK_NAME, openDrill, openLookPicker, openMenu, tutAid} from './main.js';
+import {runPicks} from './deal.js';
 import {DEV} from './perf.js';
 import {saveSettings, sessTask, settings, SHOOT_GRADES, SHOOT_V, stats, success, taskOf, tut} from './state.js';
+import {gradeOf, SH, stepOf} from './steps.js';
 import {IS_PHONE, kt, PE} from './geom.js';
 // ---------- grades & adaptive dealing ----------
 // Every shot on the ladder moves you toward the next grade (+1 right, -2 wrong: break-even is 2 in 3); ten up levels you up.
@@ -37,17 +39,6 @@ export const fastFlashLocked = () => ladderBest() < FAST_FLASH_GRADE;
 export function enforceLocks(){
   if(fastFlashLocked() && settings.flash==='750'){ settings.flash = '1500'; saveSettings(); }
 }
-// ==================== the Shoot half ====================
-// Halfball: the Shoot half. You aim and strike the cue ball yourself; the engine plays it out.
-
-// ---------- the Shoot ladder ----------
-// The skill steps. Their ids key the shot library (shots.bin's sections, LIB_STEPS) and every 'from this step on' check, so
-// they never change: id 5 (once 'your aim line') is retired and no grade plays it. Grades map onto steps through GRADE_STEP.
-export const SH = {noPath:1, noLine:2, noGhost:3, down:4, any:6, speed:7, throw:8, follow:9, stun:10, draw:11, cushion:12, english:13, all:14, full:15};
-// grade index (SHOOT_GRADES, stats.shoot.g) → the step it plays
-export const GRADE_STEP = [0, SH.noPath, SH.noLine, SH.noGhost, SH.down, SH.any, SH.speed, SH.throw, SH.follow, SH.stun, SH.draw, SH.cushion, SH.english, SH.all];
-export const stepOf = g => GRADE_STEP[Math.min(Math.max(0, g | 0), GRADE_STEP.length - 1)];
-export const gradeOf = st => { const i = GRADE_STEP.findIndex(x=>x >= st); return i < 0 ? GRADE_STEP.length - 1 : i; };   // the first grade at or past a step
 export const stepGrade = st => SHOOT_GRADES[gradeOf(st)];   // the letter that brings a step ('Unlocks at …')
 // Short names for the ladder, by grade (the lessons explain each step)
 export const SHOOT_TEXT = [

@@ -86,7 +86,13 @@ export function f2(n){return n.toFixed(2);}
 export const IS_PHONE = (()=>{ try{ return matchMedia('(hover: none) and (pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600; }catch(e){ return false; } })();
 
 export const PHONE_MAX_D = 42;   // short and long evenly: long shots aren't harder here (no cueing), so distance only comes in as a weak spot
-
+// The tip moves in half-tip steps: half a 12.5 mm tip is 6.25 mm, about 0.22 of the ball's radius. Two steps (a full tip)
+// each way, and never past half the radius from the centre (the usual miscue limit).
+// The tip, as a pool player says it: how many pips out from centre (a pip is half a 12.5 mm tip, 6.25 mm), and where
+// on the clock face of the cue ball (12 at the top, 3 to the right, 6 at the bottom). 1 pip at each hour, 2 pips at each
+// half hour (1:30 between 1 and 2). 2 pips is a full tip: inside the usual miscue limit of half the radius.
+// Before side spin is yours, only 12 (top) and 6 (bottom), as far as you've unlocked them.
+export const TIP_STEP = 6.25/28.575;
 // ---------- physics: the engine (engine.js) plays every shot ----------
 export const PE = window.PoolEngine;
 let TBL = null;

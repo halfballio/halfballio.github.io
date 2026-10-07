@@ -1,5 +1,5 @@
 // The build number and the release notes (the What's new card). The pre-commit hook bumps BUILD here.
-const BUILD = 526;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 527;   // one per commit to main (shown on the title screen and under the table)
 export const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 export const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 
