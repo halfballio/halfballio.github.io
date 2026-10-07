@@ -59,7 +59,7 @@ function showRightShot(){
         featherStart(c); const t0 = performance.now();
         const loop = now => { if(!live()) return; draw(true);
           if(now - t0 < 2000) return requestAnimationFrame(loop);   // about a stroke and a bit
-          const x0 = rigAlpha(s).push || 0; rp.feather = false; c.downAt = null; strokeThen(s, x0, play); };
+          const x0 = rigAlpha(s).push || 0; rp.feather = false; c.downAt = null; strokeThen(s, x0, play, st.V); };
         requestAnimationFrame(loop);
       });
     });
@@ -89,13 +89,13 @@ export function animateShot(oc, done, obCol, pre, rightPre){   // rightPre: the 
   const lastT = P => P[P.length-1].t;
   const total = Math.max(lastT(Pc), lastT(Po), isRight ? 0 : lastT(Pr), ...(s.extra || []).map(x=>sim.paths[x.id] ? lastT(sim.paths[x.id]) : 0))*1000 + 280;   // short hold so you see where the balls stopped
   // sounds, from the engine's events: the hit, cushions and jaws (softer the gentler; a rattle's rapid touches count once), pockets
-  // After a stroke the picture and the sounds start together at the strike. Standing (no stroke) the shot starts on the
+  // After a stroke the strike has sounded already (strokeThen) and the picture starts at once. Standing (no stroke) the shot starts on the
   // call, and a sound can't be made any earlier than that: so the picture waits out the output's latency instead, and
   // the sounds are scheduled that much later too, taking it off again (tableSounds) so they land with the picture.
-  const wait = s.struck ? 0 : soundLead(); s.struck = false;
+  const struck = !!s.struck, wait = struck ? 0 : soundLead(); s.struck = false;
   const plan = [], lastAt = {};
   const v0 = Pc.length > 1 ? len(sub(Pc[1].p, Pc[0].p))/Math.max(1e-6, Pc[1].t - Pc[0].t) : 20;
-  plan.push([wait, 'cue', Math.max(.35, Math.min(1, .3 + v0/50))]);   // the cue strikes the cue ball, firmer for a harder shot
+  if(!struck) plan.push([wait, 'cue', Math.max(.35, Math.min(1, .3 + v0/50))]);   // the cue strikes the cue ball, firmer for a harder shot
   for(const e of sim.events){
     const kind = e.type === 'ball' ? 'click' : e.type === 'pocket' ? 'drop' : e.type === 'jaw' ? 'jaw' : 'rail';
     if(kind !== 'drop' && e.speed < 3) continue;
