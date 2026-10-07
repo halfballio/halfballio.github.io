@@ -59,7 +59,7 @@ function showRightShot(){
         featherStart(c); const t0 = performance.now();
         const loop = now => { if(!live()) return; draw(true);
           if(now - t0 < 2000) return requestAnimationFrame(loop);   // about a stroke and a bit
-          const x0 = rigAlpha(s).push || 0; rp.feather = false; c.downAt = null; strokeThen(s, x0, play); };
+          const x0 = rigAlpha(s).push || 0; rp.feather = false; c.downAt = null; strokeThen(s, x0, play, st.V); };
         requestAnimationFrame(loop);
       });
     });
@@ -91,7 +91,8 @@ export function animateShot(oc, done, obCol, pre, rightPre){   // rightPre: the 
   // sounds, from the engine's events: the hit, cushions and jaws (softer the gentler; a rattle's rapid touches count once), pockets
   const plan = [], lastAt = {};
   const v0 = Pc.length > 1 ? len(sub(Pc[1].p, Pc[0].p))/Math.max(1e-6, Pc[1].t - Pc[0].t) : 20;
-  plan.push([0, 'cue', Math.max(.35, Math.min(1, .3 + v0/50))]);   // the cue strikes the cue ball, firmer for a harder shot
+  if(s.cued) s.cued = false;   // the strike already sounded, from the stroke (strokeThen)
+  else plan.push([0, 'cue', Math.max(.35, Math.min(1, .3 + v0/50))]);   // the cue strikes the cue ball, firmer for a harder shot
   for(const e of sim.events){
     const kind = e.type === 'ball' ? 'click' : e.type === 'pocket' ? 'drop' : e.type === 'jaw' ? 'jaw' : 'rail';
     if(kind !== 'drop' && e.speed < 3) continue;
