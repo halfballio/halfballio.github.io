@@ -98,7 +98,7 @@ window.addEventListener('unhandledrejection', e => { if(errorsSent++ < 3) track(
       <div class="menuhead"><span>Help</span><button class="menuclose" id="tutmenuclose" aria-label="Close">✕</button></div>
       <div class="tutlist"><button id="keysopen" class="kbd-only">Keyboard shortcuts<small>?</small></button><button id="tourreplay">App tour<small>How Halfball works</small></button></div>
       <div class="tutlist" id="tutlist"></div>
-      <p class="privnote"><b>Privacy</b> To improve Halfball, we count visits and how the game is played (time played, shots, grades reached, where lessons are left) anonymously: no cookies, no account, nothing that identifies you. It’s used for improving the game only, never sold or shared. Your players and stats stay on this device.</p>
+      <div class="tutlist"><button id="aboutopen">About<small>Privacy · contact</small></button></div>
     </div>
   </div>
   <div class="tour" id="tour" hidden>   <!-- the app tour: once for a new player, again from the ? menu -->
@@ -373,6 +373,13 @@ window.addEventListener('unhandledrejection', e => { if(errorsSent++ < 3) track(
     <div class="wnhead"><small id="wnkick"></small><h2 id="wntitle">What’s new</h2></div>
     <div class="wnbody" id="wnbody" tabindex="-1"></div>
     <div class="wnfoot"><button class="startbtn" id="wnok">Got it</button></div>
+  </div>
+</div>
+<div class="menu wnmenu" id="about" hidden>   <!-- About: what Halfball is, privacy, the build and how to reach us; from the ? menu -->
+  <div class="menucard wncard" role="dialog" aria-modal="true" aria-labelledby="abouttitle">
+    <div class="wnhead"><small>Halfball</small><h2 id="abouttitle">About</h2></div>
+    <div class="wnbody" id="aboutbody" tabindex="-1"></div>
+    <div class="wnfoot"><button class="startbtn" id="aboutok">Close</button></div>
   </div>
 </div>
 <div class="menu lvupmenu" id="lvup" hidden>   <!-- Level up to a new grade: its focus, then one row per unlock; stays until Continue -->

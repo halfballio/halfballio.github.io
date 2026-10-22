@@ -173,7 +173,6 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .stancecard .stcolor input{width:48px;height:32px;padding:2px;border:1px solid rgba(242,234,216,.3);border-radius:var(--r-sm);background:none;cursor:pointer}
 .tutlist{display:flex;flex-direction:column;gap:8px}
 .tutlist button{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:48px;text-align:left;font:600 15px var(--body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:border-color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
-.privnote{margin:14px 2px 0;font-size:12px;line-height:1.45;color:var(--muted)}.privnote b{color:var(--ink);font-weight:600;margin-right:4px}
 .tutlist button:hover{border-color:var(--line-strong);background:var(--surface)}
 .tutlist button small{color:var(--muted);font-weight:500}
 .aids{display:flex;flex-direction:column;gap:4px}
@@ -739,6 +738,7 @@ html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .wnentry h3{margin:6px 0 4px;font:600 16px/1.3 var(--body);color:var(--ink)}
 .wnentry ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.45;color:var(--ink)}
 .wnentry li{margin:3px 0}.wnentry li::marker{color:var(--gold-text)}
+.wnentry p{margin:0;font-size:14.5px;line-height:1.5;color:var(--ink)}.wnentry p+p{margin-top:8px}.wnentry a{color:var(--gold-text)}
 .wnmore{display:block;width:100%;min-height:44px;margin:4px 0 10px;background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:var(--r);font:600 14px var(--body);color:var(--muted);cursor:pointer}
 .wnmore:hover{color:var(--ink);border-color:var(--muted)}
 .wnfoot{display:flex;justify-content:flex-end;padding:12px 20px 16px;border-top:1px solid var(--line);background:var(--surface)}

@@ -784,6 +784,38 @@ export function wireWhatsNew(){
   // the one-time card waits for a calm moment: a shot on the table, untouched for a moment, with nothing else up
   // (not the first-run stance card or tour, a lesson, a menu or cover, a shot rolling, or a Flash run)
   ['pointerdown', 'keydown', 'wheel'].forEach(t=>window.addEventListener(t, ()=>{ wnInput = performance.now(); }, {capture: true, passive: true}));
+  // About, from the ? menu: closed like What's new (Close, a tap outside, Esc), with the keys kept in the card
+  $('aboutopen').addEventListener('click', e=>{ e.stopPropagation(); openTutMenu(false); openAbout(); });
+  $('aboutok').addEventListener('click', e=>{ e.stopPropagation(); closeAbout(); });
+  ['click', 'pointerdown'].forEach(t=>$('about').addEventListener(t, e=>{ e.stopPropagation(); if(t === 'click' && e.target === $('about')) closeAbout(); }));
+  window.addEventListener('keydown', e=>{
+    if($('about').hidden) return;
+    e.stopPropagation();
+    if(e.key === 'Escape'){ e.preventDefault(); closeAbout(); return; }
+    if(e.key === 'Tab'){
+      const f = [...$('about').querySelectorAll('a, button')], i = f.indexOf(document.activeElement);
+      if(f.length){ e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus(); }
+    }
+  }, true);
+}
+// About: what Halfball is, what's counted and why, the build and how to reach us
+let aboutFrom = null;
+function openAbout(){
+  $('aboutbody').innerHTML = [
+    ['Halfball', '<p>A billiards aim trainer: read the cut, call the fraction, and shoot it. Free, with no ads and no account.</p>'],
+    ['Privacy', '<p>To improve Halfball, we count visits and how the game is played: time played, shots, grades reached, and where lessons are left. It’s anonymous: no cookies, no account, nothing that identifies you.</p>'
+      + '<p>It’s used only to make the game better, never sold or shared. Your players and stats stay on this device.</p>'],
+    ['Contact', `<p><a href="mailto:${CONTACT}">${CONTACT}</a></p><p>Build ${VERSION} · <a href="${SOURCE}" target="_blank" rel="noopener">Source code</a></p>`],
+  ].map(([h, body])=>`<section class="wnentry"><h3>${h}</h3>${body}</section>`).join('');
+  aboutFrom = document.activeElement;
+  $('about').hidden = false; $('aboutbody').scrollTop = 0;
+  $('aboutok').focus({preventScroll: true});
+}
+function closeAbout(){
+  if($('about').hidden) return;
+  $('about').hidden = true;
+  const f = aboutFrom && aboutFrom.isConnected && aboutFrom !== document.body ? aboutFrom : $('help'); aboutFrom = null;
+  try{ f.focus({preventScroll: true}); }catch(e){}
 }
 function wnEntry(e, isNew){
   return `<section class="wnentry"><div class="wnmeta"><span>${wnVer(e)}</span>${isNew ? '<span class="wnpill">New</span>' : ''}</div>`
@@ -821,7 +853,7 @@ function closeWhatsNew(){
 }
 const wnCalm = () => !document.hidden && !tour.on && !tut.on && !callLock && !S.anim && !cueStroke && S.shot && !S.answered && !S.shot.bare
   && settings.task !== 'flash' && performance.now() - wnInput > 1500 && performance.now() - (S.shot.t0 || 0) > 1200
-  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'flashsheet', 'runsheet', 'plmenu', 'cover', 'startcover', 'ask', 'keys'].every(id=>!$(id) || $(id).hidden);
+  && ['playercover', 'stancecover', 'menu', 'stylemenu', 'bk', 'tutmenu', 'prog', 'lvup', 'drill', 'flashsheet', 'runsheet', 'plmenu', 'cover', 'startcover', 'ask', 'keys', 'about'].every(id=>!$(id) || $(id).hidden);
 export function startWhatsNew(){
   if(!TEST){
     wnSync();
