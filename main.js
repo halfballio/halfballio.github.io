@@ -146,9 +146,10 @@ wireWhatsNew();
 const gradeNow = () => SHOOT_GRADES[(ensureShootLevel() || {}).g];
 let shownAt = document.hidden ? 0 : Date.now(), gradeAt = gradeNow();
 document.addEventListener('visibilitychange', ()=>{
-  if(!document.hidden){ shownAt = Date.now(); gradeAt = gradeNow(); played.n = played.right = played.made = 0; return; }
-  const min = shownAt ? (Date.now() - shownAt)/60000 : 0; shownAt = 0;
-  if(min >= 0.25) track('session_end', {minutes: Math.round(min*10)/10, task: settings.task, shots: played.n, right: played.right, pocketed: played.made, from: gradeAt, grade: gradeNow()});
+  if(!document.hidden){ shownAt = Date.now(); gradeAt = gradeNow(); played.n = played.right = played.made = 0; played.by = {}; return; }
+  const min = shownAt ? (Date.now() - shownAt)/60000 : 0, by = played.by; shownAt = 0;
+  if(min >= 0.25) track('session_end', {minutes: Math.round(min*10)/10, task: settings.task, shots: played.n, right: played.right, pocketed: played.made, from: gradeAt, grade: gradeNow(),
+    ladder: by.shoot || 0, flash: by.flash || 0, practice: by.practice || 0, runouts: by.run || 0});   // shots in each mode
 });
 if(!TEST) easterEggCheck();   // a special player (a new one, or one renamed on an earlier visit)
 startWhatsNew();
