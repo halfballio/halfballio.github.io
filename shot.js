@@ -491,8 +491,13 @@ export function rigHitMs(s, run, dir){
   }
   return isFinite(first) ? Math.max(0, first*1000 - 350) : Infinity;
 }
-// pocket speed: the softest of your four strokes that gets the object ball to the pocket
-const pocketLevel = s => COARSE.find(l=>STROKE_MPH[l]*MPH >= strikeOf(s).V) || COARSE[COARSE.length - 1];
+// pocket speed: the softest of your four strokes with which the right call drops clean,
+// played out on the right call's line, not worked out: the strike that arrives at POCKET_ARRIVE is a firm pocket speed, and
+// a softer stroke often still drops. None does: the softest that gets there by that reckoning.
+function pocketLevel(s, sq){
+  const tip = shotStroke(s).tip, drops = l => { const st = {V: STROKE_MPH[l]*MPH, tip}, r = playAim(s, rightDir(s, st, sq), st, false, sq); return r.made && !r.scratch; };
+  return COARSE.find(drops) ?? (COARSE.find(l=>STROKE_MPH[l]*MPH >= strikeOf(s).V) || COARSE[COARSE.length - 1]);
+}
 // The right stroke for a shot, the one the result card names and "Replay the right shot" plays, with the right call's aim.
 // Yours, if the right call with it drops clean (and lands in the zone, with the zone's tip); otherwise the zone's own stroke,
 // or with no zone the softest from pocket speed up that drops clean. If none does, pocket speed or harder stands (yours if it's
@@ -506,7 +511,7 @@ export function rightStroke(s, sq){
 function rightStroke0(s, sq){
   const z = s.zone, c = ctrl(), tip = z ? z.tip : shotStroke(s).tip;
   if(!c.speed){ const st = z ? {V: STROKE_MPH[z.lvl]*MPH, tip} : shotStroke(s); return {st, lvl: null, mineOk: true}; }
-  const mine = nearestCoarse(speedLevel()), pl = pocketLevel(s), at = l => ({V: STROKE_MPH[l]*MPH, tip});
+  const mine = nearestCoarse(speedLevel()), pl = pocketLevel(s, sq), at = l => ({V: STROKE_MPH[l]*MPH, tip});
   const clean = l => { const st = at(l), r = playAim(s, rightDir(s, st, sq), st, false, sq); return r.made && !r.scratch && (!z || r.inZone); };   // on the line the right call plays
   const cands = z ? [...(z.lvls || []).includes(mine) ? [mine] : [], z.lvl] : [...mine >= pl ? [mine] : [], ...COARSE.filter(l=>l >= pl && l !== mine)];
   let lvl = cands.find(clean);
@@ -539,7 +544,7 @@ export function takeShot(id){
   // full marks: the right call, it drops clean, and in the zone if there is one. Harder than pocket speed is fine if it drops clean.
   // The right call that misses the zone is a partial: no points either way.
   const clean = run.made && !run.scratch && !foul;
-  const pocketLvl = pocketLevel(s);   // pocket speed: the softest stroke that gets it there
+  const pocketLvl = pocketLevel(s, sq);   // pocket speed: the softest stroke that drops it
   const speedOk = !ctrl().speed || !!s.zone || nearestCoarse(speedLevel()) >= pocketLvl;   // pocket speed or harder
   const rs = s.rightStroke = rightStroke(s, sq);   // the shot the card names and the replay plays (call, stroke, tip): one answer for all
   const ideal = ALL.find(r=>r.id === rs.id) || right, isIdeal = picked.id === ideal.id;   // your call against the right shot's; ok: against your own stroke and spin's
