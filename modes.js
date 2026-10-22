@@ -206,7 +206,7 @@ export function finishRound(){
 export const played = {n: 0, right: 0, made: 0};   // every shot since the visitor counts last heard, in any mode (main.js sends and clears it)
 export function countPlayed(ok, made){
   played.n++; if(ok) played.right++; if(made) played.made++;
-  const all = (stats.log || []).length; if(all === 1 || all === 10) track('shots_' + all);   // a new player's first shot, and their tenth
+  const all = (stats.log || []).length; if([1, 10, 50, 100, 500, 1000].includes(all)) track('shots_' + all);   // milestones, each passed once (the log keeps 3000)
 }
 // one wrong call in four, for the visitor counts: which fraction (and stroke) gets called for which, by cut and distance
 export function trackMiss(d){ if(Math.random() < .25) track('miss', {...d, grade: SHOOT_GRADES[(ensureShootLevel() || {}).g], task: settings.task}); }
