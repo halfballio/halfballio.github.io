@@ -1,5 +1,5 @@
 // The build number and the release notes (the What's new card). The pre-commit hook bumps BUILD here.
-const BUILD = 543;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 544;   // one per commit to main (shown on the title screen and under the table)
 export const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 export const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 
@@ -11,9 +11,10 @@ export const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/m
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 export const WHATS_NEW = [
-  {build: 543, date: '2026-10-22', title: 'Any angle', items: [
+  {build: 544, date: '2026-10-22', title: 'Any angle', items: [
     'Call the right fraction and the shot is played on that fraction’s line whenever it still drops, cheating the pocket if it has to.',
     'When the fraction alone wouldn’t drop it, the card says whether the shot needed a bit thinner or thicker.',
+    'Your stroke is judged on the line you played: pocket speed that drops is no longer marked wrong.',
   ]},
   {build: 540, date: '2026-10-07', title: 'Fixes', items: [
     'Reading a shot, you never stand further back than you could reach the cue ball from: a shallow line along a rail no longer puts you at the far end of the table.',

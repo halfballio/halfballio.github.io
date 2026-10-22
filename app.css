@@ -411,8 +411,6 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
 .rr small{font:600 11px/1 var(--body);letter-spacing:.07em;text-transform:uppercase}
 .rr .rrv{color:var(--good);font-weight:600}
 .rr.rnote{white-space:normal}
-.rcap{margin:-4px 0 8px;font-size:13px;line-height:18px;color:var(--ink)}
-.rcap small{font:600 11px/1 var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--gold-text);margin-right:4px}
 .rdash{display:inline-block;width:28px;height:6px;border-radius:3px;background:var(--chip);vertical-align:middle}
 .rcard:not(.pend) .rverd,.rcard:not(.pend) .rval{animation:rin var(--t) var(--ease) both}
 @keyframes rin{from{opacity:0}to{opacity:1}}
@@ -428,7 +426,6 @@ html.kbd .ctlrow .ckeys{display:flex}html.touch .ctlrow .ckeys{display:none}html
   .rrow.wide{grid-column:1/-1}
   .rk{flex:none;width:4.6em;font-size:10.5px;line-height:19px}
   .rval{gap:0 8px;min-height:19px}
-  .rcap{margin:0 0 3px;font-size:12.5px}
   .rr small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}   /* the arrow and the green say it; "right" stays for screen readers */
 }
 .opt{display:flex;align-items:center;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}

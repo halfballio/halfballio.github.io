@@ -1,6 +1,6 @@
 // The shot animation, and the right shot replayed after a miss.
 import {draw, featherStart, FOLLOW_THROUGH, rigAlpha, standUp} from './view.js';
-import {aimFor, cueStroke, downMs, ease, obHit, outcome, playAim, renderShootControls, rigHitMs, rightStroke, shootCam, strokeThen} from './shot.js';
+import {cueStroke, downMs, ease, obHit, outcome, playAim, renderShootControls, rigHitMs, rightDir, rightStroke, shootCam, strokeThen} from './shot.js';
 import {shaftSq, shootLevel} from './grades.js';
 import {cutSounds, soundLead, tableSounds} from './audio.js';
 import {S, settings} from './state.js';
@@ -13,7 +13,7 @@ function railVol(vn){ return Math.max(.2, Math.min(1, vn/40)); }
 function showRightShot(){
   const s = S.shot; if(!s || !S.answered || S.anim || cueStroke || s.replay) return;
   const z = s.zone;
-  const sq = shaftSq(), rs = s.rightStroke || rightStroke(s, sq), st = rs.st, dir = aimFor(s, st, sq), run = playAim(s, dir, st, true, sq);   // the shot the card named
+  const sq = shaftSq(), rs = s.rightStroke || rightStroke(s, sq), st = rs.st, dir = rightDir(s, st, sq), run = playAim(s, dir, st, true, sq);   // the shot the card named
   // From where you are, into the right shot: you come up off your shot (if you're still down), the balls fade out where they
   // stopped and back in where they started while you step over behind the right line, then you get down on it, a couple of
   // practice strokes, and the stroke. Played like any shot: you come up out of the way as the balls come back at your cue.

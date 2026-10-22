@@ -167,6 +167,11 @@ export function fracDrops(s, r, stroke, sq){
   const d = dirForCut(s, r.deg), p = playAim(s, d, stroke, false, sq);
   return p.made && !p.scratch ? d : null;
 }
+// the line the right call plays with a stroke: the fraction's own when it drops, else the one that pots
+export function rightDir(s, stroke, sq){
+  const need = aimFor(s, stroke, sq);
+  return fracDrops(s, nearestRef(cutForDir(s, need)), stroke, sq) || need;
+}
 export function aimDirFor(s, id){
   const stroke = shotStroke(s), sq = shaftSq(), need = aimFor(s, stroke, sq), right = nearestRef(cutForDir(s, need));
   const picked = ALL.find(r=>r.id === id);
@@ -502,7 +507,7 @@ function rightStroke0(s, sq){
   const z = s.zone, c = ctrl(), tip = z ? z.tip : shotStroke(s).tip;
   if(!c.speed){ const st = z ? {V: STROKE_MPH[z.lvl]*MPH, tip} : shotStroke(s); return {st, lvl: null, mineOk: true}; }
   const mine = nearestCoarse(speedLevel()), pl = pocketLevel(s), at = l => ({V: STROKE_MPH[l]*MPH, tip});
-  const clean = l => { const st = at(l), r = playAim(s, aimFor(s, st, sq), st, false, sq); return r.made && !r.scratch && (!z || r.inZone); };
+  const clean = l => { const st = at(l), r = playAim(s, rightDir(s, st, sq), st, false, sq); return r.made && !r.scratch && (!z || r.inZone); };   // on the line the right call plays
   const cands = z ? [...(z.lvls || []).includes(mine) ? [mine] : [], z.lvl] : [...mine >= pl ? [mine] : [], ...COARSE.filter(l=>l >= pl && l !== mine)];
   let lvl = cands.find(clean);
   if(lvl == null) lvl = z ? z.lvl : Math.max(mine, pl);
@@ -510,11 +515,6 @@ function rightStroke0(s, sq){
 }
 // what the balls did, and how it went for the ball alone (whatever the call): pocketed clean (and in the zone, if there is one)
 // is a success, pocketed clean but off the zone is half of one, anything else a miss. The Ball row and a lesson's note use it.
-// the right shot in a line, the card's caption: "RIGHT SHOT ¼ · ¾ stroke · ½ tip of top"
-function rightShotLine(s, rs, ideal){
-  const c = ctrl(), t = tipName(snapTip(rs.st.tip || [0, 0]));
-  return '<small>Right shot</small> ' + [fracName(ideal), c.speed && rs.lvl != null && strokeName(rs.lvl) + ' stroke', s.zone && (c.up || c.side) && (t === 'Center' ? 'center ball' : t)].filter(Boolean).join(' · ');
-}
 export function ballVerdict(run, zone, foul){
   if(run.scratch) return {v: 'Scratch: the cue ball went in', good: false};
   if(foul) return {v: 'Foul: another ball first', good: false};
@@ -594,9 +594,8 @@ export function takeShot(id){
     return {...r, v: ball.v, good: ball.good, note: s.adjust && run.made ? `needed a bit ${s.adjust} than ${fracName(picked)}` : ''};
   });
   const head = foul ? 'Foul' : full ? 'Good shot' : partial ? 'Pocketed' : ok ? 'Missed' : run.made ? (isIdeal ? 'Pocketed' : 'Wrong call, but it drops') : 'Missed';
-  // the right column is one shot, the one Replay the right shot plays: named above the rows once there's a stroke or spin to it
-  const rightShot = !full && rows.some(r=>r.k === 'Stroke' || r.k === 'Spin') ? rightShotLine(s, rs, ideal) : '';
-  $('quick').innerHTML = rcardHTML(head, full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no', rows, '', rightShot);
+  // no "Right shot" caption: each row already shows the right answer beside a wrong one
+  $('quick').innerHTML = rcardHTML(head, full ? 'ok' : partial || (run.made && !ok) ? 'also' : 'no', rows, '');
   $('showright').hidden = full;   // under Next shot: play it the right way
   const hitT = (obHit(run.sim.events) || {}).t ?? 0;
   const obT = run.sim.events.find(e=>e.ids && e.ids[0]==='o' && e.t > hitT && (e.type==='cushion' || e.type==='jaw' || e.type==='pocket'));
