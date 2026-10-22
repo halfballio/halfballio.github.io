@@ -160,10 +160,17 @@ export function renderRoutineChip(){
 // The aim line a call plays: the right call's is the one that pots with your stroke (throw and deflection allowed for),
 // any other call's is that fraction's contact.
 export function rightIdFor(s){ return nearestRef(cutForDir(s, aimFor(s, shotStroke(s), shaftSq()))).id; }
+// Any angle: the right call plays the fraction's own line when that still drops (cheating the pocket); null when it doesn't,
+// and the line that pots is played instead (the card says it needed a bit thinner or thicker)
+export function fracDrops(s, r, stroke, sq){
+  if(!s.any) return null;
+  const d = dirForCut(s, r.deg), p = playAim(s, d, stroke, false, sq);
+  return p.made && !p.scratch ? d : null;
+}
 export function aimDirFor(s, id){
-  const stroke = shotStroke(s), need = aimFor(s, stroke, shaftSq()), right = nearestRef(cutForDir(s, need));
+  const stroke = shotStroke(s), sq = shaftSq(), need = aimFor(s, stroke, sq), right = nearestRef(cutForDir(s, need));
   const picked = ALL.find(r=>r.id === id);
-  return !picked || picked.id === right.id ? need : dirForCut(s, picked.deg);
+  return !picked ? need : picked.id === right.id ? fracDrops(s, picked, stroke, sq) || need : dirForCut(s, picked.deg);
 }
 // Stand up off the shot (Esc or the ⤒ button, on the ladder): back up, step back to the ball line, and read it again
 function canStandUp(){ const c = S.shot && S.shot.cam; return shootRoutine() && !tut.on && !S.answered && !S.anim && !!c && c.T && c.phase !== 'stand' && !c.moving && !look.target; }
@@ -521,8 +528,9 @@ export function takeShot(id){
   const s = S.shot, stroke = shotStroke(s), rig0 = rigAlpha(s), withCue = rig0.a > .01, feather0 = rig0.push || 0;   // where the practice stroke is right now, read before anything changes
   const sq = shaftSq(), needDir = aimFor(s, stroke, sq), need = cutForDir(s, needDir), right = nearestRef(need);
   const picked = ALL.find(r=>r.id===id) || right, ok = picked.id === right.id;
-  const dir = ok ? needDir : dirForCut(s, picked.deg);
+  const own = ok ? fracDrops(s, picked, stroke, sq) : null, dir = ok ? own || needDir : dirForCut(s, picked.deg);
   s.tip = stroke.tip; s.need = need; s.rightId = right.id;
+  s.adjust = ok && s.any && !own ? (need > picked.deg ? 'thinner' : 'thicker') : null;   // the fraction itself wouldn't have dropped
   S.answered = true; cancelAnimationFrame(routineRaf); renderRoutineChip();
   if(stats.active && stats.active.pending) delete stats.active.pending;   // shot taken: the next deal is a new one
   const run = playAim(s, dir, stroke, true, sq);
@@ -583,7 +591,7 @@ export function takeShot(id){
       const zoneTip = s.zone.tip || [0, 0], same = tipName(mineTip) === tipName(zoneTip);
       return {...r, v: tipName(mineTip), good: same || zoneWin, right: same || zoneWin ? '' : tipName(zoneTip)};
     }
-    return {...r, v: ball.v, good: ball.good};
+    return {...r, v: ball.v, good: ball.good, note: s.adjust && run.made ? `needed a bit ${s.adjust} than ${fracName(picked)}` : ''};
   });
   const head = foul ? 'Foul' : full ? 'Good shot' : partial ? 'Pocketed' : ok ? 'Missed' : run.made ? (isIdeal ? 'Pocketed' : 'Wrong call, but it drops') : 'Missed';
   // the right column is one shot, the one Replay the right shot plays: named above the rows once there's a stroke or spin to it

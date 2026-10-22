@@ -231,18 +231,20 @@ function answer(id){
   endFlash();
   const picked = ALL.find(r=>r.id===id);
   const ok = id === S.shot.answer.id;
-  const contact = ok ? S.shot.theta : picked.deg;   // the right call plays the hit the shot needs, so it drops (call the nearest fraction)
-  const oc = outcome(S.shot, contact);
-  const tip = ok && !oc.made && S.shot.any;       // right bucket, but the pure reference needs adjusting
+  // the right call plays the fraction itself when that still drops (any angle: cheating the pocket), else the hit the shot needs
+  const pure = ok && S.shot.any ? outcome(S.shot, picked.deg) : null, pureOk = !!pure && pure.made && !pure.scratch;
+  const contact = ok && !pureOk ? S.shot.theta : picked.deg;
+  const oc = pureOk ? pure : outcome(S.shot, contact);
+  const tip = ok && S.shot.any && !pureOk;       // right bucket, but the pure reference needs adjusting
   const counted = oc.made || ok;                             // a right call never counts against your pocket rate
-  S.shot.pick = {...oc, id, far: Math.abs(contact - S.shot.theta) > 0.3 && (!ok || tip)};
+  S.shot.pick = {...oc, id, far: Math.abs(contact - S.shot.theta) > 0.3};
   const prevStreak = curStreak();
   const newStreak = ok ? prevStreak + 1 : 0;
   // sound first: nothing else runs before it
   S.shot.duck = 1;
   if(ok && newStreak >= STREAK_HOT){ playSound('streak', newStreak); S.shot.duck = .25; }   // on a streak the table sounds play quietly under the chime
   else if(!ok && prevStreak >= STREAK_HOT){ playSound('streakEnd'); S.shot.duck = 0; }
-  if(settings.animate === '0') tableSounds(shotPlan(S.shot, ok ? outcome(S.shot, S.shot.theta) : oc, .12, .3, 0, false, false), S.shot.duck);
+  if(settings.animate === '0') tableSounds(shotPlan(S.shot, oc, .12, .3, 0, false, false), S.shot.duck);
   logEntry({p:id, m:counted?1:0});
   if(stats.active && stats.active.pending) delete stats.active.pending;
   document.querySelectorAll('#answers button').forEach(b=>{ b.disabled = true; });
@@ -261,7 +263,7 @@ function answer(id){
   const rows = readRows().map(r=>
       r.k === 'Call' ? {...r, v: fracName(picked), good: ok ? true : oc.made ? 'also' : false, right: ok ? '' : rightCall}
     : r.k === 'Cut' ? {...r, v: `${S.shot.theta.toFixed(1)}° · ${f.toFixed(2)} ball`}
-    : {...r, v: ok ? 'Pocketed' : counted ? `Also drops, a bit ${over?'thin':'full'}` : oc.short ? `Right line, but it dies short` : `${over?'Too thin':'Too full'}, by ${Math.abs(oc.lat).toFixed(1)}″`, good: ok ? true : counted ? 'also' : false});
+    : {...r, v: tip ? `Pocketed: it needed a bit ${S.shot.theta > picked.deg ? 'thinner' : 'thicker'} than ${fracName(picked)}` : ok ? 'Pocketed' : counted ? `Also drops, a bit ${over?'thin':'full'}` : oc.short ? `Right line, but it dies short` : `${over?'Too thin':'Too full'}, by ${Math.abs(oc.lat).toFixed(1)}″`, good: ok ? true : counted ? 'also' : false});
   const cardHTML = aside => rcardHTML(counted ? 'Pocketed' : 'Missed', ok ? 'ok' : counted ? 'also' : 'no', rows, aside);   // a wrong call that drops: blue, like its rows   // the same rows the card showed before the call
   $('quick').innerHTML = cardHTML('');
   document.querySelectorAll('#answers button').forEach(b=>{
