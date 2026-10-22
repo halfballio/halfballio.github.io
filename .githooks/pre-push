@@ -1,0 +1,15 @@
+#!/bin/sh
+# main is the live site: every commit goes to preview (/dev/) first. A push to main is refused unless what it pushes is
+# already on preview (on this remote, as last pushed or fetched). Override, knowingly: git push --no-verify
+remote="$1"
+z=0000000000000000000000000000000000000000
+while read -r lref lsha rref rsha; do
+  [ "$rref" = refs/heads/main ] || continue
+  [ "$lsha" = "$z" ] && continue   # deleting main: not this hook's business
+  if ! git merge-base --is-ancestor "$lsha" "refs/remotes/$remote/preview" 2>/dev/null; then
+    echo "pre-push: refusing to push ${lsha%"${lsha#???????}"} to main: it isn't on $remote/preview yet." >&2
+    echo "Push it to preview first (git push $remote HEAD:preview), check /dev/, then push main." >&2
+    exit 1
+  fi
+done
+exit 0
