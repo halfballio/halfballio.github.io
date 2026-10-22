@@ -1,7 +1,7 @@
 // Playing a shot: speed and tip, the stroke, the routine (read, step in, get down), the bridge, the controls, and taking the shot.
 import {jumpingAhead, syncPressed} from './ui.js';
 import {LESSONS, tstep} from './lessons.js';
-import {finishRound, fracName, logEntry, pendCard, prepareNext, rcardHTML, sessionTick, shootRows, strokeName} from './modes.js';
+import {countPlayed, finishRound, fracName, logEntry, pendCard, prepareNext, rcardHTML, sessionTick, shootRows, strokeName, trackMiss} from './modes.js';
 import {animateShot} from './anim.js';
 import {camFrom, draw, featherLoop, featherOff, featherRaf, featherStart, FOLLOW_THROUGH, NEAR, norm3, rigAlpha, rigCam, standUp, strokeBack, syncFocusBtn, VH, VIEWS, VW} from './view.js';
 import {bridgeLen, nearestRef, pocketSpeedFor, pocketTol, railBehind, reachMax, runAfterShot, runFoul, stanceIn} from './deal.js';
@@ -551,6 +551,8 @@ export function takeShot(id){
   const zoneWin = !!s.zone && clean && run.inZone;   // potted and in the zone: a success, whatever fraction or stroke got it there
   const full = zoneWin || (ok && clean && !s.zone && speedOk);
   const partial = ok && clean && !full;
+  if(!full) trackMiss({right: ideal.id, call: picked.id, cut: +need.toFixed(1), dist: Math.round(len(sub(s.ob, s.cb))), made: run.made,
+    ...(ctrl().speed && rs.lvl != null ? {stroke: strokeName(nearestCoarse(speedLevel())), rightStroke: strokeName(rs.lvl)} : {})});
   const q = sub(s.ob, s.cb), qb = dot(q, dir), disc = qb*qb - dot(q, q) + 4*R*R;   // where the cue ball meets the object ball on your call
   s.pick = {made: run.made, far: !ok, g2: disc >= 0 ? add(s.cb, mul(dir, qb - Math.sqrt(disc))) : s.gb, id};
   document.querySelectorAll('#answers button').forEach(x=>{ x.disabled = true; x.className = x.dataset.id===id ? (isIdeal && run.made ? 'right' : run.made ? 'also' : 'wrong') : x.dataset.id===ideal.id ? 'right' : ''; });   // your call is marked straight away: the right fraction played too soft or too hard is still a miss
@@ -609,7 +611,7 @@ export function takeShot(id){
   animateShot({made: run.made}, ms=>{   // the shot counts once it's played out (or skipped), so the last one of a session is watched too
     if(isLadder() && stats.active && stats.active.task===settings.task) stats.active.pause = (stats.active.pause||0) + (ms||0);
     if(!jumpingAhead){ draw(true); standUp(s); setTimeout(()=>{ if(S.shot === s && S.answered && !S.anim) prepareNext(); }, 400); }
-    if(isLadder() && !practicing()) sessionTick(full, run.made);
+    if(isLadder() && !practicing()) sessionTick(full, run.made); else countPlayed(full, run.made);
   }, ok ? '#ffd34d' : MISS, run, ok ? null : playAim(s, needDir, stroke, true, sq));   // a wrong call: the right one rolls see-through alongside
   finishRound();
   };
@@ -674,6 +676,7 @@ function showLevel(from){
   if(to >= CARBON_AT && settings.shaftGot !== '1'){ settings.shaft = 'carbon'; settings.shaftGot = '1'; saveSettings(); }   // the first time at S: the carbon shaft is yours, and in your hands
   enforceLocks(); syncPressed(); renderBadge(true);
   const first = to > was, news = first ? unlocksBetween(was, to) : [], focus = first ? FOCUS_AT[to] : null;   // a grade reached for the first time: its focus and what it gives you, on a card that waits for you
+  track('grade_up', {grade: trkGrades()[L.g], task: settings.task, first});   // the visitor counts' grade funnel (anonymous)
   if(focus || news.length){ clearTimeout(lvlTimer); $('lvlcard').hidden = true; openLevelUp(trkGrades()[L.g], focus, news); playSound('levelup'); return; }
   if(SHOOT_UP[to]) notes.push(SHOOT_UP[to]);   // back up to a grade you'd had: just its name
   $('lvlhead').textContent = 'Level up';

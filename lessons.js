@@ -471,6 +471,8 @@ export function endTut(){
   setTimeout(syncStreakPill, 0);   // the streak comes back to the logo after the lesson
   tut.on = false; tut.fix = null; $('answers').classList.remove('tutoff'); document.querySelectorAll('#answers button').forEach(b=>b.removeAttribute('aria-disabled')); tut.zb = tut.zt = 0; tut.ctl = null; tut.plan = null; tut.watch = null; cancelAnimationFrame(tut.bRaf); cancelAnimationFrame(tut.zRaf); cancelAnimationFrame(tut.gRaf); if(S.shot && S.shot.gb0){ S.shot.gb = S.shot.gb0; S.shot.v = S.shot.v0; } clearTimeout(tut.fadeT); $('tutfade').classList.remove('on');
   if(!settings.tut){ settings.tut = 1; saveSettings(); }
+  const st = tstep(), n = tsteps().length;
+  track(st && st.finish ? 'lesson_done' : 'lesson_quit', {lesson: tut.lesson, step: tut.i + 1, of: n});   // where lessons are left (anonymous)
   settings.tutSeen = {...(settings.tutSeen || {}), [tut.lesson]: 1}; saveSettings();
   $('coach').hidden = true;
   deal();

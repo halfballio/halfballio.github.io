@@ -628,7 +628,7 @@ export function wirePlayerMenu(){
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && !$('plmenu').hidden){ plOpen(false); e.stopPropagation(); } }, true);
 }
 // first launch: set where you stand before anything else
-function closeStance(){ settings.stanceSet = 1; saveSettings(); askPersist(); $('stancecover').hidden = true; showSessIdle(); if(!settings.tourSeen && startTour(true)) return; deal(); }
+function closeStance(){ if(!settings.stanceSet) track('stance_set'); settings.stanceSet = 1; saveSettings(); askPersist(); $('stancecover').hidden = true; showSessIdle(); if(!settings.tourSeen && startTour(true)) return; deal(); }
 export function wireStanceCard(){
   $('stancedone').addEventListener('click', e=>{ e.stopPropagation(); closeStance(); });
 }
@@ -660,6 +660,7 @@ function startTour(first){
 function endTour(){
   if(!tour.on) return;
   tour.on = false; $('tour').hidden = true;
+  if(tour.first) track('tour_end', {step: tour.i + 1, of: tour.steps.length});   // the first run's tour: finished, or left at that step
   settings.tourSeen = 1; saveSettings();
   if(tour.first){ tour.first = false; deal(); }   // first time: on to the game (and its first lesson)
 }

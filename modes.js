@@ -203,7 +203,15 @@ export function finishRound(){
 }
 
 // ---------- the mode's open-ended run: shots and right calls ----------
+export const played = {n: 0, right: 0, made: 0};   // every shot since the visitor counts last heard, in any mode (main.js sends and clears it)
+export function countPlayed(ok, made){
+  played.n++; if(ok) played.right++; if(made) played.made++;
+  const all = (stats.log || []).length; if(all === 1 || all === 10) track('shots_' + all);   // a new player's first shot, and their tenth
+}
+// one wrong call in four, for the visitor counts: which fraction (and stroke) gets called for which, by cut and distance
+export function trackMiss(d){ if(Math.random() < .25) track('miss', {...d, grade: SHOOT_GRADES[(ensureShootLevel() || {}).g], task: settings.task}); }
 export function sessionTick(ok, made){
+  countPlayed(ok, made);
   const a = stats.active; if(!a || a.task !== settings.task) return;
   a.n++; if(ok) a.right++; if(made) a.made++;
   save();
@@ -237,6 +245,7 @@ function answer(id){
   const oc = pureOk ? pure : outcome(S.shot, contact);
   const tip = ok && S.shot.any && !pureOk;       // right bucket, but the pure reference needs adjusting
   const counted = oc.made || ok;                             // a right call never counts against your pocket rate
+  if(!ok) trackMiss({right: S.shot.answer.id, call: id, cut: +S.shot.theta.toFixed(1), dist: Math.round(len(sub(S.shot.ob, S.shot.cb)))});
   S.shot.pick = {...oc, id, far: Math.abs(contact - S.shot.theta) > 0.3};
   const prevStreak = curStreak();
   const newStreak = ok ? prevStreak + 1 : 0;

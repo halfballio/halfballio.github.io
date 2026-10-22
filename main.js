@@ -9,9 +9,11 @@ import {addExtras, dealShot, decodeRec, drillDeal, encodeRec, fetchShipped, from
 import {aimFor, bridgeAim, bridgeGeom, cueStroke, MPH, overviewCam, playAim, renderBadge, rightIdFor, shootCam, shotStroke, strikeOf, STROKE_MPH, takeShot, wireLevelUp, wireShootControls} from './shot.js';
 import {applyGfx, applyStyle, BALL_SETS, bestLook, cueRig, draw, initTable3d, keyBallSets, LOOK_AT, lookOpen, setVH, sizeTable, VH, wireArrowWake, wireResize, wireResizeDraw, wireStance, wireWalk} from './view.js';
 import {finishAnim} from './anim.js';
-import {deal, lockCalls, RUN_SIZE, setRun, showSessIdle, wireSheets} from './modes.js';
+import {deal, lockCalls, played, RUN_SIZE, setRun, showSessIdle, wireSheets} from './modes.js';
 import {alignLogo, applySetting, easterEggCheck, easterEggSkips, renderStats, showPlayers, startWhatsNew, syncPressed, syncStreakPill, toTop, wireAnswers, wireHeader, wireKeysCard, wireLockTips, wireLogoAlign, wireLookPicker, wireModeButtons, wireMusic, wireNext, wirePlayerMenu, wireRadio, wireReplay, wireReset, wireStanceCard, wireStatsView, wireTableTap, wireTour, wireWhatsNew} from './ui.js';
+import {VERSION} from './whatsnew.js';
 
+window.HB_BUILD = VERSION;   // for the error reports (index.html)
 initTable();
 wireInputMode();
 loadProfiles();
@@ -132,13 +134,22 @@ if(location.hash === '#test' || DEV) window.__lib = {NO_EIGHTH, LIB_STEPS, ZONE_
   // how wide the cue ball and object ball are drawn (in drawing units, VW wide) standing, or in the look view
   camPx: (s, view)=>{ s.cam = {phase: 'stand', k: 0}; const c = view === 'look' ? overviewCam(s) : shootCam(s, view); return [s.cb, s.ob].map(p=>{ const q = c.toCam([p[0], p[1], R]); return q[2] > 0 ? 2*R*c.focal/q[2] : 0; }); }, setVH: h=>{ setVH(h); }, cheer: (n, first)=>{ cheer(n, first); }, cheerNow: ()=>cheerGo(), confetti: (n, f)=>confetti($('hlogo'), n, f), cheerLive: ()=>!!cheerFx || !!cheerQ};
 if(!TEST) easterEggSkips();   // the Efren Reyes easter egg: no stance card, tour, lessons or What's new card (defaults stand)
-if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); }   // a new player sets their stance first
+if(!settings.stanceSet && !settings.tut && !(stats.log || []).length && !baselines().length){ $('stancecover').hidden = false; showSessIdle(); track('new_player'); }   // a new player sets their stance first
 deal();
 if(!$('stancecover').hidden && S.shot){ S.shot.bare = true; lockCalls(true); draw(false); }   // ...at an empty table (it still follows their stance): no balls, and nothing to call until the first lesson
 syncStreakPill(); requestAnimationFrame(alignLogo);
 if(!settings.tut && !(stats.log || []).length && !baselines().length){ settings.tut = 1; saveSettings(); }   // first visit: the Shooting lesson opens on the first shot
 wireKeysCard();
 wireWhatsNew();
+// time played, for the visitor counts: each stretch the page is in view, sent as it goes out of view (anonymous): how long,
+// the shots, right calls and balls pocketed, and the grade it started and ended at
+const gradeNow = () => SHOOT_GRADES[(ensureShootLevel() || {}).g];
+let shownAt = document.hidden ? 0 : Date.now(), gradeAt = gradeNow();
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden){ shownAt = Date.now(); gradeAt = gradeNow(); played.n = played.right = played.made = 0; return; }
+  const min = shownAt ? (Date.now() - shownAt)/60000 : 0; shownAt = 0;
+  if(min >= 0.25) track('session_end', {minutes: Math.round(min*10)/10, task: settings.task, shots: played.n, right: played.right, pocketed: played.made, from: gradeAt, grade: gradeNow()});
+});
 if(!TEST) easterEggCheck();   // a special player (a new one, or one renamed on an earlier visit)
 startWhatsNew();
 if(settings.stanceSet || stats.log.length) askPersist();   // already playing: ask now (once)

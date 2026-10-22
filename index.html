@@ -19,6 +19,18 @@ const DEV_SITE = location.pathname.startsWith('/dev/');
 const lsKey = k => DEV_SITE ? String(k).replace(/^halfball-/, 'halfball-dev-') : k;
 if(DEV_SITE){ const m = document.querySelector('link[rel="manifest"]'); if(m) m.remove(); }
 </script>
+<script>
+// Visitor counts (Umami: no cookies, nothing that identifies a player), on the live site only: not /dev/, not a local copy.
+// track(): an anonymous event; nothing happens when the script isn't there (not the live site, blocked, or offline). Events
+// before it has loaded wait for it (a few at most). Errors are reported too, with the build (main.js sets HB_BUILD).
+const COUNTS = location.hostname === 'halfball.io' && !DEV_SITE, trackQ = [];
+const track = (name, data) => { if(!COUNTS) return; try{ if(window.umami) window.umami.track(name, data); else if(trackQ.length < 20) trackQ.push([name, data]); }catch(e){} };
+if(COUNTS){ const s = document.createElement('script'); s.defer = true; s.src = 'https://cloud.umami.is/script.js'; s.dataset.websiteId = '09cdacba-dad9-4de1-b088-0954ac75dd9d'; s.dataset.doNotTrack = 'true';
+  s.onload = () => { trackQ.splice(0).forEach(([n, d]) => track(n, d)); }; document.head.appendChild(s); }
+let errorsSent = 0;   // the first few of a visit: one broken frame can throw on every tick
+window.addEventListener('error', e => { if(errorsSent++ < 3) track('js_error', {msg: String(e.message || 'error').slice(0, 200), at: `${String(e.filename || '').split('/').pop()}:${e.lineno || 0}`, build: window.HB_BUILD}); });
+window.addEventListener('unhandledrejection', e => { if(errorsSent++ < 3) track('js_error', {msg: String((e.reason && e.reason.message) || e.reason || 'rejection').slice(0, 200), at: 'promise', build: window.HB_BUILD}); });
+</script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
@@ -86,6 +98,7 @@ if(DEV_SITE){ const m = document.querySelector('link[rel="manifest"]'); if(m) m.
       <div class="menuhead"><span>Help</span><button class="menuclose" id="tutmenuclose" aria-label="Close">✕</button></div>
       <div class="tutlist"><button id="keysopen" class="kbd-only">Keyboard shortcuts<small>?</small></button><button id="tourreplay">App tour<small>How Halfball works</small></button></div>
       <div class="tutlist" id="tutlist"></div>
+      <p class="privnote"><b>Privacy</b> To improve Halfball, we count visits and how the game is played (time played, shots, grades reached, where lessons are left) anonymously: no cookies, no account, nothing that identifies you. It’s used for improving the game only, never sold or shared. Your players and stats stay on this device.</p>
     </div>
   </div>
   <div class="tour" id="tour" hidden>   <!-- the app tour: once for a new player, again from the ? menu -->
