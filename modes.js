@@ -209,8 +209,10 @@ export function countPlayed(ok, made){
   played.by[settings.task] = (played.by[settings.task] || 0) + 1;
   const all = (stats.log || []).length; if([1, 10, 50, 100, 500, 1000].includes(all)) track('shots_' + all);   // milestones, each passed once (the log keeps 3000)
 }
-// one wrong call in four, for the visitor counts: which fraction (and stroke) gets called for which, by cut and distance
-export function trackMiss(d){ if(Math.random() < .25) track('miss', {...d, grade: SHOOT_GRADES[(ensureShootLevel() || {}).g], task: settings.task}); }
+// one wrong call in four, for the visitor counts: which fraction (and stroke) gets called for which, by cut and distance;
+// at most 20 a visit, so a long night of shots doesn't flood them
+let missesSent = 0;
+export function trackMiss(d){ if(missesSent < 20 && Math.random() < .25){ missesSent++; track('miss', {...d, grade: SHOOT_GRADES[(ensureShootLevel() || {}).g], task: settings.task}); } }
 export function sessionTick(ok, made){
   countPlayed(ok, made);
   const a = stats.active; if(!a || a.task !== settings.task) return;
