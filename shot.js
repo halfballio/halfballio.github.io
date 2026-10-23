@@ -165,7 +165,7 @@ export function rightIdFor(s){ return nearestRef(cutForDir(s, aimFor(s, shotStro
 export function fracDrops(s, r, stroke, sq){
   if(!s.any) return null;
   const d = dirForCut(s, r.deg), p = playAim(s, d, stroke, false, sq);
-  return p.made && !p.scratch ? d : null;
+  return p.made && !p.scratch && (!s.zone || p.inZone) ? d : null;   // with a zone, the cue ball has to get there too
 }
 // the line the right call plays with a stroke: the fraction's own when it drops, else the one that pots
 export function rightDir(s, stroke, sq){
