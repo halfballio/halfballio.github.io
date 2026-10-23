@@ -34,6 +34,8 @@ function bucketWeights(step = isShoot() ? zoneStep(shootLevel()) : null){   // s
   if(isDrill() && GEN.g == null && !tut.on){ const fr = drillPicks().fr; return REFS.map(r=>fr.includes(r.id) ? 1 : 0); }   // Practice: only the fractions you picked
   const w = REFS.map(()=>1);   // full-ball shots come up as often as each cut
   if(isShoot() && NO_EIGHTH().includes(step)) w[REFS.findIndex(r=>r.id === '18')] = 0;
+  const zf = isShoot() && ZONE_FRACS[step];   // a zone step: its own mix (by id, whichever fractions REFS has)
+  if(zf) REFS.forEach((r, i)=>{ const j = CORE.findIndex(c=>c.id === r.id); if(j >= 0) w[i] *= zf[j]; });
   return w;
 }
 function weightedIndex(w){
@@ -152,6 +154,35 @@ const STEP_STROKES = {   // the kind of stroke a step's zones are made from (the
   [SH.english]:s => ({tip:[(Math.random()<.5?-1:1)*rnd(.3,.5), rnd(-.2,.35)], k:[1.6, 3.2], rails:[1, 2]}),
   [SH.full]:   s => ({tip:[(Math.random()<.5?-1:1)*rnd(0,.45), rnd(-.25,.45)], k:[2.5, 7], rails:[3, 4]}),
 };
+// What each zone step's zones are made with, so no one stroke and tip is always the answer: the stroke (½, ¾, full: COARSE
+// 5, 8, 10), the tip (null: the step's own pick, above) and how often it should come up (w), as the shots come up in play.
+// The everyday ones come up most; the extreme ones (a hard follow or draw) now and then, each with the exceptions to the
+// step's rules it needs to exist at all: rails (how many the cue ball may use: at ¾ it runs to three, at full to five),
+// spin (the spin at contact it needs: ½ tip at ¾ arrives only partly rolling) and oneWay (no second stroke has to reach
+// the zone too: on a long route off the rails none lands in the same spot). A ½-stroke stun, or a ½-stroke draw with ½ tip,
+// can't be made: the slide or the backspin is gone by contact.
+// The library builder stores each in proportion within every fraction (GEN.order); live, one by weight.
+const tip = (sgn, p) => [0, sgn*p*TIP_STEP];   // p: half tips
+export const ZONE_SHAPES = {
+  [SH.follow]: [
+    {lvl: 5, tip: tip(1, 1), w: 3}, {lvl: 5, tip: tip(1, 2), w: 6},
+    {lvl: 8, tip: tip(1, 1), w: 1, rails: [0, 3], spin: .6, oneWay: true}, {lvl: 8, tip: tip(1, 2), w: 2, rails: [0, 3], oneWay: true},
+    {lvl: 10, tip: tip(1, 2), w: 1, rails: [2, 5], oneWay: true}],
+  [SH.stun]: [{lvl: 8, tip: tip(0, 0), w: 3}, {lvl: 10, tip: tip(0, 0), w: 1}],
+  [SH.draw]: [
+    {lvl: 5, tip: tip(-1, 2), w: 4},
+    {lvl: 8, tip: tip(-1, 1), w: 2, rails: [0, 3], oneWay: true}, {lvl: 8, tip: tip(-1, 2), w: 4, rails: [0, 3], oneWay: true},
+    {lvl: 10, tip: tip(-1, 1), w: 1, rails: [0, 5], oneWay: true}, {lvl: 10, tip: tip(-1, 2), w: 1, rails: [0, 5], oneWay: true}],
+  [SH.cushion]: [{lvl: 5, tip: null, w: 2}, {lvl: 8, tip: null, w: 3}, {lvl: 10, tip: null, w: 1}],
+  [SH.english]: [{lvl: 5, tip: null, w: 3}, {lvl: 8, tip: null, w: 3}, {lvl: 10, tip: null, w: 1}],
+};
+// and the fractions each zone step deals (full, ¾, ½, ¼, ⅛): spin shows most on fuller hits, so follow, stun and draw lean
+// full to ½ (with a thin cut the cue ball leaves along the tangent line whatever the spin: no ⅛); routes off the rails come
+// from real cuts, so two rails and English lean ½ and ¼
+const ZONE_FRACS = {[SH.follow]: [3, 3, 3, 1, 0], [SH.stun]: [3, 3, 2, 1, 0], [SH.draw]: [3, 3, 2, 1, 0], [SH.cushion]: [1, 2, 3, 3, 1], [SH.english]: [1, 2, 3, 2, 1]};
+// the shape a stored zone was made with (by its stroke and tip), so it's checked again by its own rules (rails, spin)
+const shapeOf = (step, lvl, t) => (ZONE_SHAPES[step] || []).find(x=>x.lvl === lvl && (!x.tip || (Math.abs(x.tip[0] - (t[0] || 0)) < 1e-3 && Math.abs(x.tip[1] - (t[1] || 0)) < 1e-3))) || null;
+const zoneShape = step => { const L = ZONE_SHAPES[step]; return !L ? {lvl: null, tip: null} : L[weightedIndex(L.map(x=>x.w))]; };   // (a step without shapes: any stroke, its own tip)
 function zoneStep(g){
   if(g < SH.follow) return null;
   if(g >= SH.all) return pick([SH.follow, SH.stun, SH.draw, SH.cushion, SH.english]);
@@ -197,7 +228,7 @@ const ZR_TWO = 8;
 //   draw:   backspin still there (not a slow draw that's worn off), and the zone isn't one a stun or a rolling ball reaches.
 const STUN_SPIN = 0.2, FOLLOW_SPIN = 0.9, DRAW_SPIN = -0.3;
 const spinAtContact = (st, d1) => PE.arrive(st.V, st.tip[1] || 0, d1).spin;
-const spinKindOk = (kind, sp) => kind > 0 ? sp >= FOLLOW_SPIN : kind < 0 ? sp <= DRAW_SPIN : Math.abs(sp) <= STUN_SPIN;
+const spinKindOk = (kind, sp, x) => kind > 0 ? sp >= (x ?? FOLLOW_SPIN) : kind < 0 ? sp <= (x ?? DRAW_SPIN) : Math.abs(sp) <= (x ?? STUN_SPIN);   // x: a shape's own limit
 // does a centre-ball stroke still sliding at contact (a stun, any of your speeds) also pot and land in the zone?
 function stunsIn(s, d1){
   return COARSE.some(l=>{
@@ -219,7 +250,7 @@ function rollsIn(s, d1){
     const r = playAim(s, aimFor(s, st), st, false); return r.made && !r.scratch && r.inZone;
   });
 }
-function twoRailZone(s){
+function twoRailZone(s, want){   // want: the stroke the zone is named for (one of the pair has to be it)
   const c = ctrl(), V0 = strikeOf(s).V, ends = [];
   for(const l of COARSE){
     const V = STROKE_MPH[l]*MPH; if(V < V0) continue;
@@ -234,7 +265,9 @@ function twoRailZone(s){
   let best = null;
   for(let i = 0; i < ends.length; i++) for(let j = i + 1; j < ends.length; j++){
     if(ends[i].kind === ends[j].kind) continue;
-    const d = len(sub(ends[i].p, ends[j].p)); if(!best || d < best.d) best = {a: ends[i], b: ends[j], d};
+    if(want && ends[i].l !== want && ends[j].l !== want) continue;
+    const [a, b] = !want || ends[i].l === want ? [ends[i], ends[j]] : [ends[j], ends[i]];
+    const d = len(sub(a.p, b.p)); if(!best || d < best.d) best = {a, b, d};
   }
   if(!best || best.d > 2*(ZR_TWO - 1.5)) return null;
   for(const e of [best.a, best.b]){   // the pair, played exactly as your right call would play it
@@ -272,7 +305,7 @@ function otherWays(s, zs, lvl){
 // and the tip. Each is re-checked after rounding, and can be played mirrored left-right.
 // keys: step ids (SH): a zone step (B to A+), or the step itself for the grades without zones (F to B-)
 export const ZONE_STEPS = [SH.follow, SH.stun, SH.draw, SH.cushion, SH.english], BASIC_STEPS = GRADE_STEP.filter(k=>k <= SH.throw);   // (shots.bin still has the retired step 5's section: nothing deals it)
-export const LIB_STEPS = [...BASIC_STEPS, ...ZONE_STEPS], LIB_RULES = 10, REC = 13;
+export const LIB_STEPS = [...BASIC_STEPS, ...ZONE_STEPS], LIB_RULES = 11, REC = 13;
 export const isZoneStep = k => ZONE_STEPS.includes(+k), LIB_PER_OF = k => isZoneStep(k) ? 1000 : 300;   // what your device builds (the shipped file has far more)
 export const tableFor = k => { const g0 = GEN.g; GEN.g = +k; try{ return progTable(); } finally { GEN.g = g0; } };
 const fnv = t => { let h = 0x811c9dc5; for(let i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); };
@@ -326,7 +359,7 @@ export function recOk(r, step){
     return playAim(s, aimFor(s, st), st, false).made;
   }
   const st = {V: STROKE_MPH[r.lvl]*MPH, tip: r.tip};
-  const spec = STEP_STROKES[step](s), res = playAim(s, aimFor(s, st), st, false), rails = spec.rails || [0, 9];
+  const sh = shapeOf(step, r.lvl, r.tip), spec = STEP_STROKES[step](s), res = playAim(s, aimFor(s, st), st, false), rails = sh && sh.rails || spec.rails || [0, 9];
   if(spec.run && len(sub(res.cueEnd, s.gb)) > spec.run) return false;
   if(spec.stun && res.cbRails === 0 && len(sub(res.cueEnd, s.gb)) > STOP_R) return false;
   return res.made && !res.scratch && res.inZone && res.cbRails >= (step === SH.cushion ? 2 : rails[0]) && res.cbRails <= (step === SH.cushion ? 2 : rails[1]);
@@ -454,11 +487,11 @@ function scaledShot(r, from, step, fx){
   const kind = spec.stun ? 0 : step === SH.follow ? 1 : step === SH.draw ? -1 : null;
   s.zone = null;
   for(const lvl of [z.lvl, ...shuffled(COARSE.filter(l=>l !== z.lvl && STROKE_MPH[l]*MPH >= V0))]){
-    const st = {V: STROKE_MPH[lvl]*MPH, tip: z.tip};
-    if(kind != null && !spinKindOk(kind, spinAtContact(st, d1))) continue;
+    const st = {V: STROKE_MPH[lvl]*MPH, tip: z.tip}, sh = shapeOf(step, lvl, z.tip), rl = sh && sh.rails || rails;   // a shape's own rules
+    if(kind != null && !spinKindOk(kind, spinAtContact(st, d1), sh && sh.spin)) continue;
     s.zone = null;
     const res = playAim(s, aimFor(s, st), st, false), c = res.cueEnd;
-    if(!res.made || res.scratch || !res.hit || res.cbRails < rails[0] || res.cbRails > rails[1]) continue;
+    if(!res.made || res.scratch || !res.hit || res.cbRails < rl[0] || res.cbRails > rl[1]) continue;
     if(spec.run && len(sub(c, s.gb)) > spec.run) continue;
     const stop = spec.stun && res.cbRails === 0;
     if(stop && len(sub(c, s.gb)) > STOP_R) continue;
@@ -473,9 +506,9 @@ function scaledShot(r, from, step, fx){
   return null;
 }
 // work out one more shot for a step: dealt the full way, rounded to a record, re-checked
-export function makeRec(step, bucket){
-  GEN.g = +step; GEN.bucket = bucket ?? null;
-  let s = null; try{ s = shootDeal(); }catch(e){ s = null; } finally { GEN.g = null; GEN.bucket = null; }
+export function makeRec(step, bucket, order){   // order: ZONE_SHAPES[step] indices to try, first choice first (null: one by weight)
+  GEN.g = +step; GEN.bucket = bucket ?? null; GEN.order = order || null; GEN.used = null;
+  let s = null; try{ s = shootDeal(); }catch(e){ s = null; } finally { GEN.g = null; GEN.bucket = null; GEN.order = null; }
   if(!s || (isZoneStep(step) ? !s.zone || s.zone.step !== +step : !!s.zone)) return null;
   if(+step >= SH.down && !handRoom(s)) return null;   // only shots with room for the bridge hand get stored
   if(reachOf(s) > REACH_PER_HEIGHT*REACH_LIB_CM/2.54) return null;   // and only shots in reach from the rail at the default height
@@ -585,24 +618,35 @@ function shootDealStep(g, step, bucket){
       return finishDeal(s);
     }
     if(!step) return finishDeal(s);
-    if(step === SH.cushion && tries < TRIES - 20 && !late()){ const z = twoRailZone(s); if(!z) continue; s.zone = z; return finishDeal(s); }   // the last tries fall back to a plainer cushion zone below
+    // the shapes to try on this layout, in turn: the library builder's order (the one furthest below its share first, so
+    // a rare one is tried on every layout but never holds the build up), live one by weight; GEN.used: the one it got
+    const order = GEN.order ? GEN.order.map(i=>({...ZONE_SHAPES[step][i], i})) : [zoneShape(step)];
+    if(step === SH.cushion && tries < TRIES - 20 && !late()){   // the last tries fall back to a plainer cushion zone below
+      let z = null; for(const sh of order){ z = twoRailZone(s, sh.lvl); if(z){ GEN.used = sh.i; break; } }
+      if(!z) continue; s.zone = z; return finishDeal(s);
+    }
     // the zone is made with a stroke you can actually play: one of your four speeds, and a tip on the pad's half-tip steps
-    const spec = step === SH.cushion ? {tip:[0, rnd(-.2,.45)], k:[1.6, 3.2], rails:[1, 2]} : STEP_STROKES[step](s), V0 = strikeOf(s).V, d1 = len(sub(s.gb, s.cb));
-    // every stroke that reaches the pocket, in random order, so the zones use the ¾ and full strokes as often as ½;
-    // past the normal tries the rail and second-stroke rules are eased, so a zone grade is never dealt without a zone
-    const relax = tries >= TRIES, railsOk = n => relax ? n <= 2 : n >= spec.rails[0] && n <= spec.rails[1];
-    const lvls = shuffled(COARSE.filter(l=>STROKE_MPH[l]*MPH >= V0));
+    const spec0 = step === SH.cushion ? {tip:[0, rnd(-.2,.45)], k:[1.6, 3.2], rails:[1, 2]} : STEP_STROKES[step](s), V0 = strikeOf(s).V, d1 = len(sub(s.gb, s.cb));
+    // each shape's stroke, if it reaches the pocket; past the normal tries the rail and second-stroke rules are eased, and live
+    // any stroke that reaches will do, so a zone grade is never dealt without a zone (the library builder keeps to its shapes)
+    const relax = tries >= TRIES, railsOk = (n, rails) => relax ? n <= Math.max(2, rails[1]) : n >= rails[0] && n <= rails[1];   // a shape's own rails, if it has them
+    const reach = COARSE.filter(l=>STROKE_MPH[l]*MPH >= V0);
+    const cands = order.flatMap(sh=>{
+      const spec = sh.tip ? {...spec0, tip: sh.tip} : spec0;
+      const lvls = sh.lvl == null ? shuffled(reach) : reach.includes(sh.lvl) ? [sh.lvl] : relax && !GEN.order ? shuffled(reach) : [];
+      return lvls.map(lvl=>({lvl, spec, i: sh.i, rails: sh.rails || spec0.rails, spin: sh.spin, oneWay: sh.oneWay}));
+    });
     let found = null;
-    for(const lvl of lvls){
+    for(const {lvl, spec, i, rails, spin, oneWay} of cands){
       const zs = {V: STROKE_MPH[lvl]*MPH, tip: snapTip(spec.tip)};
       // stun: centre ball, and only a stroke with the pace to still be sliding at contact (spin under a fifth of
       // rolling), so it leaves along the tangent line. Fuller hits and longer shots need the ¾ or full stroke for that.
       const kind = spec.stun ? 0 : step === SH.follow ? 1 : step === SH.draw ? -1 : null;   // never eased, even past the normal tries
-      if(kind != null && !spinKindOk(kind, spinAtContact(zs, d1))) continue;
+      if(kind != null && !spinKindOk(kind, spinAtContact(zs, d1), spin)) continue;
       let r = playAim(s, quickAim(s, zs), zs, false);
-      if(!r.made || r.scratch || !r.hit || !railsOk(r.cbRails)) continue;
+      if(!r.made || r.scratch || !r.hit || !railsOk(r.cbRails, rails)) continue;
       if(!zs.tip[0]) r = playAim(s, aimFor(s, zs), zs, false);   // and played exactly as your right call would play it
-      if(!r.made || r.scratch || !r.hit || !railsOk(r.cbRails)) continue;
+      if(!r.made || r.scratch || !r.hit || !railsOk(r.cbRails, rails)) continue;
       const c = r.cueEnd;
       if(spec.run && len(sub(c, s.gb)) > spec.run) continue;
       const stop = spec.stun && r.cbRails === 0;
@@ -617,8 +661,8 @@ function shootDealStep(g, step, bucket){
       if(kind === -1 && (stunsIn(s, d1) || rollsIn(s, d1))){ s.zone = null; continue; }   // nor for draw
       // routes with a rail: the zone should take more than one stroke you can play (a different speed, or the tip half a
       // tip another way), unless none turns up after many tries
-      if(!relax && r.cbRails >= 1 && tries < TRIES*.7 && !late() && !otherWays(s, zs, lvl)){ s.zone = null; continue; }
-      found = s; break;
+      if(!relax && !oneWay && r.cbRails >= 1 && tries < TRIES*.7 && !late() && !otherWays(s, zs, lvl)){ s.zone = null; continue; }
+      found = s; GEN.used = i; break;
     }
     if(!found) continue;
     return finishDeal(s);

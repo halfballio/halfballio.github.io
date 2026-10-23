@@ -1,5 +1,5 @@
 // The build number and the release notes (the What's new card). The pre-commit hook bumps BUILD here.
-const BUILD = 550;   // one per commit to main (shown on the title screen and under the table)
+const BUILD = 551;   // one per commit to main (shown on the title screen and under the table)
 export const VERSION = '1.' + BUILD, CONTACT = 'hello@halfball.io';   // shown as 1.<build>, with the contact address
 export const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/main';   // the build links to the code it was made from
 
@@ -11,7 +11,9 @@ export const SOURCE = 'https://github.com/halfballio/halfballio.github.io/tree/m
 // A returning player sees the builds since the one they last saw, once, at a calm moment; then the dot on ? clears.
 // A new player starts with everything seen. The whole list is always under ? › What's new.
 export const WHATS_NEW = [
-  {build: 550, date: '2026-10-23', title: 'Fixes', items: [
+  {build: 551, date: '2026-10-23', title: 'Position shots', items: [
+    'Position shots ask for a real mix of strokes and spin: follow and draw at ½, ¾ and full, with ½ or 1 tip, instead of nearly always the same stroke.',
+    'Hard follow and draw shots come up now and then, sometimes off two or three rails.',
     'On position shots, the right shot gets the cue ball to the zone again, and so does Replay the right shot.',
   ]},
   {build: 546, date: '2026-10-22', title: 'Any angle and speed', items: [

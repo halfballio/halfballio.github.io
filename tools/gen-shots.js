@@ -25,19 +25,27 @@ if(!isMainThread){ (async ()=>{
   const want = workerData.want;   // {step: count}
   const steps = Object.keys(want).map(Number);
   const done = Object.fromEntries(steps.map(k=>[k, 0]));
-  // the fractions are asked for in turn (the one with fewest shots next), so each grade gets an even mix of them;
-  // a fraction that keeps failing for a grade (stun on a thin cut, follow on a full hit...) is dropped for that grade
-  const NF = 5, MISS_CAP = 30;
-  const per = Object.fromEntries(steps.map(k=>[k, {n: Array(NF).fill(0), miss: Array(NF).fill(0), dead: Array(NF).fill(false)}]));
-  for(const k of steps) if(L.NO_EIGHTH().includes(k)) per[k].dead[4] = true;   // no ⅛ at follow and stun
+  // the fractions are asked for in turn (the one with fewest shots next), so each grade gets an even mix of them; a
+  // fraction that keeps failing for a grade (stun on a thin cut, follow on a full hit...) is dropped for that grade. Within
+  // a fraction, a zone grade's strokes and tips (its zone shapes) are tried on each layout in order, the one furthest below
+  // its share (by weight) first, and the first that fits is kept: a rare shape comes up as often as layouts allow it
+  const NF = 5, MISS_CAP = 300, SW = k => L.zoneShapes(k), NS = k => SW(k).length;
+  const per = Object.fromEntries(steps.map(k=>[k, {n: Array(NF).fill(0), miss: Array(NF).fill(0), dead: Array(NF).fill(false), by: Array.from({length: NF}, ()=>Array(NS(k)).fill(0))}]));
+  for(const k of steps) if(L.NO_EIGHTH().includes(k)) per[k].dead[4] = true;   // no ⅛ at follow, stun and draw
   const open = k => done[k] < want[k] && per[k].dead.some(d=>!d);
   while(steps.some(open)){
     for(const k of steps){
       if(!open(k)) continue;
       if(L.curTable() !== L.tableFor(k)) L.setTable(L.tableFor(k));   // each grade's shots on its own table
-      const f = per[k], b = [...Array(NF).keys()].filter(i=>!f.dead[i]).sort((x, y)=>f.n[x] - f.n[y])[0];
-      const r = L.makeRec(k, b);
-      if(r){ const out = new Uint8Array(L.REC); L.encodeRec(r, out, 0); done[k]++; f.n[b]++; f.miss[b] = 0; parentPort.postMessage({step: k, rec: out}); }
+      const f = per[k], b = [...Array(NF).keys()].filter(i=>!f.dead[i]).sort((x, y)=>f.n[x] - f.n[y])[0], w = SW(k);
+      // and none already over its share by a quarter: a layout only the extreme ones fit is left, so they stay rare
+      // (shares among the shapes this fraction has actually given: one that never fits it doesn't hold the others back)
+      const got = NS(k) ? f.by[b].reduce((x, y)=>x + y, 0) : 0, fits = j => got < 40 || f.by[b][j] > 0;
+      const wt = NS(k) ? w.reduce((x, y, j)=>x + (fits(j) ? y : 0), 0) : 1;
+      const under = j => got < 20 || !fits(j) || f.by[b][j]/got <= 1.25*w[j]/wt;
+      const order = NS(k) ? [...Array(NS(k)).keys()].filter(under).sort((x, y)=>f.by[b][x]/w[x] - f.by[b][y]/w[y]) : null;
+      const r = L.makeRec(k, b, order);
+      if(r){ const out = new Uint8Array(L.REC); L.encodeRec(r, out, 0); done[k]++; f.n[b]++; f.miss[b] = 0; if(order && L.shapeUsed() != null) f.by[b][L.shapeUsed()]++; parentPort.postMessage({step: k, rec: out}); }
       else { if(++f.miss[b] >= MISS_CAP){ f.dead[b] = true; parentPort.postMessage({step: k, dropped: b}); } parentPort.postMessage({step: k, miss: 1}); }
     }
   }

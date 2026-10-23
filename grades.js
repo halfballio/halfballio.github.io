@@ -114,7 +114,7 @@ export const shootRoutine = () => isShoot() || isRun();   // the ladder's routin
 export function ensureShootLevel(){ if(!stats.shoot) stats.shoot = {g:0, best:0, pts:0, v:SHOOT_V}; return stats.shoot; }
 // You can go back to any grade you've passed and practise it as long as you like: those shots aren't scored.
 export const practicing = () => isLadder() && settings.practice != null && stats.shoot && +settings.practice < stats.shoot.g;
-export const GEN = {g: null, bucket: null};   // while the shot library is being built: the step it's building for
+export const GEN = {g: null, bucket: null, order: null, used: null};   // while the shot library is being built: the step, fraction and zone shapes it's building for, and the shape it got
 // the step being played (not the grade index: see GRADE_STEP)
 export const shootLevel = () => GEN.g != null ? GEN.g : isRun() ? SH.all : isDrill() ? drillLevel() : practicing() ? stepOf(+settings.practice) : stepOf(stats.shoot ? stats.shoot.g : 0);   // Run-outs play as S: every control
 export const NO_TIMER = 1e6;   // from Any angle on, nothing hurries you: you get down when you're ready
